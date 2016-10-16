@@ -1,0 +1,60 @@
+#! /usr/bin/python3
+# -*- coding:Utf-8 -*-
+"""
+My Notes - Sticky notes/post-it
+Copyright 2016 Juliette Monsel <j_4321@sfr.fr>
+
+My Notes is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+My Notes is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+Main
+"""
+
+
+import os
+import sys
+from subprocess import Popen, check_output
+from tkinter.messagebox import showerror
+
+from mynoteslib.constantes import LANG
+from mynoteslib.notes import App
+_ = LANG.gettext
+
+# vérifie si mynotes est déjà lancé
+pid = str(os.getpid())
+pidfile = "/tmp/mynotes.pid"
+
+if os.path.isfile(pidfile):
+    with open(pidfile) as fich:
+        old_pid = fich.read().strip()
+    if os.path.exists("/proc/%s" % old_pid):
+        # MyNotes is already runnning
+        showerror(_("Error"), _("MyNotes is already running."))
+        sys.exit()
+    else:
+        # it is an old pid file (certainly due to session logout then login)
+        os.remove(pidfile)
+open(pidfile, 'w').write(pid)
+try:
+    res_ps = check_output(["ps", "-e"]).decode("utf-8")
+    if res_ps.find("devilspie") == -1:
+        try:
+            Popen("devilspie")
+        except FileNotFoundError:
+            showerror(_("Error"), _("Devilspie is not installed."))
+            sys.exit()
+    App()
+finally:
+    os.unlink(pidfile)
+
