@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 My Notes - Sticky notes/post-it
-Copyright 2016 Juliette Monsel <j_4321@hotmail.fr>
+Copyright 2016-2017 Juliette Monsel <j_4321@protonmail.com>
 
 My Notes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,275 +18,17 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-Main classes
+Sticky note class
 """
 
-from tkinter import Tk, Text,  Toplevel, PhotoImage, StringVar, Menu
-from tkinter.ttk import  Style, Sizegrip, Entry, Checkbutton, Label
-from tkinter.messagebox import askokcancel, showerror
-from tkFontChooser import askfont
-from subprocess import check_output, CalledProcessError
-import tktray
 import os
-from shutil import copy
-import pickle
+from subprocess import check_output, CalledProcessError
+from tkinter import Toplevel, Menu, Text, StringVar, PhotoImage
+from tkinter.ttk import Label, Entry, Checkbutton, Style, Sizegrip
+from tkinter.messagebox import askokcancel, showerror
 from time import strftime
-from mynoteslib.constantes import *
-from mynoteslib.config import Config
-from mynoteslib.categories import CategoryManager
-_ = LANG.gettext
-
-class App(Tk):
-    """ Main app: put an icon in the system tray with a right click menu to
-        create notes ... """
-    def __init__(self):
-        Tk.__init__(self)
-        self.withdraw()
-        self.notes = {}
-        self.img = PhotoImage(file=IM_ICON)
-        self.icon = PhotoImage(master=self, file=IM_ICON_48)
-        self.iconphoto(True, self.icon)
-        style = Style(self)
-        self.close1 = PhotoImage("img_close", file=IM_CLOSE)
-        self.close2 = PhotoImage("img_closeactive", file=IM_CLOSE_ACTIVE)
-        self.roll1 = PhotoImage("img_roll", file=IM_ROLL)
-        self.roll2 = PhotoImage("img_rollactive", file=IM_ROLL_ACTIVE)
-        style.element_create("closenote", "image", "img_close",
-                             ("active", "!disabled", "img_closeactive"),
-                             border=8, sticky='')
-        style.element_create("rollnote", "image", "img_roll",
-                             ("active", "!disabled", "img_rollactive"),
-                             border=8, sticky='')
-        self.protocol("WM_DELETE_WINDOW", self.quit)
-        self.icon = tktray.Icon(self, docked=True)
-        self.menu_notes = Menu(self.icon.menu, tearoff=False)
-        self.hidden_notes = {}
-        self.menu_show_cat = Menu(self.icon.menu, tearoff=False)
-        self.menu_hide_cat = Menu(self.icon.menu, tearoff=False)
-        self.update_menu()
-        self.icon.configure(image=self.img)
-        self.icon.menu.add_command(label=_("New Note"), command=self.new)
-        self.icon.menu.add_separator()
-        self.icon.menu.add_command(label=_('Show All'),
-                                   command=self.show_all)
-        self.icon.menu.add_cascade(label=_('Show Category'),
-                                   menu=self.menu_show_cat)
-        self.icon.menu.add_cascade(label=_('Show Note'), menu=self.menu_notes,
-                                   state="disabled")
-        self.icon.menu.add_separator()
-        self.icon.menu.add_command(label=_('Hide All'),
-                                   command=self.hide_all)
-        self.icon.menu.add_cascade(label=_('Hide Category'),
-                                   menu=self.menu_hide_cat)
-        self.icon.menu.add_separator()
-        self.icon.menu.add_command(label=_("Manage Categories"),
-                                   command=self.manage_cat)
-        self.icon.menu.add_command(label=_("Preferences"),
-                                   command=self.config)
-        self.icon.menu.add_separator()
-        self.icon.menu.add_command(label=_("Backup Notes"), command=self.backup)
-        self.icon.menu.add_command(label=_("Restore Backup"), command=self.restore)
-        self.icon.menu.add_separator()
-        self.icon.menu.add_command(label=_('Quit'), command=self.quit)
-        self.note_data = {}
-        if os.path.exists(PATH_DATA):
-            with open(PATH_DATA, "rb") as fich:
-                dp = pickle.Unpickler(fich)
-                note_data = dp.load()
-                for i,key in enumerate(note_data):
-                    self.note_data["%i" % i] = note_data[key]
-            backup()
-            for key in self.note_data:
-                data = self.note_data[key]
-                if data["visible"]:
-                    self.notes[key] = Sticky(self, key, **data)
-                else:
-                    title = self.menu_notes_title(data["title"])
-                    self.hidden_notes[key] = title
-                    self.menu_notes.add_command(label=title,
-                                                command=lambda nb=key: self.show_note(nb))
-                    self.icon.menu.entryconfigure(4, state="normal")
-        self.nb = len(self.note_data)
-        self.mainloop()
-
-    def menu_notes_title(self, note_title):
-        """
-            Return the title to display in the Show note submenu for the note
-            whose title is note_title. The title returned will be 'note_title'
-            if only this note has this title in the menu. Otherwise, it will
-            be 'note_title ~#n', if it is the n-th note with this title.
-        """
-        end = self.menu_notes.index("end")
-        if end is not None:
-            # le menu n'est pas vide
-            titles = self.hidden_notes.values()
-            titles = [t for t in titles if t.split(" ~#")[0] == note_title]
-            if titles:
-                return "%s ~#%i" % (note_title, len(titles) + 1)
-            else:
-                return note_title
-        else:
-            return note_title
-
-    def backup(self):
-        """ create a backup at the location indicated by user """
-        try:
-            fichier = check_output(["zenity", "--file-selection",
-                                    "--file-filter", "--save",
-                                    "--filename", PATH_DATA_BACKUP % 0,
-                                    "--confirm-overwrite",
-                                    " Backup | *.backup*"]).decode("utf-8").strip()
-            with open(fichier, "wb") as fich:
-                dp = pickle.Pickler(fich)
-                dp.dump(self.note_data)
-        except CalledProcessError:
-            pass
-
-    def restore(self):
-        """ restore notes from backup """
-        try:
-            fichier = check_output(["zenity",
-                                    "--file-selection",
-                                    "--filename", LOCAL_PATH,
-                                    "--file-filter",
-                                    " Backup | *.backup*"]).decode("utf-8").strip()
-            self.show_all()
-            keys = list(self.notes.keys())
-            for key in keys:
-                self.notes[key].delete(confirmation=False)
-            copy(fichier, PATH_DATA)
-            with open(PATH_DATA, "rb") as fich:
-                dp = pickle.Unpickler(fich)
-                note_data = dp.load()
-                for i,key in enumerate(note_data):
-                    self.note_data["%i" % i] = note_data[key]
-            for key in self.note_data:
-                data = self.note_data[key]
-                if data["visible"]:
-                    self.notes[key] = Sticky(self, key, **data)
-                else:
-                    title = self.menu_notes_title(data["title"])
-                    self.hidden_notes[key] = title
-                    self.menu_notes.add_command(label=title,
-                                                command=lambda nb=key: self.show_note(nb))
-                    self.icon.menu.entryconfigure(4, state="normal")
-            self.nb = len(self.note_data)
-        except CalledProcessError:
-            pass
-
-    def show_all(self):
-        """ Show all notes """
-        keys = list(self.hidden_notes.keys())
-        for key in keys:
-            self.show_note(key)
-
-    def show_cat(self, category):
-        """ Show all notes belonging to category """
-        keys = list(self.hidden_notes.keys())
-        for key in keys:
-            if self.note_data[key]["category"] == category:
-                self.show_note(key)
-
-    def hide_all(self):
-        """ Hide all notes """
-        keys = list(self.notes.keys())
-        for key in keys:
-            self.notes[key].quit()
-
-    def hide_cat(self, category):
-        """ Hide all notes belonging to category """
-        keys = list(self.notes.keys())
-        for key in keys:
-            if self.note_data[key]["category"] == category:
-                self.notes[key].quit()
-
-    def manage_cat(self):
-        """ Launch the Category Manager """
-        CategoryManager(self)
-
-    def config(self):
-        """ Launch the setting manager """
-        Config(self)
-
-    def delete_cat(self, category):
-        """ Delete all notes belonging to category """
-        keys = list(self.notes.keys())
-        for key in keys:
-            if self.note_data[key]["category"] == category:
-                self.notes[key].delete(confirmation=False)
-
-    def show_note(self, nb):
-        """ Display the note corresponding to the 'nb' key in self.note_data """
-        self.note_data[nb]["visible"] = True
-        index = self.menu_notes.index(self.hidden_notes[nb])
-        del(self.hidden_notes[nb])
-        self.notes[nb] = Sticky(self, nb, **self.note_data[nb])
-        self.menu_notes.delete(index)
-        if self.menu_notes.index("end") is None:
-            # the menu is empty
-            self.icon.menu.entryconfigure(4, state="disabled")
-
-    def update_notes(self):
-        """ Update the notes after changes in the categories """
-        categories = CONFIG.options("Categories")
-        categories.sort()
-        for key in self.note_data:
-            if not self.note_data[key]["category"] in categories:
-                default = CONFIG.get("General", "default_category")
-                default_color = CONFIG.get("Categories", default)
-                if self.note_data[key]["visible"]:
-                    self.notes[key].change_category(default)
-                self.note_data[key]["category"] = default
-                self.note_data[key]["color"] = default_color
-        for note in self.notes.values():
-            note.update_menu_cat(categories)
-        self.save()
-
-    def update_cat_colors(self, changes):
-        """ Default color of the categories was changed, so change the color of the
-            notes belonging to this category if they were of the default color
-            changes = {category: (old_color, new_color)}
-        """
-        for key in self.note_data:
-            if self.note_data[key]["category"] in changes:
-                old_color, new_color = changes[self.note_data[key]["category"]]
-                if self.note_data[key]["color"] == old_color:
-                    self.note_data[key]["color"] = new_color
-                    if self.note_data[key]["visible"]:
-                        self.notes[key].change_color(INV_COLORS[new_color])
-
-    def update_menu(self):
-        """ Populate self.menu_show_cat and self.menu_hide_cat with the categories """
-        self.menu_hide_cat.delete(0, "end")
-        self.menu_show_cat.delete(0, "end")
-        categories = CONFIG.options("Categories")
-        categories.sort()
-        for cat in categories:
-            self.menu_show_cat.add_command(label=cat.capitalize(),
-                                           command=lambda c=cat: self.show_cat(c))
-            self.menu_hide_cat.add_command(label=cat.capitalize(),
-                                           command=lambda c=cat: self.hide_cat(c))
-
-    def save(self):
-        """ Save the data """
-        with open(PATH_DATA, "wb") as fich:
-            dp = pickle.Pickler(fich)
-            dp.dump(self.note_data)
-
-
-    def new(self):
-        """ Create a new note """
-        key = "%i" % self.nb
-        self.notes[key] = Sticky(self, key)
-        data = self.notes[key].save_info()
-        data["visible"] = True
-        self.note_data[key] = data
-        self.nb += 1
-
-    def quit(self):
-        self.save()
-        save_config()
-        self.destroy()
+from mynoteslib.constantes import CONFIG, COLORS, IM_LOCK, askopenfilename
+from mynoteslib.constantes import TEXT_COLORS, NB_SYMB, IM_SYMB
 
 
 class Sticky(Toplevel):
@@ -301,7 +43,14 @@ class Sticky(Toplevel):
              images, rolled)
         """
         Toplevel.__init__(self, master)
-        self.title("mynotes")
+        self.title('mynotes')
+        self.attributes("-type", "splash")
+        self.attributes("-alpha", CONFIG.getint("General", "opacity")/100)
+        self.focus_force()
+        self.update_idletasks()
+        self.geometry(kwargs.get("geometry", '220x235'))
+        self.update()
+        self.protocol("WM_DELETE_WINDOW", self.hide)
         self.id = key
         self.is_locked = not (kwargs.get("locked", False))
         self.columnconfigure(1, weight=1)
@@ -335,21 +84,17 @@ class Sticky(Toplevel):
 
         # style
         self.style = Style(self)
-        self.style.theme_use("clam")
         self.style.configure(self.id + ".TCheckbutton", selectbackground="red")
-        self.style.map("close" + self.id + ".TLabel", foreground=[('active', '#ff0000')])
-        # make labels behave like button (enable "active" state for the style)
-        self.bind_class("TLabel", "<Enter>", self.bind_class("TButton", "<Enter>"))
-        self.bind_class("TLabel", "<Leave>", self.bind_class("TButton", "<Leave>"))
-        # hide note "button"
-        self.style.layout("close" + self.id + ".TLabel",
-                          [("close" + self.id + ".TLabel.closenote",
-                            {"side": "left", "sticky": 'eswn'})])
-        # roll note "button"
-        self.style.layout("roll" + self.id + ".TLabel",
-                          [("roll" + self.id + ".TLabel.rollnote",
-                            {"side": "left", "sticky": 'eswn'})])
+        self.style.map('TEntry', selectbackground=[('!focus', '#c3c3c3')])
 
+        font_text = "%s %s" %(CONFIG.get("Font", "text_family").replace(" ", "\ "),
+                              CONFIG.get("Font", "text_size"))
+        font_title = "%s %s" %(CONFIG.get("Font", "title_family").replace(" ", "\ "),
+                               CONFIG.get("Font", "title_size"))
+        style = CONFIG.get("Font", "title_style").split(",")
+        if style:
+            font_title += " "
+            font_title += " ".join(style)
 
         self.title_var = StringVar(master=self,
                                    value=kwargs.get("title", _("Title")))
@@ -358,15 +103,19 @@ class Sticky(Toplevel):
                                  textvariable=self.title_var,
                                  anchor="center",
                                  style=self.id + ".TLabel",
-                                 font="Liberation\ Sans 11")
+                                 font=font_title)
         self.title_label.grid(row=0, column=1, sticky="ew", pady=(1,0))
 
         self.title_entry = Entry(self, textvariable=self.title_var,
-                                 justify="center", font="Liberation\ Sans 10")
+                                 exportselection=False,
+                                 justify="center", font=font_text)
 
         self.txt = Text(self, wrap='word', undo=True,
+                        selectforeground='white',
+                        inactiveselectbackground='#c3c3c3',
+                        selectbackground=self.style.lookup('TEntry', 'selectbackground', ('focus',)),
                         relief="flat", borderwidth=0,
-                        highlightthickness=0, font="Liberation\ Sans 10")
+                        highlightthickness=0, font=font_text)
         self.txt.grid(row=1, columnspan=4, column=0, sticky="ewsn",
                       pady=(1,4), padx=4)
         self.txt.insert('1.0', kwargs.get("txt",""))
@@ -374,28 +123,36 @@ class Sticky(Toplevel):
 
         # right-click menu on the main text of the note
         self.menu_txt = Menu(self.txt, tearoff=False)
-        self.menu_style = Menu(self.menu_txt, tearoff=False)
-        self.menu_align = Menu(self.menu_txt, tearoff=False)
-        self.menu_symbols = Menu(self.menu_txt, tearoff=False)
+        menu_style = Menu(self.menu_txt, tearoff=False)
+        menu_align = Menu(self.menu_txt, tearoff=False)
+        menu_symbols = Menu(self.menu_txt, tearoff=False)
+        menu_colors = Menu(self.menu_txt, tearoff=False)
 
-        self.menu_style.add_command(label=_("Bold"), command=lambda: self.toggle_text_style("bold"))
-        self.menu_style.add_command(label=_("Italic"), command=lambda: self.toggle_text_style("italic"))
-        self.menu_style.add_command(label=_("Underline"), command=lambda: self.toggle_text_style("underline"))
-        self.menu_style.add_command(label=_("Overstrike"), command=lambda: self.toggle_text_style("overstrike"))
+        menu_style.add_command(label=_("Bold"), command=lambda: self.toggle_text_style("bold"))
+        menu_style.add_command(label=_("Italic"), command=lambda: self.toggle_text_style("italic"))
+        menu_style.add_command(label=_("Underline"), command=lambda: self.toggle_text_style("underline"))
+        menu_style.add_command(label=_("Overstrike"), command=lambda: self.toggle_text_style("overstrike"))
 
-        self.menu_align.add_command(label=_("Left"), command=lambda: self.set_align("left"))
-        self.menu_align.add_command(label=_("Right"), command=lambda: self.set_align("right"))
-        self.menu_align.add_command(label=_("Center"), command=lambda: self.set_align("center"))
+        menu_align.add_command(label=_("Left"), command=lambda: self.set_align("left"))
+        menu_align.add_command(label=_("Right"), command=lambda: self.set_align("right"))
+        menu_align.add_command(label=_("Center"), command=lambda: self.set_align("center"))
 
+
+        colors = list(TEXT_COLORS.keys())
+        colors.sort()
+        for coul in colors:
+            menu_colors.add_command(label=coul,
+                                    command=lambda key=coul: self.change_sel_color(TEXT_COLORS[key]))
         self.symbols = []
         for i in range(NB_SYMB):
             self.symbols.append(PhotoImage(master=self, file=IM_SYMB[i]))
-            self.menu_symbols.add_command(image=self.symbols[-1],
+            menu_symbols.add_command(image=self.symbols[-1],
                                           command=lambda nb=i: self.add_symbol(nb))
 
-        self.menu_txt.add_cascade(label=_("Style"), menu=self.menu_style)
-        self.menu_txt.add_cascade(label=_("Paragraph"), menu=self.menu_align)
-        self.menu_txt.add_cascade(label=_("Symbols"), menu=self.menu_symbols)
+        self.menu_txt.add_cascade(label=_("Style"), menu=menu_style)
+        self.menu_txt.add_cascade(label=_("Paragraph"), menu=menu_align)
+        self.menu_txt.add_cascade(label=_("Color"), menu=menu_colors)
+        self.menu_txt.add_cascade(label=_("Symbols"), menu=menu_symbols)
         self.menu_txt.add_command(label=_("Checkbox"), command=self.add_checkbox)
         self.menu_txt.add_command(label=_("Image"), command=self.add_image)
         self.menu_txt.add_command(label=_("Date"), command=self.add_date)
@@ -408,12 +165,8 @@ class Sticky(Toplevel):
         self.txt.tag_configure("center", justify="center")
         self.txt.tag_configure("left", justify="left")
         self.txt.tag_configure("right", justify="right")
-
-        # restore tags
-        for tag in kwargs.get("tags", []):
-            indices = kwargs["tags"][tag]
-            if indices:
-                self.txt.tag_add(tag, *indices)
+        for coul in TEXT_COLORS.values():
+            self.txt.tag_configure(coul, foreground=coul)
 
         # restore checkboxes
         for index in kwargs.get("checkboxes", []):
@@ -435,11 +188,17 @@ class Sticky(Toplevel):
                 self.images.append(PhotoImage(master=self.txt, file=fich))
                 self.txt.image_create(index, image=self.images[-1], name=fich)
 
+        # restore tags
+        for tag in kwargs.get("tags", []):
+            indices = kwargs["tags"][tag]
+            if indices:
+                self.txt.tag_add(tag, *indices)
+
         self.txt.focus_set()
 
-        self.roll = Label(self, style="roll" + self.id + ".TLabel")
+        self.roll = Label(self, image="img_roll", style=self.id + ".TLabel")
         self.roll.grid(row=0, column=2, sticky="e")
-        self.close = Label(self, style="close" + self.id + ".TLabel")
+        self.close = Label(self, image="img_close", style=self.id + ".TLabel")
         self.close.grid(row=0, column=3, sticky="e")
 
         self.corner = Sizegrip(self, style=self.id + ".TSizegrip")
@@ -452,8 +211,12 @@ class Sticky(Toplevel):
 
         self.cadenas.grid(row=0,column=0, sticky="w")
 
-        self.close.bind("<Button-1>", self.quit, add=True)
-        self.roll.bind("<Button-1>", self.rollnote, add=True)
+        self.close.bind("<Button-1>", self.hide)
+        self.roll.bind("<Button-1>", self.rollnote)
+        self.close.bind("<Enter>", self.enter_close)
+        self.roll.bind("<Enter>", self.enter_roll)
+        self.close.bind("<Leave>", self.leave_close)
+        self.roll.bind("<Leave >", self.leave_roll)
 
         self.title_label.bind("<Double-Button-1>", self.edit_title)
         self.title_label.bind("<ButtonPress-1>", self.start_move)
@@ -465,20 +228,57 @@ class Sticky(Toplevel):
         self.bind("<FocusOut>", self.focus_out)
         self.title_label.bind('<Button-3>', self.show_menu)
         self.txt.bind('<Button-3>', self.show_menu_txt)
-# already done with no stack error
-#        self.txt.bind('<Control-z>', lambda e: self.txt.edit_undo())
-#        self.txt.bind('<Control-Shift-Z>', lambda e: self.txt.edit_redo())
+        self.bind_class('Text', '<Control-a>', self.select_all_text)
+        self.bind_class('TEntry', '<Control-a>', self.select_all_entry)
         # remove Ctrl+Y from shortcuts since it's pasting things like Ctrl+V
-        self.txt.bind('<Control-y>', lambda e: "break")
+        self.txt.unbind_class('Text', '<Control-y>')
         self.corner.bind('<ButtonRelease-1>', self.resize)
         self.bind('<Configure>', self.bouge)
-        self.update_idletasks()
-        self.geometry(kwargs.get("geometry", '220x235'))
-        self.update()
+
         self.lock()
         if kwargs.get("rolled", False):
             self.rollnote()
-        self.protocol("WM_DELETE_WINDOW", self.quit)
+        self.bind('<Button-1>', self.change_focus, True)
+
+    def enter_roll(self, event):
+        """ mouse is over the roll icon """
+        self.roll.configure(image="img_rollactive")
+
+    def leave_roll(self, event):
+        """ mouse leaves the roll icon """
+        self.roll.configure(image="img_roll")
+
+    def enter_close(self, event):
+        """ mouse is over the close icon """
+        self.close.configure(image="img_closeactive")
+
+    def leave_close(self, event):
+        """ mouse leaves the close icon """
+        self.close.configure(image="img_close")
+
+    def select_all_text(self, event):
+        event.widget.tag_add("sel","1.0","end")
+
+    def select_all_entry(self, event):
+        event.widget.selection_range(0, "end")
+
+    def change_focus(self, event):
+        if not self.is_locked:
+            event.widget.focus_force()
+
+    def update_title_font(self):
+        font = "%s %s" %(CONFIG.get("Font", "title_family").replace(" ", "\ "),
+                         CONFIG.get("Font", "title_size"))
+        style = CONFIG.get("Font", "title_style").split(",")
+        if style:
+            font += " "
+            font += " ".join(style)
+        self.title_label.configure(font=font)
+
+    def update_text_font(self):
+        font = "%s %s" %(CONFIG.get("Font", "text_family").replace(" ", "\ "),
+                         CONFIG.get("Font", "text_size"))
+        self.txt.configure(font=font)
 
     def update_menu_cat(self, categories):
         """ Update the category submenu """
@@ -521,20 +321,19 @@ class Sticky(Toplevel):
         self.txt.insert("insert", strftime("%x"))
 
     def add_image(self):
-        try:
-            fichier = check_output(["zenity",
-                                    "--file-selection",
-                                    "--file-filter",
-                                    "PNG | *.png"]).decode("utf-8").strip()
-            if os.path.exists(fichier):
-                self.images.append(PhotoImage(master=self.txt, file=fichier))
-                self.txt.image_create("insert",
-                                      image=self.images[-1],
-                                      name=fichier)
-            else:
-                showerror("Erreur", "L'image %s n'existe pas" % fichier)
-        except CalledProcessError:
-            pass
+        fichier = askopenfilename(defaultextension=".png",
+                                  filetypes=[("PNG", "*.png")],
+                                  initialdir="",
+                                  initialfile="",
+                                  title=_('Select PNG image'))
+        if os.path.exists(fichier):
+            self.images.append(PhotoImage(master=self.txt, file=fichier))
+            self.txt.image_create("insert",
+                                  image=self.images[-1],
+                                  name=fichier)
+        else:
+            showerror("Erreur", "L'image %s n'existe pas" % fichier)
+
 
     def add_symbol(self, nb):
         self.txt.image_create("insert", image=self.symbols[nb], name="symb%i" % nb)
@@ -564,7 +363,11 @@ class Sticky(Toplevel):
 
     def lock(self):
         if self.is_locked:
-            self.txt.configure(state="normal")
+            self.txt.configure(state="normal",
+                               selectforeground='white',
+                               selectbackground=self.style.lookup('TEntry',
+                                                                  'selectbackground',
+                                                                  ('focus',)))
             self.is_locked = False
             for checkbox in self.txt.window_names():
                 ch = self.txt.children[checkbox.split(".")[-1]]
@@ -574,7 +377,9 @@ class Sticky(Toplevel):
             self.title_label.bind("<Double-Button-1>", self.edit_title)
             self.txt.bind('<Button-3>', self.show_menu_txt)
         else:
-            self.txt.configure(state="disabled")
+            self.txt.configure(state="disabled",
+                               selectforeground='black',
+                               selectbackground='#c3c3c3')
             self.cadenas.configure(image=self.im_lock)
             for checkbox in self.txt.window_names():
                 ch = self.txt.children[checkbox.split(".")[-1]]
@@ -587,7 +392,7 @@ class Sticky(Toplevel):
     def save_info(self):
         """ Return the dictionnary containing all the note data """
         data = {}
-        data["txt"] = self.txt.get("1.0","end")
+        data["txt"] = self.txt.get("1.0","end")[:-1]
         data["tags"] = {}
         for tag in self.txt.tag_names():
             if tag != "sel":
@@ -603,9 +408,9 @@ class Sticky(Toplevel):
         data["rolled"] = not self.txt.winfo_ismapped()
         for image in self.txt.image_names():
             if image[:4] == "symb":
-                data["symbols"][self.txt.index(image)] = int(image[4:])
+                data["symbols"][self.txt.index(image)] = int(image[4:].split('#')[0])
             else:
-                data["images"][self.txt.index(image)] = image
+                data["images"][self.txt.index(image)] = image.split('#')[0]
         for checkbox in self.txt.window_names():
             ch = self.txt.children[checkbox.split(".")[-1]]
             data["checkboxes"][self.txt.index(checkbox)] = ("selected" in ch.state())
@@ -644,7 +449,7 @@ class Sticky(Toplevel):
                                anchor="nw",
                                width=self.title_label.winfo_width()-10)
 
-    def quit(self, event=None):
+    def hide(self, event=None):
         title = self.master.menu_notes_title(self.title_var.get().strip())
         self.master.hidden_notes[self.id] = title
         self.master.menu_notes.add_command(label=title,
@@ -693,6 +498,15 @@ class Sticky(Toplevel):
             else:
                 # first char is normal, so apply style to the whole selection
                 self.txt.tag_add(style, "sel.first", "sel.last")
+
+    def change_sel_color(self, color):
+        """ change the color of the selection """
+        if self.txt.tag_ranges("sel"):
+            current_tags = self.txt.tag_names("sel.first")
+            for coul in TEXT_COLORS.values():
+                if coul in current_tags:
+                    self.txt.tag_remove(coul, "sel.first", "sel.last")
+            self.txt.tag_add(color, "sel.first", "sel.last")
 
     def set_align(self, alignment):
         """ Align the text according to alignment (left, right, center) """

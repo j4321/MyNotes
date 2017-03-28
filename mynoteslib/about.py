@@ -1,15 +1,15 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#! /usr/bin/python3
+# -*- coding:Utf-8 -*-
 """
-Checkmails - System tray unread mail checker
-Copyright 2016 Juliette Monsel <j_4321@hotmail.fr>
+My Notes - Sticky notes/post-it
+Copyright 2016-2017 Juliette Monsel <j_4321@protonmail.com>
 
-CheckMails is free software: you can redistribute it and/or modify
+My Notes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-CheckMails is distributed in the hope that it will be useful,
+My Notes is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -17,13 +17,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 About dialog
 """
 from webbrowser import open as webOpen
 from tkinter import Text, Toplevel, PhotoImage
 from tkinter.ttk import Button, Label
-from checkmailslib.constants import LANG, ICON_48, VERSION
-_ = LANG.gettext
+from mynoteslib.constantes import LANG, IM_ICON_48, VERSION
 
 class About(Toplevel):
     """ Toplevel de l'application principale donnant les informations à
@@ -32,16 +32,16 @@ class About(Toplevel):
         """ créer le Toplevel 'À propos de CheckMails' """
         Toplevel.__init__(self, master)
 
-        self.title(_("About CheckMails"))
-        self.image = PhotoImage(file=ICON_48, master=self)
+        self.title(_("About MyNotes"))
+        self.image = PhotoImage(file=IM_ICON_48, master=self)
         Label(self, image=self.image).grid(row=0, columnspan=2, pady=10)
 
         Label(self,
-                  text=_("CheckMails %(version)s")
+                  text=_("MyNotes %(version)s")
                   % ({"version": VERSION})).grid(row=1, columnspan=2)
-        Label(self, text=_("System tray unread mail checker")).grid(row=2, columnspan=2, padx=10)
-        Label(self, text="Copyright (C) Juliette Monsel 2016").grid(row=3, columnspan=2)
-        Label(self, text="j_4321@hotmail.fr").grid(row=4, columnspan=2)
+        Label(self, text=_("Sticky notes/post-it system tray app")).grid(row=2, columnspan=2, padx=10)
+        Label(self, text="Copyright (C) Juliette Monsel 2016-2017").grid(row=3, columnspan=2)
+        Label(self, text="j_4321@protonmail.com").grid(row=4, columnspan=2)
         Button(self, text=_("License"), command=self._license).grid(row=5, column=0, pady=20, padx=4)
         Button(self, text=_("Close"), command=self.exit).grid(row=5, column=1, pady=20, padx=4)
 

@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 My Notes - Sticky notes/post-it
-Copyright 2016 Juliette Monsel <j_4321@sfr.fr>
+Copyright 2016-2017 Juliette Monsel <j_4321@protonmail.com>
 
 My Notes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -24,11 +24,11 @@ Main
 
 import os
 import sys
-from subprocess import Popen, check_output
+#from subprocess import Popen, check_output
 from tkinter.messagebox import showerror
 
-from mynoteslib.constantes import LANG
-from mynoteslib.notes import App
+from mynoteslib.constantes import LANG, save_config
+from mynoteslib.app import App
 _ = LANG.gettext
 
 # vérifie si mynotes est déjà lancé
@@ -47,14 +47,10 @@ if os.path.isfile(pidfile):
         os.remove(pidfile)
 open(pidfile, 'w').write(pid)
 try:
-    res_ps = check_output(["ps", "-e"]).decode("utf-8")
-    if res_ps.find("devilspie") == -1:
-        try:
-            Popen("devilspie")
-        except FileNotFoundError:
-            showerror(_("Error"), _("Devilspie is not installed."))
-            sys.exit()
-    App()
+    app = App()
+    app.mainloop()
 finally:
+    app.save()
+    save_config()
     os.unlink(pidfile)
 

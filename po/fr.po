@@ -1,0 +1,329 @@
+# My Notes - Sticky notes/post-it
+# Copyright (C) 2016-2017 Juliette Monsel
+# This file is distributed under the same license as the MyNotes package.
+# Juliette Monsel <j_4321@protonmail.com>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2017-03-28 22:04+0200\n"
+"PO-Revision-Date: 2017-03-28 22:13+0200\n"
+"Last-Translator:  <j_4321@protonmail.com>\n"
+"Language-Team: French\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: mynoteslib/config.py:34
+msgid "Configure"
+msgstr ""
+
+#: mynoteslib/config.py:53
+msgid "Font"
+msgstr ""
+
+#: mynoteslib/config.py:54 mynoteslib/sticky.py:100
+msgid "Title"
+msgstr ""
+
+#: mynoteslib/config.py:61 mynoteslib/config.py:111
+msgid "Sample text"
+msgstr ""
+
+#: mynoteslib/config.py:85 mynoteslib/sticky.py:131
+msgid "Bold"
+msgstr ""
+
+#: mynoteslib/config.py:87 mynoteslib/sticky.py:132
+msgid "Italic"
+msgstr ""
+
+#: mynoteslib/config.py:89 mynoteslib/sticky.py:133
+msgid "Underline"
+msgstr ""
+
+#: mynoteslib/config.py:104
+msgid "Text"
+msgstr ""
+
+#: mynoteslib/config.py:134
+msgid "Opacity"
+msgstr ""
+
+#: mynoteslib/config.py:151
+msgid "Language"
+msgstr ""
+
+#: mynoteslib/config.py:167 mynoteslib/categories.py:179
+msgid "Cancel"
+msgstr ""
+
+#: mynoteslib/config.py:214
+msgid "The language setting will take effect after restarting the application"
+msgstr ""
+
+#: mynoteslib/about.py:35
+msgid "About MyNotes"
+msgstr ""
+
+#: mynoteslib/about.py:40
+#, python-format
+msgid "MyNotes %(version)s"
+msgstr ""
+
+#: mynoteslib/about.py:42
+msgid "Sticky notes/post-it system tray app"
+msgstr ""
+
+#: mynoteslib/about.py:45 mynoteslib/about.py:69
+msgid "License"
+msgstr ""
+
+#: mynoteslib/about.py:46 mynoteslib/about.py:95
+msgid "Close"
+msgstr ""
+
+#: mynoteslib/about.py:78
+msgid ""
+"CheckMails is free software: you can redistribute it and/or modify it under "
+"the terms of the GNU General Public License as published by the Free "
+"Software Foundation, either version 3 of the License, or (at your option) "
+"any later version.\n"
+"\n"
+msgstr ""
+
+#: mynoteslib/about.py:80
+msgid ""
+"CheckMails is distributed in the hope that it will be useful, but WITHOUT "
+"ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or "
+"FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for "
+"more details.\n"
+"\n"
+msgstr ""
+
+#: mynoteslib/about.py:82
+msgid ""
+"You should have received a copy of the GNU General Public License along with "
+"this program. If not, see http://www.gnu.org/licenses/."
+msgstr ""
+
+#: mynoteslib/constantes.py:101 mynoteslib/constantes.py:111
+msgid "Blue"
+msgstr ""
+
+#: mynoteslib/constantes.py:101
+msgid "Turquoise"
+msgstr ""
+
+#: mynoteslib/constantes.py:102
+msgid "Orange"
+msgstr ""
+
+#: mynoteslib/constantes.py:102 mynoteslib/constantes.py:112
+msgid "Red"
+msgstr ""
+
+#: mynoteslib/constantes.py:103
+msgid "Grey"
+msgstr ""
+
+#: mynoteslib/constantes.py:103 mynoteslib/constantes.py:110
+msgid "White"
+msgstr ""
+
+#: mynoteslib/constantes.py:104 mynoteslib/constantes.py:111
+msgid "Green"
+msgstr ""
+
+#: mynoteslib/constantes.py:104 mynoteslib/constantes.py:110
+msgid "Black"
+msgstr ""
+
+#: mynoteslib/constantes.py:105
+msgid "Purple"
+msgstr ""
+
+#: mynoteslib/constantes.py:105 mynoteslib/constantes.py:112
+#: mynoteslib/categories.py:152 mynoteslib/categories.py:154
+#: mynoteslib/categories.py:157
+msgid "Yellow"
+msgstr ""
+
+#: mynoteslib/constantes.py:106
+msgid "Dark Blue"
+msgstr ""
+
+#: mynoteslib/constantes.py:113
+msgid "Cyan"
+msgstr ""
+
+#: mynoteslib/constantes.py:113
+msgid "Magenta"
+msgstr ""
+
+#: mynoteslib/constantes.py:117
+msgid "Home"
+msgstr ""
+
+#: mynoteslib/constantes.py:118
+msgid "home"
+msgstr ""
+
+#: mynoteslib/constantes.py:119
+msgid "office"
+msgstr ""
+
+#: mynoteslib/constantes.py:136
+msgid "Open"
+msgstr ""
+
+#: mynoteslib/constantes.py:178
+msgid "Save As"
+msgstr ""
+
+#: mynoteslib/categories.py:35
+msgid "Category Manager"
+msgstr ""
+
+#: mynoteslib/categories.py:53
+msgid "Default category "
+msgstr ""
+
+#: mynoteslib/categories.py:109
+msgid "Question"
+msgstr ""
+
+#: mynoteslib/categories.py:110
+#, python-format
+msgid ""
+"Do you want to delete all notes belonging to the category %(category)s? If "
+"you answer 'No', the category will be deleted but the notes will belong to "
+"the default category."
+msgstr ""
+
+#: mynoteslib/categories.py:142
+msgid "New Category"
+msgstr ""
+
+#: mynoteslib/sticky.py:80
+msgid "Delete"
+msgstr ""
+
+#: mynoteslib/sticky.py:81
+msgid "Category"
+msgstr ""
+
+#: mynoteslib/sticky.py:82 mynoteslib/sticky.py:154
+msgid "Color"
+msgstr ""
+
+#: mynoteslib/sticky.py:83 mynoteslib/sticky.py:376
+msgid "Lock"
+msgstr ""
+
+#: mynoteslib/sticky.py:134
+msgid "Overstrike"
+msgstr ""
+
+#: mynoteslib/sticky.py:136
+msgid "Left"
+msgstr ""
+
+#: mynoteslib/sticky.py:137
+msgid "Right"
+msgstr ""
+
+#: mynoteslib/sticky.py:138
+msgid "Center"
+msgstr ""
+
+#: mynoteslib/sticky.py:152
+msgid "Style"
+msgstr ""
+
+#: mynoteslib/sticky.py:153
+msgid "Paragraph"
+msgstr ""
+
+#: mynoteslib/sticky.py:155
+msgid "Symbols"
+msgstr ""
+
+#: mynoteslib/sticky.py:156
+msgid "Checkbox"
+msgstr ""
+
+#: mynoteslib/sticky.py:157
+msgid "Image"
+msgstr ""
+
+#: mynoteslib/sticky.py:158
+msgid "Date"
+msgstr ""
+
+#: mynoteslib/sticky.py:328
+msgid "Select PNG image"
+msgstr ""
+
+#: mynoteslib/sticky.py:355
+msgid "Confirmation"
+msgstr ""
+
+#: mynoteslib/sticky.py:355
+msgid "Delete the note?"
+msgstr ""
+
+#: mynoteslib/sticky.py:388
+msgid "Unlock"
+msgstr ""
+
+#: mynoteslib/app.py:69
+msgid "New Note"
+msgstr ""
+
+#: mynoteslib/app.py:71
+msgid "Show All"
+msgstr ""
+
+#: mynoteslib/app.py:73
+msgid "Show Category"
+msgstr ""
+
+#: mynoteslib/app.py:75
+msgid "Show Note"
+msgstr ""
+
+#: mynoteslib/app.py:78
+msgid "Hide All"
+msgstr ""
+
+#: mynoteslib/app.py:80
+msgid "Hide Category"
+msgstr ""
+
+#: mynoteslib/app.py:83
+msgid "Manage Categories"
+msgstr ""
+
+#: mynoteslib/app.py:85
+msgid "Preferences"
+msgstr ""
+
+#: mynoteslib/app.py:88 mynoteslib/app.py:146
+msgid "Backup Notes"
+msgstr ""
+
+#: mynoteslib/app.py:89 mynoteslib/app.py:158
+msgid "Restore Backup"
+msgstr ""
+
+#: mynoteslib/app.py:91
+msgid "About"
+msgstr ""
+
+#: mynoteslib/app.py:92
+msgid "Quit"
+msgstr ""

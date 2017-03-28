@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 My Notes - Sticky notes/post-it
-Copyright 2016 Juliette Monsel <j_4321@hotmail.fr>
+Copyright 2016-2017 Juliette Monsel <j_4321@protonmail.com>
 
 My Notes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,11 +22,10 @@ Category Manager
 """
 
 from tkinter import Toplevel, StringVar, PhotoImage
-from mynoteslib.constantes import CONFIG, LANG, COLORS, INV_COLORS, save_config, fill, optionmenu_patch
+from mynoteslib.constantes import CONFIG, LANG, COLORS, INV_COLORS, IM_PLUS, IM_MOINS
+from mynoteslib.constantes import save_config, fill, optionmenu_patch
 from tkinter.ttk import Label, Button, OptionMenu, Style, Separator, Entry, Frame
 from tkinter.messagebox import askyesnocancel
-_ = LANG.gettext
-
 
 class CategoryManager(Toplevel):
     """ Category manager for the sticky notes """
@@ -41,6 +40,9 @@ class CategoryManager(Toplevel):
         self.style = Style(self)
         self.style.theme_use("clam")
 
+        self.im_plus = PhotoImage(file=IM_PLUS)
+        self.im_moins = PhotoImage(file=IM_MOINS)
+
         self.frame_cat = Frame(self)
         self.frame_cat.grid(row=0, column=0, sticky="eswn")
 
@@ -48,7 +50,9 @@ class CategoryManager(Toplevel):
         self.default_category = StringVar(self.frame_cat,
                                           CONFIG.get("General",
                                                      "default_category").capitalize())
-        Label(self.frame_cat, text=_("Default category ")).grid(row=0, column=0, sticky="e")
+        Label(self.frame_cat, text=_("Default category ")).grid(row=0, column=0,
+                                                                sticky="e",
+                                                                padx=(4, 0))
         self.categories = CONFIG.options("Categories")
         self.categories.sort()
         categories = [cat.capitalize() for cat in self.categories]
@@ -85,17 +89,13 @@ class CategoryManager(Toplevel):
             optionmenu_patch(self.cat_menus[cat], self.cat_colors[cat])
             self.style.configure("%s.TMenubutton" % cat, background=color)
             self.cat_menus[cat].grid(row=i+2, column=1, sticky="w", padx=4, pady=4)
-            self.cat_buttons[cat] = Button(self.frame_cat, text=_("Delete"),
+            self.cat_buttons[cat] = Button(self.frame_cat, image=self.im_moins,
                                            command=lambda c=cat: self.del_cat(c))
             self.cat_buttons[cat].grid(row=i+2, column=2, padx=4, pady=4)
 
-        self.add_cat_button = Button(self.frame_cat, text=_("New Category"),
+        self.add_cat_button = Button(self.frame_cat, image=self.im_plus,
                                      command=self.add_cat)
-        self.add_cat_button.grid(row=i+3,column=0)
-        Button(self, text=_("Close"), command=self.quit).grid(row=1,
-                                                              column=0,
-                                                              padx=4,
-                                                              pady=4)
+        self.add_cat_button.grid(row=i+3, column=0, sticky="e", pady=(0,4))
 
         if len(self.categories) == 1:
             self.cat_buttons[self.categories[0]].configure(state="disabled")
@@ -157,7 +157,7 @@ the notes will belong to the default category." % {"category": category}))
                self.style.configure("%s.TMenubutton" % cat, background=COLORS[_("Yellow")])
                optionmenu_patch(self.cat_menus[cat], self.cat_colors[cat])
                self.cat_menus[cat].grid(row=i, column=1, padx=4, pady=4)
-               self.cat_buttons[cat] = Button(self.frame_cat, text=_("Delete"),
+               self.cat_buttons[cat] = Button(self.frame_cat, image=self.im_moins,
                                               command=lambda c=cat: self.del_cat(c))
                self.cat_buttons[cat].grid(row=i, column=2, padx=4, pady=4)
                self.cat_buttons[self.categories[0]].configure(state="normal")
@@ -174,10 +174,10 @@ the notes will belong to the default category." % {"category": category}))
         name = Entry(top, justify="center")
         name.grid(row=0, column=0, columnspan=2, sticky="ew")
         name.bind("<Return>", valide)
+        name.focus_set()
         Button(top, text="Ok", command=valide).grid(row=1, column=0, sticky="nswe")
         Button(top, text=_("Cancel"),
                command=top.destroy).grid(row=1, column=1, sticky="nswe")
-
 
     def quit(self):
         CONFIG.set("General", "default_category", self.default_category.get().lower())

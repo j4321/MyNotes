@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 My Notes - Sticky notes/post-it
-Copyright 2016 Juliette Monsel <j_4321@hotmail.fr>
+Copyright 2016-2017 Juliette Monsel <j_4321@protonmail.com>
 
 My Notes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -21,10 +21,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Constants
 """
 
+
 import os
 import gettext
 from configparser import ConfigParser
 from locale import getdefaultlocale, setlocale, LC_ALL
+from subprocess import check_output, CalledProcessError
+
+VERSION = "1.0.0"
 
 setlocale(LC_ALL, '')
 
@@ -50,6 +54,8 @@ IM_CLOSE_ACTIVE = os.path.join(PATH_IMAGES, "close_active.png")
 IM_ROLL = os.path.join(PATH_IMAGES, "roll.png")
 IM_ROLL_ACTIVE = os.path.join(PATH_IMAGES, "roll_active.png")
 IM_LOCK = os.path.join(PATH_IMAGES, "verr.png")
+IM_PLUS = os.path.join(PATH_IMAGES, "plus.png")
+IM_MOINS = os.path.join(PATH_IMAGES, "moins.png")
 NB_SYMB = 15
 IM_SYMB = [os.path.join(PATH_IMAGES, "puce%i.png" % i) for i in range(NB_SYMB)]
 
@@ -64,8 +70,11 @@ else:
     CONFIG.set("General", "language", "en")
     CONFIG.set("General", "opacity", "82")
     CONFIG.add_section("Font")
-    CONFIG.set("Font", "family", "TkDefaultFont")
-    CONFIG.set("Font", "size", "12")
+    CONFIG.set("Font", "text_family", "TkDefaultFont")
+    CONFIG.set("Font", "text_size", "12")
+    CONFIG.set("Font", "title_family", "TkDefaultFont")
+    CONFIG.set("Font", "title_size", "14")
+    CONFIG.set("Font", "title_style", "bold")
     CONFIG.add_section("Categories")
 
 APP_NAME = "MyNotes"
@@ -86,7 +95,7 @@ gettext.bindtextdomain(APP_NAME, PATH_LOCALE)
 gettext.textdomain(APP_NAME)
 LANG = gettext.translation(APP_NAME, PATH_LOCALE,
                            languages=[LANGUE], fallback=True)
-_ = LANG.gettext
+LANG.install()
 
 # colors
 COLORS = {_("Blue"): '#A7B6D6', _("Turquoise"): "#9FC9E2",
@@ -98,10 +107,120 @@ COLORS = {_("Blue"): '#A7B6D6', _("Turquoise"): "#9FC9E2",
 
 INV_COLORS = {col:name for name, col in COLORS.items()}
 
+TEXT_COLORS = {_("Black"): "black", _("White"): "white",
+               _("Blue"): "blue", _("Green"): "green",
+               _("Red"): "red", _("Yellow"): "yellow",
+               _("Cyan"): "cyan", _("Magenta"): "magenta"
+               }
+
 if not CONFIG.has_option("General", "default_category"):
     CONFIG.set("General", "default_category", _("Home"))
     CONFIG.set("Categories", _("home"), '#F9F3A9')
     CONFIG.set("Categories", _("office"), '#A7B6D6')
+
+
+# filebrowser
+ZENITY = False
+
+paths = os.environ['PATH'].split(":")
+for path in paths:
+    if os.path.exists(os.path.join(path, "zenity")):
+        ZENITY = True
+
+try:
+    import tkFileBrowser as tkfb
+except ImportError:
+    tkfb = False
+    from tkinter import filedialog
+
+def askopenfilename(defaultextension, filetypes, initialdir, initialfile="", title=_('Open'), **options):
+    """ file browser:
+            - defaultextension: extension added if none is given
+            - initialdir: directory where the filebrowser is opened
+            - filetypes: [('NOM', '*.ext'), ...]
+    """
+    if tkfb:
+        return tkfb.askopenfilename(title=title,
+                                    defaultext=defaultextension,
+                                    filetypes=filetypes,
+                                    initialdir=initialdir,
+                                    initialfile=initialfile,
+                                    **options)
+    elif ZENITY:
+        try:
+            args = ["zenity", "--file-selection",
+                    "--filename", os.path.join(initialdir, initialfile)]
+            for ext in filetypes:
+                args += ["--file-filter", "%s|%s" % ext]
+            args += ["--title", title]
+            file = check_output(args).decode("utf-8").strip()
+            filename, ext = os.path.splitext(file)
+            if not ext:
+                ext = defaultextension
+            return filename + ext
+        except CalledProcessError:
+            return ""
+        except Exception:
+            return filedialog.askopenfilename(title=title,
+                                              defaultextension=defaultextension,
+                                              filetypes=filetypes,
+                                              initialdir=initialdir,
+                                              initialfile=initialfile,
+                                              **options)
+    else:
+        return filedialog.askopenfilename(title=title,
+                                          defaultextension=defaultextension,
+                                          filetypes=filetypes,
+                                          initialdir=initialdir,
+                                          initialfile=initialfile,
+                                          **options)
+
+def asksaveasfilename(defaultextension, filetypes, initialdir=".", initialfile="", title=_('Save As'), **options):
+    """ plateform specific file browser for saving a file:
+            - defaultextension: extension added if none is given
+            - initialdir: directory where the filebrowser is opened
+            - filetypes: [('NOM', '*.ext'), ...]
+    """
+    if tkfb:
+        return tkfb.asksaveasfilename(title=title,
+                                      defaultext=defaultextension,
+                                      filetypes=filetypes,
+                                      initialdir=initialdir,
+                                      initialfile=initialfile,
+                                      **options)
+    elif ZENITY:
+        try:
+            args = ["zenity", "--file-selection",
+                    "--filename", os.path.join(initialdir, initialfile),
+                    "--save", "--confirm-overwrite"]
+            for ext in filetypes:
+                args += ["--file-filter", "%s|%s" % ext]
+            args += ["--title", title]
+            file = check_output(args).decode("utf-8").strip()
+            if file:
+                filename, ext = os.path.splitext(file)
+                if not ext:
+                    ext = defaultextension
+                return filename + ext
+            else:
+                return ""
+        except CalledProcessError:
+            return ""
+        except Exception:
+            return filedialog.asksaveasfilename(title=title,
+                                                defaultextension=defaultextension,
+                                                initialdir=initialdir,
+                                                filetypes=filetypes,
+                                                initialfile=initialfile,
+                                                **options)
+    else:
+        return filedialog.asksaveasfilename(title=title,
+                                            defaultextension=defaultextension,
+                                            initialdir=initialdir,
+                                            filetypes=filetypes,
+                                            initialfile=initialfile,
+                                            **options)
+
 
 def fill(image, color):
      """Fill image with a color=#hex."""
