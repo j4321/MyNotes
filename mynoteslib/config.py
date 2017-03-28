@@ -60,6 +60,7 @@ class Config(Toplevel):
 
         self.sampletitle = Label(fonttitle_frame, text = _("Sample text"), anchor="center",
                                  style="prev.TLabel", relief="groove")
+
         self.sampletitle.grid(row=2, columnspan=2, padx=4, pady=6,
                               ipadx=4, ipady=4, sticky="eswn")
         self.fonts = list(set(font.families()))
@@ -206,6 +207,7 @@ class Config(Toplevel):
         CONFIG.set("Font", "title_family",familytitle)
         CONFIG.set("Font", "title_size", sizetitle)
         CONFIG.set("Font", "title_style", style)
+
         save_config()
         self.destroy()
 

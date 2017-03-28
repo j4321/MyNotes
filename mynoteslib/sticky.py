@@ -21,15 +21,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Sticky note class
 """
 
-import os
-from subprocess import check_output, CalledProcessError
-from tkinter import Toplevel, Menu, Text, StringVar, PhotoImage
-from tkinter.ttk import Label, Entry, Checkbutton, Style, Sizegrip
+
+from tkinter import Text,  Toplevel, PhotoImage, StringVar, Menu
+from tkinter.ttk import  Style, Sizegrip, Entry, Checkbutton, Label
 from tkinter.messagebox import askokcancel, showerror
+import os
 from time import strftime
+
 from mynoteslib.constantes import CONFIG, COLORS, IM_LOCK, askopenfilename
 from mynoteslib.constantes import TEXT_COLORS, NB_SYMB, IM_SYMB
-
 
 class Sticky(Toplevel):
     """ Sticky note class """
@@ -44,6 +44,7 @@ class Sticky(Toplevel):
         """
         Toplevel.__init__(self, master)
         self.title('mynotes')
+
         self.attributes("-type", "splash")
         self.attributes("-alpha", CONFIG.getint("General", "opacity")/100)
         self.focus_force()
@@ -210,6 +211,7 @@ class Sticky(Toplevel):
                                 CONFIG.get("Categories", self.category.get()))
 
         self.cadenas.grid(row=0,column=0, sticky="w")
+
 
         self.close.bind("<Button-1>", self.hide)
         self.roll.bind("<Button-1>", self.rollnote)

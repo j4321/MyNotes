@@ -24,12 +24,10 @@ Main
 
 import os
 import sys
-#from subprocess import Popen, check_output
 from tkinter.messagebox import showerror
 
-from mynoteslib.constantes import LANG, save_config
+from mynoteslib.constantes import save_config
 from mynoteslib.app import App
-_ = LANG.gettext
 
 # vérifie si mynotes est déjà lancé
 pid = str(os.getpid())
