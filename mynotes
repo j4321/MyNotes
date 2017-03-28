@@ -24,10 +24,10 @@ Main
 
 import os
 import sys
-from subprocess import Popen, check_output
+#from subprocess import Popen, check_output
 from tkinter.messagebox import showerror
 
-from mynoteslib.constantes import LANG
+from mynoteslib.constantes import LANG, save_config
 from mynoteslib.notes import App
 _ = LANG.gettext
 
@@ -47,14 +47,10 @@ if os.path.isfile(pidfile):
         os.remove(pidfile)
 open(pidfile, 'w').write(pid)
 try:
-    res_ps = check_output(["ps", "-e"]).decode("utf-8")
-    if res_ps.find("devilspie") == -1:
-        try:
-            Popen("devilspie")
-        except FileNotFoundError:
-            showerror(_("Error"), _("Devilspie is not installed."))
-            sys.exit()
-    App()
+    app = App()
+    app.mainloop()
 finally:
+    app.save()
+    save_config()
     os.unlink(pidfile)
 

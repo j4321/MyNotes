@@ -24,13 +24,14 @@ Main classes
 from tkinter import Tk, Text,  Toplevel, PhotoImage, StringVar, Menu
 from tkinter.ttk import  Style, Sizegrip, Entry, Checkbutton, Label
 from tkinter.messagebox import askokcancel, showerror
-from tkFontChooser import askfont
+#from tkFontChooser import askfont
 from subprocess import check_output, CalledProcessError
 import tktray
 import os
 from shutil import copy
 import pickle
 from time import strftime
+from mynoteslib.constantes import CONFIG, COLORS, PATH_DATA, PATH_DATA_BACKUP, LOCAL_PATH, LANG
 from mynoteslib.constantes import *
 from mynoteslib.config import Config
 from mynoteslib.categories import CategoryManager
@@ -57,6 +58,7 @@ class App(Tk):
         style.element_create("rollnote", "image", "img_roll",
                              ("active", "!disabled", "img_rollactive"),
                              border=8, sticky='')
+        style.map("TLabel", background=[("active", style.lookup("TLabel", "background"))])
         self.protocol("WM_DELETE_WINDOW", self.quit)
         self.icon = tktray.Icon(self, docked=True)
         self.menu_notes = Menu(self.icon.menu, tearoff=False)
@@ -107,7 +109,6 @@ class App(Tk):
                                                 command=lambda nb=key: self.show_note(nb))
                     self.icon.menu.entryconfigure(4, state="normal")
         self.nb = len(self.note_data)
-        self.mainloop()
 
     def menu_notes_title(self, note_title):
         """
@@ -191,14 +192,14 @@ class App(Tk):
         """ Hide all notes """
         keys = list(self.notes.keys())
         for key in keys:
-            self.notes[key].quit()
+            self.notes[key].hide()
 
     def hide_cat(self, category):
         """ Hide all notes belonging to category """
         keys = list(self.notes.keys())
         for key in keys:
             if self.note_data[key]["category"] == category:
-                self.notes[key].quit()
+                self.notes[key].hide()
 
     def manage_cat(self):
         """ Launch the Category Manager """
@@ -206,7 +207,14 @@ class App(Tk):
 
     def config(self):
         """ Launch the setting manager """
-        Config(self)
+        conf = Config(self)
+        self.wait_window(conf)
+        alpha = CONFIG.getint("General", "opacity")/100
+        for note in self.notes.values():
+            note.attributes("-alpha", alpha)
+            note.update_title_font()
+            note.update_text_font()
+
 
     def delete_cat(self, category):
         """ Delete all notes belonging to category """
@@ -284,8 +292,8 @@ class App(Tk):
         self.nb += 1
 
     def quit(self):
-        self.save()
-        save_config()
+#        self.save()
+#        save_config()
         self.destroy()
 
 
@@ -301,7 +309,13 @@ class Sticky(Toplevel):
              images, rolled)
         """
         Toplevel.__init__(self, master)
-        self.title("mynotes")
+        self.attributes("-type", "splash")
+        self.attributes("-alpha", CONFIG.getint("General", "opacity")/100)
+        self.focus_force()
+        self.update_idletasks()
+        self.geometry(kwargs.get("geometry", '220x235'))
+        self.update()
+        self.protocol("WM_DELETE_WINDOW", self.hide)
         self.id = key
         self.is_locked = not (kwargs.get("locked", False))
         self.columnconfigure(1, weight=1)
@@ -337,6 +351,7 @@ class Sticky(Toplevel):
         self.style = Style(self)
         self.style.theme_use("clam")
         self.style.configure(self.id + ".TCheckbutton", selectbackground="red")
+        self.style.map('TEntry', selectbackground=[('!focus', '#c3c3c3')])
         self.style.map("close" + self.id + ".TLabel", foreground=[('active', '#ff0000')])
         # make labels behave like button (enable "active" state for the style)
         self.bind_class("TLabel", "<Enter>", self.bind_class("TButton", "<Enter>"))
@@ -350,7 +365,10 @@ class Sticky(Toplevel):
                           [("roll" + self.id + ".TLabel.rollnote",
                             {"side": "left", "sticky": 'eswn'})])
 
-
+        font_text = "%s %s" %(CONFIG.get("Font", "text_family").replace(" ", "\ "),
+                              CONFIG.get("Font", "text_size"))
+        font_title = "%s %s" %(CONFIG.get("Font", "title_family").replace(" ", "\ "),
+                               CONFIG.get("Font", "title_size"))
         self.title_var = StringVar(master=self,
                                    value=kwargs.get("title", _("Title")))
 
@@ -358,15 +376,19 @@ class Sticky(Toplevel):
                                  textvariable=self.title_var,
                                  anchor="center",
                                  style=self.id + ".TLabel",
-                                 font="Liberation\ Sans 11")
+                                 font=font_title)
         self.title_label.grid(row=0, column=1, sticky="ew", pady=(1,0))
 
         self.title_entry = Entry(self, textvariable=self.title_var,
-                                 justify="center", font="Liberation\ Sans 10")
+                                 exportselection=False,
+                                 justify="center", font=font_text)
 
         self.txt = Text(self, wrap='word', undo=True,
+                        selectforeground='white',
+                        inactiveselectbackground='#c3c3c3',
+                        selectbackground=self.style.lookup('TEntry', 'selectbackground', ('focus',)),
                         relief="flat", borderwidth=0,
-                        highlightthickness=0, font="Liberation\ Sans 10")
+                        highlightthickness=0, font=font_text)
         self.txt.grid(row=1, columnspan=4, column=0, sticky="ewsn",
                       pady=(1,4), padx=4)
         self.txt.insert('1.0', kwargs.get("txt",""))
@@ -452,7 +474,7 @@ class Sticky(Toplevel):
 
         self.cadenas.grid(row=0,column=0, sticky="w")
 
-        self.close.bind("<Button-1>", self.quit, add=True)
+        self.close.bind("<Button-1>", self.hide, add=True)
         self.roll.bind("<Button-1>", self.rollnote, add=True)
 
         self.title_label.bind("<Double-Button-1>", self.edit_title)
@@ -465,20 +487,37 @@ class Sticky(Toplevel):
         self.bind("<FocusOut>", self.focus_out)
         self.title_label.bind('<Button-3>', self.show_menu)
         self.txt.bind('<Button-3>', self.show_menu_txt)
-# already done with no stack error
-#        self.txt.bind('<Control-z>', lambda e: self.txt.edit_undo())
-#        self.txt.bind('<Control-Shift-Z>', lambda e: self.txt.edit_redo())
+        self.bind_class('Text', '<Control-a>', self.select_all_text)
+        self.bind_class('TEntry', '<Control-a>', self.select_all_entry)
         # remove Ctrl+Y from shortcuts since it's pasting things like Ctrl+V
-        self.txt.bind('<Control-y>', lambda e: "break")
+        self.txt.unbind_class('Text', '<Control-y>')
         self.corner.bind('<ButtonRelease-1>', self.resize)
         self.bind('<Configure>', self.bouge)
-        self.update_idletasks()
-        self.geometry(kwargs.get("geometry", '220x235'))
-        self.update()
         self.lock()
         if kwargs.get("rolled", False):
             self.rollnote()
-        self.protocol("WM_DELETE_WINDOW", self.quit)
+        self.bind_all('<Button-1>', self.change_focus, True)
+
+
+    def select_all_text(self, event):
+        event.widget.tag_add("sel","1.0","end")
+
+    def select_all_entry(self, event):
+        event.widget.selection_range(0, "end")
+
+    def change_focus(self, event):
+        if not self.is_locked:
+            event.widget.focus_force()
+
+    def update_title_font(self):
+        font = "%s %s" %(CONFIG.get("Font", "title_family").replace(" ", "\ "),
+                         CONFIG.get("Font", "title_size"))
+        self.title_label.configure(font=font)
+
+    def update_text_font(self):
+        font = "%s %s" %(CONFIG.get("Font", "text_family").replace(" ", "\ "),
+                         CONFIG.get("Font", "text_size"))
+        self.txt.configure(font=font)
 
     def update_menu_cat(self, categories):
         """ Update the category submenu """
@@ -564,7 +603,11 @@ class Sticky(Toplevel):
 
     def lock(self):
         if self.is_locked:
-            self.txt.configure(state="normal")
+            self.txt.configure(state="normal",
+                               selectforeground='white',
+                               selectbackground=self.style.lookup('TEntry',
+                                                                  'selectbackground',
+                                                                  ('focus',)))
             self.is_locked = False
             for checkbox in self.txt.window_names():
                 ch = self.txt.children[checkbox.split(".")[-1]]
@@ -574,7 +617,9 @@ class Sticky(Toplevel):
             self.title_label.bind("<Double-Button-1>", self.edit_title)
             self.txt.bind('<Button-3>', self.show_menu_txt)
         else:
-            self.txt.configure(state="disabled")
+            self.txt.configure(state="disabled",
+                               selectforeground='black',
+                               selectbackground='#c3c3c3')
             self.cadenas.configure(image=self.im_lock)
             for checkbox in self.txt.window_names():
                 ch = self.txt.children[checkbox.split(".")[-1]]
@@ -587,7 +632,7 @@ class Sticky(Toplevel):
     def save_info(self):
         """ Return the dictionnary containing all the note data """
         data = {}
-        data["txt"] = self.txt.get("1.0","end")
+        data["txt"] = self.txt.get("1.0","end")[:-1]
         data["tags"] = {}
         for tag in self.txt.tag_names():
             if tag != "sel":
@@ -603,9 +648,9 @@ class Sticky(Toplevel):
         data["rolled"] = not self.txt.winfo_ismapped()
         for image in self.txt.image_names():
             if image[:4] == "symb":
-                data["symbols"][self.txt.index(image)] = int(image[4:])
+                data["symbols"][self.txt.index(image)] = int(image[4:].split('#')[0])
             else:
-                data["images"][self.txt.index(image)] = image
+                data["images"][self.txt.index(image)] = image.split('#')[0]
         for checkbox in self.txt.window_names():
             ch = self.txt.children[checkbox.split(".")[-1]]
             data["checkboxes"][self.txt.index(checkbox)] = ("selected" in ch.state())
@@ -644,7 +689,7 @@ class Sticky(Toplevel):
                                anchor="nw",
                                width=self.title_label.winfo_width()-10)
 
-    def quit(self, event=None):
+    def hide(self, event=None):
         title = self.master.menu_notes_title(self.title_var.get().strip())
         self.master.hidden_notes[self.id] = title
         self.master.menu_notes.add_command(label=title,
