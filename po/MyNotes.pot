@@ -7,8 +7,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0.0\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-03-28 22:04+0200\n"
+"Report-Msgid-Bugs-To: <j_4321@protonmail.com>\n"
+"POT-Creation-Date: 2017-03-29 20:25+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,51 +17,51 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: mynoteslib/config.py:34
-msgid "Configure"
+#: mynoteslib/config.py:34 mynoteslib/app.py:85
+msgid "Preferences"
 msgstr ""
 
 #: mynoteslib/config.py:53
 msgid "Font"
 msgstr ""
 
-#: mynoteslib/config.py:54 mynoteslib/sticky.py:100
+#: mynoteslib/config.py:54 mynoteslib/sticky.py:101
 msgid "Title"
 msgstr ""
 
-#: mynoteslib/config.py:61 mynoteslib/config.py:111
+#: mynoteslib/config.py:61 mynoteslib/config.py:115
 msgid "Sample text"
 msgstr ""
 
-#: mynoteslib/config.py:85 mynoteslib/sticky.py:131
+#: mynoteslib/config.py:89 mynoteslib/sticky.py:132
 msgid "Bold"
 msgstr ""
 
-#: mynoteslib/config.py:87 mynoteslib/sticky.py:132
+#: mynoteslib/config.py:91 mynoteslib/sticky.py:133
 msgid "Italic"
 msgstr ""
 
-#: mynoteslib/config.py:89 mynoteslib/sticky.py:133
+#: mynoteslib/config.py:93 mynoteslib/sticky.py:134
 msgid "Underline"
 msgstr ""
 
-#: mynoteslib/config.py:104
+#: mynoteslib/config.py:108
 msgid "Text"
 msgstr ""
 
-#: mynoteslib/config.py:134
+#: mynoteslib/config.py:140
 msgid "Opacity"
 msgstr ""
 
-#: mynoteslib/config.py:151
+#: mynoteslib/config.py:157
 msgid "Language"
 msgstr ""
 
-#: mynoteslib/config.py:167 mynoteslib/categories.py:179
+#: mynoteslib/config.py:173 mynoteslib/categories.py:179
 msgid "Cancel"
 msgstr ""
 
-#: mynoteslib/config.py:214
+#: mynoteslib/config.py:252
 msgid "The language setting will take effect after restarting the application"
 msgstr ""
 
@@ -88,7 +88,7 @@ msgstr ""
 
 #: mynoteslib/about.py:78
 msgid ""
-"CheckMails is free software: you can redistribute it and/or modify it under "
+"MyNotes is free software: you can redistribute it and/or modify it under "
 "the terms of the GNU General Public License as published by the Free "
 "Software Foundation, either version 3 of the License, or (at your option) "
 "any later version.\n"
@@ -97,7 +97,7 @@ msgstr ""
 
 #: mynoteslib/about.py:80
 msgid ""
-"CheckMails is distributed in the hope that it will be useful, but WITHOUT "
+"MyNotes is distributed in the hope that it will be useful, but WITHOUT "
 "ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or "
 "FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for "
 "more details.\n"
@@ -118,7 +118,7 @@ msgstr ""
 msgid "Turquoise"
 msgstr ""
 
-#: mynoteslib/constantes.py:102
+#: mynoteslib/constantes.py:102 mynoteslib/constantes.py:114
 msgid "Orange"
 msgstr ""
 
@@ -126,7 +126,7 @@ msgstr ""
 msgid "Red"
 msgstr ""
 
-#: mynoteslib/constantes.py:103
+#: mynoteslib/constantes.py:103 mynoteslib/constantes.py:114
 msgid "Grey"
 msgstr ""
 
@@ -164,23 +164,23 @@ msgstr ""
 msgid "Magenta"
 msgstr ""
 
-#: mynoteslib/constantes.py:117
+#: mynoteslib/constantes.py:118
 msgid "Home"
 msgstr ""
 
-#: mynoteslib/constantes.py:118
+#: mynoteslib/constantes.py:119
 msgid "home"
 msgstr ""
 
-#: mynoteslib/constantes.py:119
+#: mynoteslib/constantes.py:120
 msgid "office"
 msgstr ""
 
-#: mynoteslib/constantes.py:136
+#: mynoteslib/constantes.py:137
 msgid "Open"
 msgstr ""
 
-#: mynoteslib/constantes.py:178
+#: mynoteslib/constantes.py:179
 msgid "Save As"
 msgstr ""
 
@@ -208,76 +208,76 @@ msgstr ""
 msgid "New Category"
 msgstr ""
 
-#: mynoteslib/sticky.py:80
+#: mynoteslib/sticky.py:81
 msgid "Delete"
 msgstr ""
 
-#: mynoteslib/sticky.py:81
+#: mynoteslib/sticky.py:82
 msgid "Category"
 msgstr ""
 
-#: mynoteslib/sticky.py:82 mynoteslib/sticky.py:154
+#: mynoteslib/sticky.py:83 mynoteslib/sticky.py:155
 msgid "Color"
 msgstr ""
 
-#: mynoteslib/sticky.py:83 mynoteslib/sticky.py:376
+#: mynoteslib/sticky.py:84 mynoteslib/sticky.py:314
 msgid "Lock"
 msgstr ""
 
-#: mynoteslib/sticky.py:134
+#: mynoteslib/sticky.py:135
 msgid "Overstrike"
 msgstr ""
 
-#: mynoteslib/sticky.py:136
+#: mynoteslib/sticky.py:137
 msgid "Left"
 msgstr ""
 
-#: mynoteslib/sticky.py:137
+#: mynoteslib/sticky.py:138
 msgid "Right"
 msgstr ""
 
-#: mynoteslib/sticky.py:138
+#: mynoteslib/sticky.py:139
 msgid "Center"
 msgstr ""
 
-#: mynoteslib/sticky.py:152
+#: mynoteslib/sticky.py:153
 msgid "Style"
 msgstr ""
 
-#: mynoteslib/sticky.py:153
+#: mynoteslib/sticky.py:154
 msgid "Paragraph"
 msgstr ""
 
-#: mynoteslib/sticky.py:155
+#: mynoteslib/sticky.py:156
 msgid "Symbols"
 msgstr ""
 
-#: mynoteslib/sticky.py:156
+#: mynoteslib/sticky.py:157
 msgid "Checkbox"
 msgstr ""
 
-#: mynoteslib/sticky.py:157
+#: mynoteslib/sticky.py:158
 msgid "Image"
 msgstr ""
 
-#: mynoteslib/sticky.py:158
+#: mynoteslib/sticky.py:159
 msgid "Date"
 msgstr ""
 
-#: mynoteslib/sticky.py:328
-msgid "Select PNG image"
-msgstr ""
-
-#: mynoteslib/sticky.py:355
+#: mynoteslib/sticky.py:292
 msgid "Confirmation"
 msgstr ""
 
-#: mynoteslib/sticky.py:355
+#: mynoteslib/sticky.py:292
 msgid "Delete the note?"
 msgstr ""
 
-#: mynoteslib/sticky.py:388
+#: mynoteslib/sticky.py:327
 msgid "Unlock"
+msgstr ""
+
+#: mynoteslib/sticky.py:505
+msgid "Select PNG image"
 msgstr ""
 
 #: mynoteslib/app.py:69
@@ -306,10 +306,6 @@ msgstr ""
 
 #: mynoteslib/app.py:83
 msgid "Manage Categories"
-msgstr ""
-
-#: mynoteslib/app.py:85
-msgid "Preferences"
 msgstr ""
 
 #: mynoteslib/app.py:88 mynoteslib/app.py:146

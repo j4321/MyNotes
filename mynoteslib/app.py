@@ -152,31 +152,32 @@ class App(Tk):
     def restore(self):
         """ restore notes from backup """
         fichier = askopenfilename(defaultextension=".backup",
-                                  filetypes=[('Backup', '*.backup')],
+                                  filetypes=[],
                                   initialdir=LOCAL_PATH,
                                   initialfile="",
                                   title=_('Restore Backup'))
-        self.show_all()
-        keys = list(self.notes.keys())
-        for key in keys:
-            self.notes[key].delete(confirmation=False)
-        copy(fichier, PATH_DATA)
-        with open(PATH_DATA, "rb") as fich:
-            dp = pickle.Unpickler(fich)
-            note_data = dp.load()
-            for i, key in enumerate(note_data):
-                self.note_data["%i" % i] = note_data[key]
-        for key in self.note_data:
-            data = self.note_data[key]
-            if data["visible"]:
-                self.notes[key] = Sticky(self, key, **data)
-            else:
-                title = self.menu_notes_title(data["title"])
-                self.hidden_notes[key] = title
-                self.menu_notes.add_command(label=title,
-                                            command=lambda nb=key: self.show_note(nb))
-                self.icon.menu.entryconfigure(4, state="normal")
-        self.nb = len(self.note_data)
+        if fichier:
+            self.show_all()
+            keys = list(self.notes.keys())
+            for key in keys:
+                self.notes[key].delete(confirmation=False)
+            copy(fichier, PATH_DATA)
+            with open(PATH_DATA, "rb") as fich:
+                dp = pickle.Unpickler(fich)
+                note_data = dp.load()
+                for i, key in enumerate(note_data):
+                    self.note_data["%i" % i] = note_data[key]
+            for key in self.note_data:
+                data = self.note_data[key]
+                if data["visible"]:
+                    self.notes[key] = Sticky(self, key, **data)
+                else:
+                    title = self.menu_notes_title(data["title"])
+                    self.hidden_notes[key] = title
+                    self.menu_notes.add_command(label=title,
+                                                command=lambda nb=key: self.show_note(nb))
+                    self.icon.menu.entryconfigure(4, state="normal")
+            self.nb = len(self.note_data)
 
     def show_all(self):
         """ Show all notes """

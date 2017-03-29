@@ -31,7 +31,7 @@ class Config(Toplevel):
 
     def __init__(self, master):
         Toplevel.__init__(self, master)
-        self.title(_("Configure"))
+        self.title(_("Preferences"))
         self.grab_set()
         self.resizable(False, False)
         self.protocol("WM_DELETE_WINDOW", self.quit)
@@ -71,7 +71,10 @@ class Config(Toplevel):
 
         self.fonttitle_family = Combobox(fonttitle_frame, values=self.fonts, width=(w*2)//3,
                                          exportselection=False,
-                                         state="readonly")
+                                         validate="key")
+        self._validate_title_family = self.register(lambda *args: self.validate_font_family(self.fonttitle_family, *args))
+        self.fonttitle_family.configure(validatecommand=(self._validate_title_family,
+                                                         "%d", "%S","%i", "%s", "%V"))
         self.fonttitle_family.current(self.fonts.index(title_family))
         self.fonttitle_family.grid(row=0, column=0, padx=4, pady=4)
         self.fonttitle_size = Combobox(fonttitle_frame, values=self.sizes, width=5,
@@ -115,8 +118,10 @@ class Config(Toplevel):
                          ipadx=4, ipady=4, sticky="eswn")
 
         self.font_family = Combobox(font_frame, values=self.fonts, width=(w*2)//3,
-                                    exportselection=False,
-                                    state="readonly")
+                                    exportselection=False, validate="key")
+        self._validate_family = self.register(lambda *args: self.validate_font_family(self.font_family, *args))
+        self.font_family.configure(validatecommand=(self._validate_family,
+                                                    "%d", "%S","%i", "%s", "%V"))
         self.font_family.current(self.fonts.index(family))
         self.font_family.grid(row=0, column=0, padx=4, pady=4)
         self.font_size = Combobox(font_frame, values=self.sizes, width=5,
@@ -169,9 +174,13 @@ class Config(Toplevel):
                                                                     padx=4, pady=4)
 
         self.font_family.bind('<<ComboboxSelected>>', self.update_preview)
+        self.font_family.bind('<Return>', self.update_preview)
         self.font_size.bind('<<ComboboxSelected>>', self.update_preview, add=True)
+        self.font_size.bind('<Return>', self.update_preview, add=True)
         self.fonttitle_family.bind('<<ComboboxSelected>>', self.update_preview_title)
         self.fonttitle_size.bind('<<ComboboxSelected>>', self.update_preview_title, add=True)
+        self.fonttitle_family.bind('<Return>', self.update_preview_title)
+        self.fonttitle_size.bind('<Return>', self.update_preview_title, add=True)
 
     def validate_font_size(self, d, ch, V):
         ''' Validation of the size entry content '''
@@ -183,6 +192,33 @@ class Config(Toplevel):
             return ch.isdigit()
         else:
             return True
+
+    def validate_font_family(self, combo, action, modif, pos, prev_txt, V):
+        """ completion of the text in the path entry with existing
+            folder/file names """
+        if combo.selection_present():
+            sel = combo.selection_get()
+            txt = prev_txt.replace(sel, '')
+        else:
+            txt = prev_txt
+        if action == "0":
+            txt = txt[:int(pos)] + txt[int(pos)+1:]
+            return True
+        else:
+            txt = txt[:int(pos)] + modif + txt[int(pos):]
+            ch = txt.replace(" ", "\ ")
+            l = [i for i in self.fonts if i[:len(ch)] == ch]
+            if l:
+                i = self.fonts.index(l[0])
+                combo.current(i)
+                index = combo.index("insert")
+                combo.delete(0, "end")
+                combo.insert(0, l[0].replace("\ ", " "))
+                combo.selection_range(index + 1, "end")
+                combo.icursor(index + 1)
+                return True
+            else:
+                return False
 
     def ok(self):
         family = self.font_family.get()

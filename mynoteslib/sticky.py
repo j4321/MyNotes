@@ -29,7 +29,7 @@ import os
 from time import strftime
 
 from mynoteslib.constantes import CONFIG, COLORS, IM_LOCK, askopenfilename
-from mynoteslib.constantes import TEXT_COLORS, NB_SYMB, IM_SYMB
+from mynoteslib.constantes import TEXT_COLORS, NB_SYMB, IM_SYMB, sorting
 
 class Sticky(Toplevel):
     """ Sticky note class """
@@ -110,11 +110,11 @@ class Sticky(Toplevel):
         self.title_entry = Entry(self, textvariable=self.title_var,
                                  exportselection=False,
                                  justify="center", font=font_text)
-
+        selectbg = self.style.lookup('TEntry', 'selectbackground', ('focus',))
         self.txt = Text(self, wrap='word', undo=True,
                         selectforeground='white',
-                        inactiveselectbackground='#c3c3c3',
-                        selectbackground=self.style.lookup('TEntry', 'selectbackground', ('focus',)),
+                        inactiveselectbackground=selectbg,
+                        selectbackground=selectbg,
                         relief="flat", borderwidth=0,
                         highlightthickness=0, font=font_text)
         self.txt.grid(row=1, columnspan=4, column=0, sticky="ewsn",
@@ -169,25 +169,44 @@ class Sticky(Toplevel):
         for coul in TEXT_COLORS.values():
             self.txt.tag_configure(coul, foreground=coul)
 
-        # restore checkboxes
-        for index in kwargs.get("checkboxes", []):
-            ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
-            if kwargs["checkboxes"][index]:
-                ch.state(("selected",))
-            self.txt.window_create(index, window=ch)
+#        # restore checkboxes
+#        for index in kwargs.get("checkboxes", []):
+#            ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
+#            if kwargs["checkboxes"][index]:
+#                ch.state(("selected",))
+#            self.txt.window_create(index, window=ch)
+#
+#        # restore symbols
+#        for index in kwargs.get("symbols", []):
+#            nb = kwargs['symbols'][index]
+#            self.txt.image_create(index, image=self.symbols[nb],
+#                                  name="symb%i" % nb)
+#
+#        # restore images
+#        for i,index in enumerate(kwargs.get("images", [])):
+#            fich = kwargs["images"][index]
+#            if os.path.exists(fich):
+#                self.images.append(PhotoImage(master=self.txt, file=fich))
+#                self.txt.image_create(index, image=self.images[-1], name=fich)
 
-        # restore symbols
-        for index in kwargs.get("symbols", []):
-            nb = kwargs['symbols'][index]
-            self.txt.image_create(index, image=self.symbols[nb],
-                                  name="symb%i" % nb)
+        # restore inserted objects
+        indexes = list(kwargs.get("inserted_objects", {}).keys())
+        indexes.sort(key=sorting)  # restore objects with increasing index to avoid placment errors
 
-        # restore images
-        for i,index in enumerate(kwargs.get("images", [])):
-            fich = kwargs["images"][index]
-            if os.path.exists(fich):
-                self.images.append(PhotoImage(master=self.txt, file=fich))
-                self.txt.image_create(index, image=self.images[-1], name=fich)
+        for index in indexes:
+            kind, val = kwargs["inserted_objects"][index]
+            if kind == "checkbox":
+                ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
+                if val:
+                    ch.state(("selected",))
+                self.txt.window_create(index, window=ch)
+            elif kind == "symbol":
+                self.txt.image_create(index, image=self.symbols[val],
+                                      name="symb%i" % val)
+            elif kind == "image":
+                if os.path.exists(val):
+                    self.images.append(PhotoImage(master=self.txt, file=val))
+                    self.txt.image_create(index, image=self.images[-1], name=val)
 
         # restore tags
         for tag in kwargs.get("tags", []):
@@ -242,6 +261,119 @@ class Sticky(Toplevel):
             self.rollnote()
         self.bind('<Button-1>', self.change_focus, True)
 
+    def __setattr__(self, name, value):
+        object.__setattr__(self, name, value)
+        if name == "color":
+            self.style.configure(self.id + ".TSizegrip",
+                                 background=self.color)
+            self.style.configure(self.id +  ".TLabel",
+                                 background=self.color)
+            self.style.configure("close" + self.id +  ".TLabel",
+                                 background=self.color)
+            self.style.configure("roll" + self.id +  ".TLabel",
+                                 background=self.color)
+            self.style.map(self.id +  ".TLabel",
+                           background=[("active", self.color)])
+            self.style.configure(self.id + ".TCheckbutton",
+                                 background=self.color)
+            self.style.map(self.id + ".TCheckbutton",
+                           background=[("active", self.color),
+                                       ("disabled", self.color)])
+            self.style.map("close" + self.id +  ".TLabel",
+                           background=[("active", self.color)])
+            self.style.map("roll" + self.id +  ".TLabel",
+                           background=[("active", self.color)])
+            self.configure(bg=self.color)
+            self.txt.configure(bg=self.color)
+
+    def delete(self, confirmation=True):
+        """ Delete this note """
+        if confirmation:
+            rep = askokcancel(_("Confirmation"), _("Delete the note?"))
+        else:
+            rep = True
+        if rep:
+            del(self.master.note_data[self.id])
+            del(self.master.notes[self.id])
+            self.master.save()
+            self.destroy()
+
+    def lock(self):
+        """ Put note in read-only mode to avoid unwanted text insertion """
+        if self.is_locked:
+            selectbg = self.style.lookup('TEntry', 'selectbackground', ('focus',))
+            self.txt.configure(state="normal",
+                               selectforeground='white',
+                               selectbackground=selectbg,
+                               inactiveselectbackground=selectbg)
+            self.is_locked = False
+            for checkbox in self.txt.window_names():
+                ch = self.txt.children[checkbox.split(".")[-1]]
+                ch.configure(state="normal")
+            self.cadenas.configure(image="")
+            self.menu.entryconfigure(3, label=_("Lock"))
+            self.title_label.bind("<Double-Button-1>", self.edit_title)
+            self.txt.bind('<Button-3>', self.show_menu_txt)
+        else:
+            self.txt.configure(state="disabled",
+                               selectforeground='black',
+                               inactiveselectbackground='#c3c3c3',
+                               selectbackground='#c3c3c3')
+            self.cadenas.configure(image=self.im_lock)
+            for checkbox in self.txt.window_names():
+                ch = self.txt.children[checkbox.split(".")[-1]]
+                ch.configure(state="disabled")
+            self.is_locked = True
+            self.menu.entryconfigure(3, label=_("Unlock"))
+            self.title_label.unbind("<Double-Button-1>")
+            self.txt.unbind('<Button-3>')
+
+    def save_info(self):
+        """ Return the dictionnary containing all the note data """
+        data = {}
+        data["txt"] = self.txt.get("1.0","end")[:-1]
+        data["tags"] = {}
+        for tag in self.txt.tag_names():
+            if tag != "sel":
+                data["tags"][tag] = [index.string for index in self.txt.tag_ranges(tag)]
+        data["title"] = self.title_var.get()
+        data["geometry"] = self.save_geometry
+        data["category"] = self.category.get()
+        data["color"] = self.color
+        data["locked"] = self.is_locked
+        data["inserted_objects"] = {}
+#        data["checkboxes"] = {}
+#        data["images"] = {}
+#        data["symbols"] = {}
+        data["rolled"] = not self.txt.winfo_ismapped()
+#        for image in self.txt.image_names():
+#            if image[:4] == "symb":
+#                data["symbols"][self.txt.index(image)] = int(image[4:].split('#')[0])
+#            else:
+#                data["images"][self.txt.index(image)] = image.split('#')[0]
+#        for checkbox in self.txt.window_names():
+#            ch = self.txt.children[checkbox.split(".")[-1]]
+#            data["checkboxes"][self.txt.index(checkbox)] = ("selected" in ch.state())
+        for image in self.txt.image_names():
+            if image[:4] == "symb":
+                data["inserted_objects"][self.txt.index(image)] = ("symbol",
+                                                                   int(image[4:].split('#')[0]))
+            else:
+                data["inserted_objects"][self.txt.index(image)] = ("image",
+                                                                   image.split('#')[0])
+        for checkbox in self.txt.window_names():
+            ch = self.txt.children[checkbox.split(".")[-1]]
+            data["inserted_objects"][self.txt.index(checkbox)] = ("checkbox", "selected" in ch.state())
+        return data
+
+    def change_color(self, key):
+        self.color = COLORS[key]
+
+    def change_category(self, category):
+        self.color = CONFIG.get("Categories", category)
+
+
+    #----bindings----
     def enter_roll(self, event):
         """ mouse is over the roll icon """
         self.roll.configure(image="img_rollactive")
@@ -268,6 +400,74 @@ class Sticky(Toplevel):
         if not self.is_locked:
             event.widget.focus_force()
 
+    def show_menu(self, event):
+        self.menu.tk_popup(event.x_root,event.y_root)
+
+    def show_menu_txt(self, event):
+        self.menu_txt.tk_popup(event.x_root,event.y_root)
+
+    def resize(self, event):
+        self.save_geometry = self.geometry()
+
+    def bouge(self, event):
+        geo = self.geometry().split("+")[1:]
+        self.save_geometry = self.save_geometry.split("+")[0] \
+                             + "+%s+%s" % tuple(geo)
+
+    def edit_title(self, event):
+        self.title_entry.place(x=self.title_label.winfo_x() + 5,
+                               y=self.title_label.winfo_y(),
+                               anchor="nw",
+                               width=self.title_label.winfo_width()-10)
+
+    def start_move(self, event):
+        self.x = event.x
+        self.y = event.y
+
+    def stop_move(self, event):
+        self.x = None
+        self.y = None
+
+    def move(self, event):
+        if self.x is not None and self.y is not None:
+            deltax = event.x - self.x
+            deltay = event.y - self.y
+            x = self.winfo_x() + deltax
+            y = self.winfo_y() + deltay
+            self.geometry("+%s+%s" % (x, y))
+
+    def focus_out(self, event):
+        data = self.save_info()
+        data["visible"] = True
+        self.master.note_data[self.id] = data
+        self.master.save()
+
+    def rollnote(self, event=None):
+        if self.txt.winfo_ismapped():
+            self.txt.grid_forget()
+            self.corner.place_forget()
+            self.geometry("%sx22" % self.winfo_width())
+        else:
+            self.txt.grid(row=1, columnspan=4,
+                          column=0, sticky="ewsn", pady=(1,4), padx=4)
+            self.corner.place(relx=1.0, rely=1.0, anchor="se")
+            self.geometry(self.save_geometry)
+
+    def hide(self, event=None):
+        """ Hide note (can be displayed again via app menu) """
+        title = self.master.menu_notes_title(self.title_var.get().strip())
+        self.master.hidden_notes[self.id] = title
+        self.master.menu_notes.add_command(label=title,
+                                           command=lambda: self.master.show_note(self.id))
+        self.master.icon.menu.entryconfigure(4, state="normal")
+        data = self.save_info()
+        data["visible"] = False
+        self.master.note_data[self.id] = data
+        del(self.master.notes[self.id])
+        self.master.save()
+        self.destroy()
+
+    #----Settings update----
     def update_title_font(self):
         font = "%s %s" %(CONFIG.get("Font", "title_family").replace(" ", "\ "),
                          CONFIG.get("Font", "title_size"))
@@ -289,32 +489,7 @@ class Sticky(Toplevel):
             self.menu_categories.add_radiobutton(label=cat.capitalize(), value=cat,
                                                  variable=self.category,
                                                  command=lambda category=cat: self.change_category(category))
-
-    def show_menu(self, event):
-        self.menu.tk_popup(event.x_root,event.y_root)
-
-    def show_menu_txt(self, event):
-        self.menu_txt.tk_popup(event.x_root,event.y_root)
-
-    def resize(self, event):
-        self.save_geometry = self.geometry()
-
-    def bouge(self, event):
-        geo = self.geometry().split("+")[1:]
-        self.save_geometry = self.save_geometry.split("+")[0] \
-                             + "+%s+%s" % tuple(geo)
-
-    def rollnote(self, event=None):
-        if self.txt.winfo_ismapped():
-            self.txt.grid_forget()
-            self.corner.place_forget()
-            self.geometry("%sx22" % self.winfo_width())
-        else:
-            self.txt.grid(row=1, columnspan=4,
-                          column=0, sticky="ewsn", pady=(1,4), padx=4)
-            self.corner.place(relx=1.0, rely=1.0, anchor="se")
-            self.geometry(self.save_geometry)
-
+    #----Text edition----
     def add_checkbox(self):
         ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
         self.txt.window_create("insert", window=ch)
@@ -340,146 +515,6 @@ class Sticky(Toplevel):
     def add_symbol(self, nb):
         self.txt.image_create("insert", image=self.symbols[nb], name="symb%i" % nb)
 
-    def change_color(self, key):
-        self.color = COLORS[key]
-
-    def change_category(self, category):
-        self.color = CONFIG.get("Categories", category)
-
-    def focus_out(self, event):
-        data = self.save_info()
-        data["visible"] = True
-        self.master.note_data[self.id] = data
-        self.master.save()
-
-    def delete(self, confirmation=True):
-        if confirmation:
-            rep = askokcancel(_("Confirmation"), _("Delete the note?"))
-        else:
-            rep = True
-        if rep:
-            del(self.master.note_data[self.id])
-            del(self.master.notes[self.id])
-            self.master.save()
-            self.destroy()
-
-    def lock(self):
-        if self.is_locked:
-            self.txt.configure(state="normal",
-                               selectforeground='white',
-                               selectbackground=self.style.lookup('TEntry',
-                                                                  'selectbackground',
-                                                                  ('focus',)))
-            self.is_locked = False
-            for checkbox in self.txt.window_names():
-                ch = self.txt.children[checkbox.split(".")[-1]]
-                ch.configure(state="normal")
-            self.cadenas.configure(image="")
-            self.menu.entryconfigure(3, label=_("Lock"))
-            self.title_label.bind("<Double-Button-1>", self.edit_title)
-            self.txt.bind('<Button-3>', self.show_menu_txt)
-        else:
-            self.txt.configure(state="disabled",
-                               selectforeground='black',
-                               selectbackground='#c3c3c3')
-            self.cadenas.configure(image=self.im_lock)
-            for checkbox in self.txt.window_names():
-                ch = self.txt.children[checkbox.split(".")[-1]]
-                ch.configure(state="disabled")
-            self.is_locked = True
-            self.menu.entryconfigure(3, label=_("Unlock"))
-            self.title_label.unbind("<Double-Button-1>")
-            self.txt.unbind('<Button-3>')
-
-    def save_info(self):
-        """ Return the dictionnary containing all the note data """
-        data = {}
-        data["txt"] = self.txt.get("1.0","end")[:-1]
-        data["tags"] = {}
-        for tag in self.txt.tag_names():
-            if tag != "sel":
-                data["tags"][tag] = [index.string for index in self.txt.tag_ranges(tag)]
-        data["title"] = self.title_var.get()
-        data["geometry"] = self.save_geometry
-        data["category"] = self.category.get()
-        data["color"] = self.color
-        data["locked"] = self.is_locked
-        data["checkboxes"] = {}
-        data["images"] = {}
-        data["symbols"] = {}
-        data["rolled"] = not self.txt.winfo_ismapped()
-        for image in self.txt.image_names():
-            if image[:4] == "symb":
-                data["symbols"][self.txt.index(image)] = int(image[4:].split('#')[0])
-            else:
-                data["images"][self.txt.index(image)] = image.split('#')[0]
-        for checkbox in self.txt.window_names():
-            ch = self.txt.children[checkbox.split(".")[-1]]
-            data["checkboxes"][self.txt.index(checkbox)] = ("selected" in ch.state())
-        return data
-
-    def __setattr__(self, name, value):
-        object.__setattr__(self, name, value)
-        if name == "color":
-            self.style.configure(self.id + ".TSizegrip",
-                                 background=self.color)
-            self.style.configure(self.id +  ".TLabel",
-                                 background=self.color)
-            self.style.configure("close" + self.id +  ".TLabel",
-                                 background=self.color)
-            self.style.configure("roll" + self.id +  ".TLabel",
-                                 background=self.color)
-            self.style.map(self.id +  ".TLabel",
-                           background=[("active", self.color)])
-            self.style.configure(self.id + ".TCheckbutton",
-                                 background=self.color)
-            self.style.map(self.id + ".TCheckbutton",
-                           background=[("active", self.color),
-                                       ("disabled", self.color)])
-            self.style.map("close" + self.id +  ".TLabel",
-                           background=[("active", self.color)])
-            self.style.map("roll" + self.id +  ".TLabel",
-                           background=[("active", self.color)])
-            self.configure(bg=self.color)
-            self.txt.configure(bg=self.color)
-
-
-
-    def edit_title(self, event):
-        self.title_entry.place(x=self.title_label.winfo_x() + 5,
-                               y=self.title_label.winfo_y(),
-                               anchor="nw",
-                               width=self.title_label.winfo_width()-10)
-
-    def hide(self, event=None):
-        title = self.master.menu_notes_title(self.title_var.get().strip())
-        self.master.hidden_notes[self.id] = title
-        self.master.menu_notes.add_command(label=title,
-                                           command=lambda: self.master.show_note(self.id))
-        self.master.icon.menu.entryconfigure(4, state="normal")
-        data = self.save_info()
-        data["visible"] = False
-        self.master.note_data[self.id] = data
-        del(self.master.notes[self.id])
-        self.master.save()
-        self.destroy()
-
-    def start_move(self, event):
-        self.x = event.x
-        self.y = event.y
-
-    def stop_move(self, event):
-        self.x = None
-        self.y = None
-
-    def move(self, event):
-        if self.x is not None and self.y is not None:
-            deltax = event.x - self.x
-            deltay = event.y - self.y
-            x = self.winfo_x() + deltax
-            y = self.winfo_y() + deltay
-            self.geometry("+%s+%s" % (x, y))
-
     def toggle_text_style(self, style):
         '''Toggle the style of the selected text'''
         if self.txt.tag_ranges("sel"):
@@ -504,11 +539,10 @@ class Sticky(Toplevel):
     def change_sel_color(self, color):
         """ change the color of the selection """
         if self.txt.tag_ranges("sel"):
-            current_tags = self.txt.tag_names("sel.first")
             for coul in TEXT_COLORS.values():
-                if coul in current_tags:
-                    self.txt.tag_remove(coul, "sel.first", "sel.last")
-            self.txt.tag_add(color, "sel.first", "sel.last")
+                self.txt.tag_remove(coul, "sel.first", "sel.last")
+            if not color == "black":
+                self.txt.tag_add(color, "sel.first", "sel.last")
 
     def set_align(self, alignment):
         """ Align the text according to alignment (left, right, center) """
@@ -520,3 +554,4 @@ class Sticky(Toplevel):
             self.txt.tag_remove("center", line + ".0", line + ".end")
             # set new alignment tag
             self.txt.tag_add(alignment, line + ".0", line + ".end")
+

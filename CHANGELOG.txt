@@ -1,0 +1,9 @@
+My Notes - Sticky notes/post-it
+===============================
+Copyright 2016 Juliette Monsel <j_4321@protonmail.com>
+
+Changelog
+---------
+
+- Version 1.0.0
+    * Initial release

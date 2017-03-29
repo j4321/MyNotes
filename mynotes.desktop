@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0.0
+Encoding=UTF-8
+Comment="Post-it system tray app"
+Name=MyNotes
+Exec=mynotes
+Terminal=false
+Type=Application
+Categories=Utility
+StartupNotify=false
+Icon=mynotes

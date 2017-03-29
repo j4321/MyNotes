@@ -34,15 +34,22 @@ setlocale(LC_ALL, '')
 
 PATH = os.path.dirname(__file__)
 
-# local directory containing config files and sticky notes data
-LOCAL_PATH = os.path.join(os.path.expanduser("~"), ".mynotes")
-if not os.path.isdir(LOCAL_PATH):
-    os.mkdir(LOCAL_PATH)
+if os.access(PATH, os.W_OK):
+    # the path is writable, the app is not installed
+    # local directory containing config files and sticky notes data
+    LOCAL_PATH = PATH
+    PATH_LOCALE = os.path.join(PATH, "locale")
+
+else:
+    # local directory containing config files and sticky notes data
+    LOCAL_PATH = os.path.join(os.path.expanduser("~"), ".mynotes")
+    if not os.path.isdir(LOCAL_PATH):
+        os.mkdir(LOCAL_PATH)
+    PATH_LOCALE = "/usr/share/locale"
 
 PATH_CONFIG = os.path.join(LOCAL_PATH, "mynotes.ini")
 PATH_DATA = os.path.join(LOCAL_PATH, "notes")
 PATH_DATA_BACKUP = os.path.join(LOCAL_PATH, "notes.backup%i")
-PATH_LOCALE = os.path.join(PATH, "locale")
 PATH_IMAGES = os.path.join(PATH, "images")
 
 # images files
@@ -110,7 +117,8 @@ INV_COLORS = {col:name for name, col in COLORS.items()}
 TEXT_COLORS = {_("Black"): "black", _("White"): "white",
                _("Blue"): "blue", _("Green"): "green",
                _("Red"): "red", _("Yellow"): "yellow",
-               _("Cyan"): "cyan", _("Magenta"): "magenta"
+               _("Cyan"): "cyan", _("Magenta"): "magenta",
+               _("Grey"): "grey", _("Orange"):"orange",
                }
 
 if not CONFIG.has_option("General", "default_category"):
@@ -221,13 +229,17 @@ def asksaveasfilename(defaultextension, filetypes, initialdir=".", initialfile="
                                             initialfile=initialfile,
                                             **options)
 
-
 def fill(image, color):
      """Fill image with a color=#hex."""
      width = image.width()
      height = image.height()
      horizontal_line = "{" + " ".join([color]*width) + "}"
      image.put(" ".join([horizontal_line]*height))
+
+def sorting(index):
+    """ sorting key for text indexes """
+    line, char = index.split(".")
+    return (int(line), int(char))
 
 def save_config():
     """ sauvegarde du dictionnaire contenant la configuration du logiciel (langue ...) """

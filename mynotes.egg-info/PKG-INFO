@@ -1,0 +1,27 @@
+Metadata-Version: 1.1
+Name: mynotes
+Version: 1.0.0
+Summary: Post-it system tray app
+Home-page: UNKNOWN
+Author: Juliette Monsel
+Author-email: j_4321@protonmail.fr
+License: GNU General Public License v3
+Description: 
+        MyNotes is a sticky notes/post-it application. Notes are created using 
+        the system tray icon. They can be organized in categories and each 
+        category has a color. Images, checkboxes and a few predefined symbols 
+        can be inserted in the notes. The style of the text can be changed 
+        (alignment, style).
+        
+Platform: UNKNOWN
+Requires: tkinter
+Requires: sys
+Requires: os
+Requires: locale
+Requires: gettext
+Requires: configparser
+Requires: subprocess
+Requires: time
+Requires: shutil
+Requires: pickle
+Requires: ewmh

@@ -29,7 +29,7 @@ class About(Toplevel):
     """ Toplevel de l'application principale donnant les informations à
         propos du logiciel """
     def __init__(self, master):
-        """ créer le Toplevel 'À propos de CheckMails' """
+        """ créer le Toplevel 'À propos de MyNotes' """
         Toplevel.__init__(self, master)
 
         self.title(_("About MyNotes"))
@@ -75,9 +75,9 @@ class About(Toplevel):
         texte = Text(fen, width=50, height=18)
         texte.pack()
         texte.insert("end",
-                     _("CheckMails is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\n"))
+                     _("MyNotes is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\n"))
         texte.insert("end",
-                     _("CheckMails is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\n"))
+                     _("MyNotes is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\n"))
         texte.insert("end",
                      _("You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/."))
 
