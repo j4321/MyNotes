@@ -94,9 +94,9 @@ msgid ""
 "any later version.\n"
 "\n"
 msgstr ""
-"MyNotes est un logiciel libre ; vous pouvez le diffuser et/ou le modifier "
+"MyNotes est un logiciel libre ; vous pouvez le diffuser et/ou le modifier "
 "suivant les termes de la Licence Publique Générale GNU telle que publiée par "
-"la Free Software Foundation ; soit la version 3 de cette licence, soit (à "
+"la Free Software Foundation ; soit la version 3 de cette licence, soit (à "
 "votre convenance) une version ultérieure.\n"
 "\n"
 
@@ -109,7 +109,7 @@ msgid ""
 "\n"
 msgstr ""
 "MyNotes est diffusé dans l'espoir qu'il sera utile, mais SANS AUCUNE "
-"GARANTIE ; sans même une garantie implicite de COMMERCIALISATION ou "
+"GARANTIE ; sans même une garantie implicite de COMMERCIALISATION ou "
 "d'ADÉQUATION À UN USAGE PARTICULIER. Voyez la Licence Publique Générale GNU "
 "pour plus de détails.\n"
 "\n"
@@ -120,7 +120,7 @@ msgid ""
 "this program. If not, see http://www.gnu.org/licenses/."
 msgstr ""
 "Vous devriez avoir reçu une copie de la Licence Publique Générale GNU avec "
-"ce programme. Sinon, consultez http://www.gnu.org/licenses/."
+"ce programme. Sinon, consultez http://www.gnu.org/licenses/."
 
 #: mynoteslib/constantes.py:101 mynoteslib/constantes.py:111
 msgid "Blue"
@@ -178,7 +178,7 @@ msgstr "Magenta"
 
 #: mynoteslib/constantes.py:118
 msgid "Home"
-msgstr ""
+msgstr "Perso"
 
 #: mynoteslib/constantes.py:119
 msgid "home"
@@ -338,3 +338,7 @@ msgstr "À propos"
 #: mynoteslib/app.py:92
 msgid "Quit"
 msgstr "Quitter"
+
+#: mynotes.py:43
+msgid "MyNotes is already running. If not deletes /tmp/mynotes.pid"
+msgstr "MyNotes est déjà lancé. Si ce n'est pas le cas, supprimez /tmp/mynotes.pid"

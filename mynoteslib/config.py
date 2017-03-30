@@ -23,7 +23,7 @@ Configuration Window
 
 from tkinter import Toplevel, StringVar, Menu
 from tkinter.messagebox import showinfo
-from tkinter.ttk import Label, Button, Scale, Style, Separator, Combobox, Frame, Menubutton, Checkbutton
+from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator, Combobox, Frame, Menubutton, Checkbutton
 from mynoteslib.constantes import CONFIG, LANG, save_config
 from tkinter import font
 
@@ -49,7 +49,7 @@ class Config(Toplevel):
         style.configure("prev.TLabel", background="white")
         style.map("prev.TLabel", background=[("active", "white")])
 
-        # Font
+        #----Font----
         Label(self, text=_("Font")).grid(row=0, sticky="w", padx=4, pady=4)
         Label(self, text=_("Title")).grid(row=1, columnspan=2, padx=4, pady=4)
         fonttitle_frame = Frame(self)
@@ -136,7 +136,7 @@ class Config(Toplevel):
         Separator(self, orient="horizontal").grid(row=5, columnspan=2,
                                                   sticky="ew", pady=10)
 
-        # Opacity
+        #----Opacity----
         Label(self, text=_("Opacity")).grid(row=6, sticky="w", padx=4, pady=4)
         self.opacity_scale = Scale(self, orient="horizontal", length=200,
                                    from_=0, to=100,
@@ -149,7 +149,7 @@ class Config(Toplevel):
 
         Separator(self, orient="horizontal").grid(row=8, columnspan=2, sticky="ew", pady=10)
 
-
+        #----Language----
         lang = {"fr":"Français", "en":"English"}
         self.lang = StringVar(self, lang[CONFIG.get("General","language")])
         lang_frame = Frame(self)
@@ -164,10 +164,25 @@ class Config(Toplevel):
                                   variable=self.lang, command=self.translate)
 
         Separator(self, orient="horizontal").grid(row=10, columnspan=2,
-                                                  sticky="ew", pady=10)
+                                                 sticky="ew", pady=10)
+        #----Position----
+        frame_position = Frame(self)
+        frame_position.grid(row=11, columnspan=2)
+        self.position = StringVar(self, CONFIG.get("General", "position"))
+        print(self.position.get())
+        Label(frame_position, text=_("Default position")).grid(row=0, columnspan=3)
+        Radiobutton(frame_position, text=_("Always above"), value="above",
+                    variable=self.position).grid(row=1,column=0)
+        Radiobutton(frame_position, text=_("Always below"), value="below",
+                    variable=self.position).grid(row=1,column=1)
+        Radiobutton(frame_position, text=_("Normal"), value="normal",
+                    variable=self.position).grid(row=1,column=2)
 
+        Separator(self, orient="horizontal").grid(row=12, columnspan=2,
+                                                  sticky="ew", pady=10)
+        #----Ok/Cancel----
         frame = Frame(self)
-        frame.grid(row=11, columnspan=2)
+        frame.grid(row=13, columnspan=2)
         Button(frame, text="Ok", command=self.ok).grid(row=1, column=0,
                                                        padx=8, pady=4)
         Button(frame, text=_("Cancel"),  command=self.destroy).grid(row=1, column=1,
@@ -238,6 +253,7 @@ class Config(Toplevel):
             style = style[:-1]
         CONFIG.set("General", "language", language)
         CONFIG.set("General", "opacity", opacity)
+        CONFIG.set("General", "position", self.position.get())
         CONFIG.set("Font", "text_size", size)
         CONFIG.set("Font", "text_family", family)
         CONFIG.set("Font", "title_family",familytitle)

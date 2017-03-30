@@ -323,3 +323,7 @@ msgstr ""
 #: mynoteslib/app.py:92
 msgid "Quit"
 msgstr ""
+
+#: mynotes.py:43
+msgid "MyNotes is already running. If not deletes /tmp/mynotes.pid"
+msgstr ""

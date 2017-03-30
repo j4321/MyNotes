@@ -113,7 +113,7 @@ class App(Tk):
 
     def make_notes_sticky(self):
         for w in self.ewmh.getClientList():
-            if w.get_wm_name() == 'mynotes':
+            if w.get_wm_name()[:7] == 'mynotes':
                 self.ewmh.setWmState(w, 1, '_NET_WM_STATE_STICKY')
         self.ewmh.display.flush()
 

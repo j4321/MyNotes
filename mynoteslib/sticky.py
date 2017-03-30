@@ -27,9 +27,10 @@ from tkinter.ttk import  Style, Sizegrip, Entry, Checkbutton, Label
 from tkinter.messagebox import askokcancel, showerror
 import os
 from time import strftime
-
+import ewmh
 from mynoteslib.constantes import CONFIG, COLORS, IM_LOCK, askopenfilename
-from mynoteslib.constantes import TEXT_COLORS, NB_SYMB, IM_SYMB, sorting
+from mynoteslib.constantes import TEXT_COLORS, sorting, SYMBOLS
+from mynoteslib.symbols import pick_symbol
 
 class Sticky(Toplevel):
     """ Sticky note class """
@@ -43,7 +44,7 @@ class Sticky(Toplevel):
              images, rolled)
         """
         Toplevel.__init__(self, master)
-        self.title('mynotes')
+        self.title('mynotes%s' % key)
 
         self.attributes("-type", "splash")
         self.attributes("-alpha", CONFIG.getint("General", "opacity")/100)
@@ -54,6 +55,9 @@ class Sticky(Toplevel):
         self.protocol("WM_DELETE_WINDOW", self.hide)
         self.id = key
         self.is_locked = not (kwargs.get("locked", False))
+        self.position = StringVar(self,
+                                  kwargs.get("position",
+                                             CONFIG.get("General", "position")))
         self.columnconfigure(1, weight=1)
         self.rowconfigure(1, weight=1)
         self.minsize(10,10)
@@ -68,7 +72,9 @@ class Sticky(Toplevel):
         for coul in colors:
             self.menu_colors.add_command(label=coul,
                                            command=lambda key=coul: self.change_color(key))
-        self.category = StringVar(self)
+        self.category = StringVar(self, kwargs.get("category",
+                                                   CONFIG.get("General",
+                                                              "default_category")))
         self.menu_categories = Menu(self.menu, tearoff=False)
         categories = CONFIG.options("Categories")
         categories.sort()
@@ -76,12 +82,22 @@ class Sticky(Toplevel):
             self.menu_categories.add_radiobutton(label=cat.capitalize(), value=cat,
                                                  variable=self.category,
                                                  command=lambda category=cat: self.change_category(category))
-        self.category.set(kwargs.get("category",
-                                     CONFIG.get("General", "default_category")))
+        menu_position = Menu(self.menu, tearoff=False)
+        menu_position.add_radiobutton(label=_("Always above"),
+                                      value="above",
+                                      variable=self.position,
+                                      command=self.set_position_above)
+        menu_position.add_radiobutton(label=_("Always below"),
+                                      value="below",
+                                      variable=self.position, command=self.set_position_below)
+        menu_position.add_radiobutton(label=_("Normal"),
+                                      value="normal",
+                                      variable=self.position,command=self.set_position_normal)
         self.menu.add_command(label=_("Delete"), command=self.delete)
         self.menu.add_cascade(label=_("Category"), menu=self.menu_categories)
         self.menu.add_cascade(label=_("Color"), menu=self.menu_colors)
         self.menu.add_command(label=_("Lock"), command=self.lock)
+        self.menu.add_cascade(label=_("Position"), menu=menu_position)
 
         # style
         self.style = Style(self)
@@ -126,7 +142,7 @@ class Sticky(Toplevel):
         self.menu_txt = Menu(self.txt, tearoff=False)
         menu_style = Menu(self.menu_txt, tearoff=False)
         menu_align = Menu(self.menu_txt, tearoff=False)
-        menu_symbols = Menu(self.menu_txt, tearoff=False)
+#        menu_symbols = Menu(self.menu_txt, tearoff=False)
         menu_colors = Menu(self.menu_txt, tearoff=False)
 
         menu_style.add_command(label=_("Bold"), command=lambda: self.toggle_text_style("bold"))
@@ -144,16 +160,26 @@ class Sticky(Toplevel):
         for coul in colors:
             menu_colors.add_command(label=coul,
                                     command=lambda key=coul: self.change_sel_color(TEXT_COLORS[key]))
-        self.symbols = []
-        for i in range(NB_SYMB):
-            self.symbols.append(PhotoImage(master=self, file=IM_SYMB[i]))
-            menu_symbols.add_command(image=self.symbols[-1],
-                                          command=lambda nb=i: self.add_symbol(nb))
+#        l = len(SYMBOLS)
+#        for symb in SYMBOLS[:l//2 + 1]:
+#            menu_symbols.add_command(label=symb,
+#                                     command=lambda s=symb: self.add_symbol(s))
+#        menu_symbols.add_command(label=SYMBOLS[l//2], columnbreak=True,
+#                                 command=lambda: self.add_symbol(SYMBOLS[l//2]))
+#        for symb in SYMBOLS[l//2 + 2:]:
+#            menu_symbols.add_command(label=symb,
+#                                     command=lambda s=symb: self.add_symbol(s))
+#        self.symbols = []
+#        for i in range(NB_SYMB):
+#            self.symbols.append(PhotoImage(master=self, file=IM_SYMB[i]))
+#            menu_symbols.add_command(image=self.symbols[-1],
+#                                          command=lambda nb=i: self.add_symbol(nb))
 
         self.menu_txt.add_cascade(label=_("Style"), menu=menu_style)
         self.menu_txt.add_cascade(label=_("Paragraph"), menu=menu_align)
         self.menu_txt.add_cascade(label=_("Color"), menu=menu_colors)
-        self.menu_txt.add_cascade(label=_("Symbols"), menu=menu_symbols)
+#        self.menu_txt.add_cascade(label=_("Symbols"), menu=menu_symbols)
+        self.menu_txt.add_command(label=_("Symbols"), command=self.add_symbols)
         self.menu_txt.add_command(label=_("Checkbox"), command=self.add_checkbox)
         self.menu_txt.add_command(label=_("Image"), command=self.add_image)
         self.menu_txt.add_command(label=_("Date"), command=self.add_date)
@@ -169,26 +195,6 @@ class Sticky(Toplevel):
         for coul in TEXT_COLORS.values():
             self.txt.tag_configure(coul, foreground=coul)
 
-#        # restore checkboxes
-#        for index in kwargs.get("checkboxes", []):
-#            ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
-#            if kwargs["checkboxes"][index]:
-#                ch.state(("selected",))
-#            self.txt.window_create(index, window=ch)
-#
-#        # restore symbols
-#        for index in kwargs.get("symbols", []):
-#            nb = kwargs['symbols'][index]
-#            self.txt.image_create(index, image=self.symbols[nb],
-#                                  name="symb%i" % nb)
-#
-#        # restore images
-#        for i,index in enumerate(kwargs.get("images", [])):
-#            fich = kwargs["images"][index]
-#            if os.path.exists(fich):
-#                self.images.append(PhotoImage(master=self.txt, file=fich))
-#                self.txt.image_create(index, image=self.images[-1], name=fich)
-
         # restore inserted objects
         indexes = list(kwargs.get("inserted_objects", {}).keys())
         indexes.sort(key=sorting)  # restore objects with increasing index to avoid placment errors
@@ -200,9 +206,7 @@ class Sticky(Toplevel):
                 if val:
                     ch.state(("selected",))
                 self.txt.window_create(index, window=ch)
-            elif kind == "symbol":
-                self.txt.image_create(index, image=self.symbols[val],
-                                      name="symb%i" % val)
+
             elif kind == "image":
                 if os.path.exists(val):
                     self.images.append(PhotoImage(master=self.txt, file=val))
@@ -249,6 +253,7 @@ class Sticky(Toplevel):
         self.bind("<FocusOut>", self.focus_out)
         self.title_label.bind('<Button-3>', self.show_menu)
         self.txt.bind('<Button-3>', self.show_menu_txt)
+        self.txt.bind("<Control-v>", self.paste)
         self.bind_class('Text', '<Control-a>', self.select_all_text)
         self.bind_class('TEntry', '<Control-a>', self.select_all_entry)
         # remove Ctrl+Y from shortcuts since it's pasting things like Ctrl+V
@@ -259,6 +264,10 @@ class Sticky(Toplevel):
         self.lock()
         if kwargs.get("rolled", False):
             self.rollnote()
+        if self.position.get() == "above":
+            self.set_position_above()
+        elif self.position.get() == "below":
+            self.set_position_below()
         self.bind('<Button-1>', self.change_focus, True)
 
     def __setattr__(self, name, value):
@@ -285,6 +294,11 @@ class Sticky(Toplevel):
                            background=[("active", self.color)])
             self.configure(bg=self.color)
             self.txt.configure(bg=self.color)
+
+    def paste(self, event):
+        """ delete selected text before pasting """
+        if self.txt.tag_ranges("sel"):
+            self.txt.delete("sel.first", "sel.last")
 
     def delete(self, confirmation=True):
         """ Delete this note """
@@ -342,25 +356,12 @@ class Sticky(Toplevel):
         data["color"] = self.color
         data["locked"] = self.is_locked
         data["inserted_objects"] = {}
-#        data["checkboxes"] = {}
-#        data["images"] = {}
-#        data["symbols"] = {}
         data["rolled"] = not self.txt.winfo_ismapped()
-#        for image in self.txt.image_names():
-#            if image[:4] == "symb":
-#                data["symbols"][self.txt.index(image)] = int(image[4:].split('#')[0])
-#            else:
-#                data["images"][self.txt.index(image)] = image.split('#')[0]
-#        for checkbox in self.txt.window_names():
-#            ch = self.txt.children[checkbox.split(".")[-1]]
-#            data["checkboxes"][self.txt.index(checkbox)] = ("selected" in ch.state())
+        data["position"] = self.position.get()
+
         for image in self.txt.image_names():
-            if image[:4] == "symb":
-                data["inserted_objects"][self.txt.index(image)] = ("symbol",
-                                                                   int(image[4:].split('#')[0]))
-            else:
-                data["inserted_objects"][self.txt.index(image)] = ("image",
-                                                                   image.split('#')[0])
+            data["inserted_objects"][self.txt.index(image)] = ("image",
+                                                               image.split('#')[0])
         for checkbox in self.txt.window_names():
             ch = self.txt.children[checkbox.split(".")[-1]]
             data["inserted_objects"][self.txt.index(checkbox)] = ("checkbox", "selected" in ch.state())
@@ -372,6 +373,27 @@ class Sticky(Toplevel):
     def change_category(self, category):
         self.color = CONFIG.get("Categories", category)
 
+    def set_position_above(self):
+        e = ewmh.EWMH()
+        for w in e.getClientList():
+            if w.get_wm_name() == 'mynotes%s' % self.id:
+                e.setWmState(w, 1, '_NET_WM_STATE_ABOVE')
+        e.display.flush()
+
+    def set_position_below(self):
+        e = ewmh.EWMH()
+        for w in e.getClientList():
+            if w.get_wm_name() == 'mynotes%s' % self.id:
+                e.setWmState(w, 1, '_NET_WM_STATE_BELOW')
+        e.display.flush()
+
+    def set_position_normal(self):
+        e = ewmh.EWMH()
+        for w in e.getClientList():
+            if w.get_wm_name() == 'mynotes%s' % self.id:
+                e.setWmState(w, 0, '_NET_WM_STATE_BELOW')
+                e.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
+        e.display.flush()
 
     #----bindings----
     def enter_roll(self, event):
@@ -492,10 +514,10 @@ class Sticky(Toplevel):
     #----Text edition----
     def add_checkbox(self):
         ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
-        self.txt.window_create("insert", window=ch)
+        self.txt.window_create("current", window=ch)
 
     def add_date(self):
-        self.txt.insert("insert", strftime("%x"))
+        self.txt.insert("current", strftime("%x"))
 
     def add_image(self):
         fichier = askopenfilename(defaultextension=".png",
@@ -505,15 +527,18 @@ class Sticky(Toplevel):
                                   title=_('Select PNG image'))
         if os.path.exists(fichier):
             self.images.append(PhotoImage(master=self.txt, file=fichier))
-            self.txt.image_create("insert",
+            self.txt.image_create("current",
                                   image=self.images[-1],
                                   name=fichier)
         else:
             showerror("Erreur", "L'image %s n'existe pas" % fichier)
 
-
-    def add_symbol(self, nb):
-        self.txt.image_create("insert", image=self.symbols[nb], name="symb%i" % nb)
+    def add_symbols(self):
+        symbols = pick_symbol(self, CONFIG.get("Font", "text_family"), SYMBOLS)
+        self.txt.insert("current", symbols)
+#        self.txt.image_create("insert", image=self.symbols[nb], name="symb%i" % nb)
+#    def add_symbol(self,symbol):
+#        self.txt.insert("current", symbol)
 
     def toggle_text_style(self, style):
         '''Toggle the style of the selected text'''

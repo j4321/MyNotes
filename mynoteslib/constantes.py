@@ -39,6 +39,9 @@ if os.access(PATH, os.W_OK):
     # local directory containing config files and sticky notes data
     LOCAL_PATH = PATH
     PATH_LOCALE = os.path.join(PATH, "locale")
+    PATH_DATA_BACKUP = os.path.join(LOCAL_PATH, "backup", "notes.backup%i")
+    if not os.path.exists(os.path.join(LOCAL_PATH, "backup")):
+        os.mkdir(os.path.join(LOCAL_PATH, "backup"))
 
 else:
     # local directory containing config files and sticky notes data
@@ -46,10 +49,10 @@ else:
     if not os.path.isdir(LOCAL_PATH):
         os.mkdir(LOCAL_PATH)
     PATH_LOCALE = "/usr/share/locale"
+    PATH_DATA_BACKUP = os.path.join(LOCAL_PATH, "notes.backup%i")
 
 PATH_CONFIG = os.path.join(LOCAL_PATH, "mynotes.ini")
 PATH_DATA = os.path.join(LOCAL_PATH, "notes")
-PATH_DATA_BACKUP = os.path.join(LOCAL_PATH, "notes.backup%i")
 PATH_IMAGES = os.path.join(PATH, "images")
 
 # images files
@@ -63,19 +66,23 @@ IM_ROLL_ACTIVE = os.path.join(PATH_IMAGES, "roll_active.png")
 IM_LOCK = os.path.join(PATH_IMAGES, "verr.png")
 IM_PLUS = os.path.join(PATH_IMAGES, "plus.png")
 IM_MOINS = os.path.join(PATH_IMAGES, "moins.png")
-NB_SYMB = 15
-IM_SYMB = [os.path.join(PATH_IMAGES, "puce%i.png" % i) for i in range(NB_SYMB)]
+#NB_SYMB = 15
+#IM_SYMB = [os.path.join(PATH_IMAGES, "puce%i.png" % i) for i in range(NB_SYMB)]
+SYMBOLS = 'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩαβγδεζηθικλμνξοπρςστυφχψωϐϑϒϕϖæœ«»¡¿£¥$€§ø∞∀∃∄∈∉∫∧∨∩∪÷±√∝∼≃≅≡≤≥≪≫≲≳▪•✭✦➔➢✔▴▸✗✚✳☎✉✎♫⚠⇒⇔'
 
 # read config file
 CONFIG = ConfigParser()
 if os.path.exists(PATH_CONFIG):
     CONFIG.read(PATH_CONFIG)
     LANGUE = CONFIG.get("General","language")
+    if not CONFIG.has_option("General", "position"):
+        CONFIG.set("General", "position", "normal")
 else:
     LANGUE = ""
     CONFIG.add_section("General")
     CONFIG.set("General", "language", "en")
     CONFIG.set("General", "opacity", "82")
+    CONFIG.set("General", "position", "normal")
     CONFIG.add_section("Font")
     CONFIG.set("Font", "text_family", "TkDefaultFont")
     CONFIG.set("Font", "text_size", "12")
@@ -247,7 +254,7 @@ def save_config():
         CONFIG.write(fichier)
 
 def backup(nb_backup=12):
-    backups = [int(f.split(".")[-1][6:]) for f in os.listdir(LOCAL_PATH) if f[:12] == "notes.backup"]
+    backups = [int(f.split(".")[-1][6:]) for f in os.listdir(os.path.dirname(PATH_DATA_BACKUP)) if f[:12] == "notes.backup"]
     if len(backups) < nb_backup:
         os.rename(PATH_DATA, PATH_DATA_BACKUP % len(backups))
     else:
