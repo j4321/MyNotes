@@ -44,34 +44,86 @@ class Sticky(Toplevel):
              images, rolled)
         """
         Toplevel.__init__(self, master)
+        ### window properties
+        self.id = key
+        self.is_locked = not (kwargs.get("locked", False))
+        self.images = []
         self.title('mynotes%s' % key)
-
         self.attributes("-type", "splash")
         self.attributes("-alpha", CONFIG.getint("General", "opacity")/100)
         self.focus_force()
+        # window geometry
         self.update_idletasks()
         self.geometry(kwargs.get("geometry", '220x235'))
+        self.save_geometry = kwargs.get("geometry", '220x235')
         self.update()
-        self.protocol("WM_DELETE_WINDOW", self.hide)
-        self.id = key
-        self.is_locked = not (kwargs.get("locked", False))
-        self.position = StringVar(self,
-                                  kwargs.get("position",
-                                             CONFIG.get("General", "position")))
-        self.columnconfigure(1, weight=1)
         self.rowconfigure(1, weight=1)
         self.minsize(10,10)
-        self.save_geometry = kwargs.get("geometry", '220x235')
-        self.images = []
+        self.protocol("WM_DELETE_WINDOW", self.hide)
 
-        # right-click menu on the title
+        ### style
+        self.style = Style(self)
+        self.style.configure(self.id + ".TCheckbutton", selectbackground="red")
+        self.style.map('TEntry', selectbackground=[('!focus', '#c3c3c3')])
+
+        ### note elements
+        # title
+        font_title = "%s %s" %(CONFIG.get("Font", "title_family").replace(" ", "\ "),
+                               CONFIG.get("Font", "title_size"))
+        style = CONFIG.get("Font", "title_style").split(",")
+        if style:
+            font_title += " "
+            font_title += " ".join(style)
+
+        self.title_var = StringVar(master=self,
+                                   value=kwargs.get("title", _("Title")))
+        self.title_label = Label(self,
+                                 textvariable=self.title_var,
+                                 anchor="center",
+                                 style=self.id + ".TLabel",
+                                 font=font_title)
+        self.title_entry = Entry(self, textvariable=self.title_var,
+                                 exportselection=False,
+                                 justify="center", font=font_title)
+        # buttons/icons
+        self.roll = Label(self, image="img_roll", style=self.id + ".TLabel")
+        self.close = Label(self, image="img_close", style=self.id + ".TLabel")
+        self.im_lock = PhotoImage(master=self, file=IM_LOCK)
+        self.cadenas = Label(self, style=self.id + ".TLabel")
+        # corner grip
+        self.corner = Sizegrip(self, style=self.id + ".TSizegrip")
+        # texte
+        font_text = "%s %s" %(CONFIG.get("Font", "text_family").replace(" ", "\ "),
+                              CONFIG.get("Font", "text_size"))
+        selectbg = self.style.lookup('TEntry', 'selectbackground', ('focus',))
+        self.txt = Text(self, wrap='word', undo=True,
+                        selectforeground='white',
+                        inactiveselectbackground=selectbg,
+                        selectbackground=selectbg,
+                        relief="flat", borderwidth=0,
+                        highlightthickness=0, font=font_text)
+        # tags
+        self.txt.tag_configure("bold", font="Liberation\ Sans 10 bold")
+        self.txt.tag_configure("italic", font="Liberation\ Sans 10 italic")
+        self.txt.tag_configure("bold-italic", font="Liberation\ Sans 10 bold italic")
+        self.txt.tag_configure("underline", underline=True)
+        self.txt.tag_configure("overstrike", overstrike=True)
+        self.txt.tag_configure("center", justify="center")
+        self.txt.tag_configure("left", justify="left")
+        self.txt.tag_configure("right", justify="right")
+        for coul in TEXT_COLORS.values():
+            self.txt.tag_configure(coul, foreground=coul)
+        ### menus
+        ### * menu on title
         self.menu = Menu(self, tearoff=False)
-        self.menu_colors = Menu(self.menu, tearoff=False)
+        # note color
+        menu_note_color = Menu(self.menu, tearoff=False)
         colors = list(COLORS.keys())
         colors.sort()
         for coul in colors:
-            self.menu_colors.add_command(label=coul,
+            menu_note_color.add_command(label=coul,
                                            command=lambda key=coul: self.change_color(key))
+        # category
         self.category = StringVar(self, kwargs.get("category",
                                                    CONFIG.get("General",
                                                               "default_category")))
@@ -82,6 +134,10 @@ class Sticky(Toplevel):
             self.menu_categories.add_radiobutton(label=cat.capitalize(), value=cat,
                                                  variable=self.category,
                                                  command=lambda category=cat: self.change_category(category))
+        # position: normal, always above, always below
+        self.position = StringVar(self,
+                                  kwargs.get("position",
+                                             CONFIG.get("General", "position")))
         menu_position = Menu(self.menu, tearoff=False)
         menu_position.add_radiobutton(label=_("Always above"),
                                       value="above",
@@ -95,110 +151,47 @@ class Sticky(Toplevel):
                                       variable=self.position,command=self.set_position_normal)
         self.menu.add_command(label=_("Delete"), command=self.delete)
         self.menu.add_cascade(label=_("Category"), menu=self.menu_categories)
-        self.menu.add_cascade(label=_("Color"), menu=self.menu_colors)
+        self.menu.add_cascade(label=_("Color"), menu=menu_note_color)
         self.menu.add_command(label=_("Lock"), command=self.lock)
         self.menu.add_cascade(label=_("Position"), menu=menu_position)
 
-        # style
-        self.style = Style(self)
-        self.style.configure(self.id + ".TCheckbutton", selectbackground="red")
-        self.style.map('TEntry', selectbackground=[('!focus', '#c3c3c3')])
-
-        font_text = "%s %s" %(CONFIG.get("Font", "text_family").replace(" ", "\ "),
-                              CONFIG.get("Font", "text_size"))
-        font_title = "%s %s" %(CONFIG.get("Font", "title_family").replace(" ", "\ "),
-                               CONFIG.get("Font", "title_size"))
-        style = CONFIG.get("Font", "title_style").split(",")
-        if style:
-            font_title += " "
-            font_title += " ".join(style)
-
-        self.title_var = StringVar(master=self,
-                                   value=kwargs.get("title", _("Title")))
-
-        self.title_label = Label(self,
-                                 textvariable=self.title_var,
-                                 anchor="center",
-                                 style=self.id + ".TLabel",
-                                 font=font_title)
-        self.title_label.grid(row=0, column=1, sticky="ew", pady=(1,0))
-
-        self.title_entry = Entry(self, textvariable=self.title_var,
-                                 exportselection=False,
-                                 justify="center", font=font_text)
-        selectbg = self.style.lookup('TEntry', 'selectbackground', ('focus',))
-        self.txt = Text(self, wrap='word', undo=True,
-                        selectforeground='white',
-                        inactiveselectbackground=selectbg,
-                        selectbackground=selectbg,
-                        relief="flat", borderwidth=0,
-                        highlightthickness=0, font=font_text)
-        self.txt.grid(row=1, columnspan=4, column=0, sticky="ewsn",
-                      pady=(1,4), padx=4)
-        self.txt.insert('1.0', kwargs.get("txt",""))
-        self.txt.edit_reset()
-
-        # right-click menu on the main text of the note
+        ### * menu on main text
         self.menu_txt = Menu(self.txt, tearoff=False)
+        # style
         menu_style = Menu(self.menu_txt, tearoff=False)
-        menu_align = Menu(self.menu_txt, tearoff=False)
-#        menu_symbols = Menu(self.menu_txt, tearoff=False)
-        menu_colors = Menu(self.menu_txt, tearoff=False)
-
         menu_style.add_command(label=_("Bold"), command=lambda: self.toggle_text_style("bold"))
         menu_style.add_command(label=_("Italic"), command=lambda: self.toggle_text_style("italic"))
         menu_style.add_command(label=_("Underline"), command=lambda: self.toggle_text_style("underline"))
         menu_style.add_command(label=_("Overstrike"), command=lambda: self.toggle_text_style("overstrike"))
-
+        # text alignment
+        menu_align = Menu(self.menu_txt, tearoff=False)
         menu_align.add_command(label=_("Left"), command=lambda: self.set_align("left"))
         menu_align.add_command(label=_("Right"), command=lambda: self.set_align("right"))
         menu_align.add_command(label=_("Center"), command=lambda: self.set_align("center"))
-
-
+        # text color
+        menu_colors = Menu(self.menu_txt, tearoff=False)
         colors = list(TEXT_COLORS.keys())
         colors.sort()
         for coul in colors:
             menu_colors.add_command(label=coul,
                                     command=lambda key=coul: self.change_sel_color(TEXT_COLORS[key]))
-#        l = len(SYMBOLS)
-#        for symb in SYMBOLS[:l//2 + 1]:
-#            menu_symbols.add_command(label=symb,
-#                                     command=lambda s=symb: self.add_symbol(s))
-#        menu_symbols.add_command(label=SYMBOLS[l//2], columnbreak=True,
-#                                 command=lambda: self.add_symbol(SYMBOLS[l//2]))
-#        for symb in SYMBOLS[l//2 + 2:]:
-#            menu_symbols.add_command(label=symb,
-#                                     command=lambda s=symb: self.add_symbol(s))
-#        self.symbols = []
-#        for i in range(NB_SYMB):
-#            self.symbols.append(PhotoImage(master=self, file=IM_SYMB[i]))
-#            menu_symbols.add_command(image=self.symbols[-1],
-#                                          command=lambda nb=i: self.add_symbol(nb))
 
         self.menu_txt.add_cascade(label=_("Style"), menu=menu_style)
-        self.menu_txt.add_cascade(label=_("Paragraph"), menu=menu_align)
+        self.menu_txt.add_cascade(label=_("Alignment"), menu=menu_align)
         self.menu_txt.add_cascade(label=_("Color"), menu=menu_colors)
-#        self.menu_txt.add_cascade(label=_("Symbols"), menu=menu_symbols)
         self.menu_txt.add_command(label=_("Symbols"), command=self.add_symbols)
         self.menu_txt.add_command(label=_("Checkbox"), command=self.add_checkbox)
         self.menu_txt.add_command(label=_("Image"), command=self.add_image)
         self.menu_txt.add_command(label=_("Date"), command=self.add_date)
-
-        self.txt.tag_configure("bold", font="Liberation\ Sans 10 bold")
-        self.txt.tag_configure("italic", font="Liberation\ Sans 10 italic")
-        self.txt.tag_configure("bold-italic", font="Liberation\ Sans 10 bold italic")
-        self.txt.tag_configure("underline", underline=True)
-        self.txt.tag_configure("overstrike", overstrike=True)
-        self.txt.tag_configure("center", justify="center")
-        self.txt.tag_configure("left", justify="left")
-        self.txt.tag_configure("right", justify="right")
-        for coul in TEXT_COLORS.values():
-            self.txt.tag_configure(coul, foreground=coul)
-
-        # restore inserted objects
+        ### restore note content/appearence
+        self.color = kwargs.get("color",
+                                CONFIG.get("Categories", self.category.get()))
+        self.txt.insert('1.0', kwargs.get("txt",""))
+        self.txt.edit_reset()  # clear undo stack
+        # restore inserted objects (images and checkboxes)
+        # we need to restore objects with increasing index to avoid placment errors
         indexes = list(kwargs.get("inserted_objects", {}).keys())
-        indexes.sort(key=sorting)  # restore objects with increasing index to avoid placment errors
-
+        indexes.sort(key=sorting)
         for index in indexes:
             kind, val = kwargs["inserted_objects"][index]
             if kind == "checkbox":
@@ -211,56 +204,12 @@ class Sticky(Toplevel):
                 if os.path.exists(val):
                     self.images.append(PhotoImage(master=self.txt, file=val))
                     self.txt.image_create(index, image=self.images[-1], name=val)
-
         # restore tags
         for tag in kwargs.get("tags", []):
             indices = kwargs["tags"][tag]
             if indices:
                 self.txt.tag_add(tag, *indices)
-
         self.txt.focus_set()
-
-        self.roll = Label(self, image="img_roll", style=self.id + ".TLabel")
-        self.roll.grid(row=0, column=2, sticky="e")
-        self.close = Label(self, image="img_close", style=self.id + ".TLabel")
-        self.close.grid(row=0, column=3, sticky="e")
-
-        self.corner = Sizegrip(self, style=self.id + ".TSizegrip")
-        self.corner.place(relx=1.0, rely=1.0, anchor="se")
-        self.im_lock = PhotoImage(master=self, file=IM_LOCK)
-        self.cadenas = Label(self, style=self.id + ".TLabel")
-
-        self.color = kwargs.get("color",
-                                CONFIG.get("Categories", self.category.get()))
-
-        self.cadenas.grid(row=0,column=0, sticky="w")
-
-
-        self.close.bind("<Button-1>", self.hide)
-        self.roll.bind("<Button-1>", self.rollnote)
-        self.close.bind("<Enter>", self.enter_close)
-        self.roll.bind("<Enter>", self.enter_roll)
-        self.close.bind("<Leave>", self.leave_close)
-        self.roll.bind("<Leave >", self.leave_roll)
-
-        self.title_label.bind("<Double-Button-1>", self.edit_title)
-        self.title_label.bind("<ButtonPress-1>", self.start_move)
-        self.title_label.bind("<ButtonRelease-1>", self.stop_move)
-        self.title_label.bind("<B1-Motion>", self.move)
-        self.title_entry.bind("<Return>", lambda e: self.title_entry.place_forget())
-        self.title_entry.bind("<FocusOut>", lambda e: self.title_entry.place_forget())
-        self.title_entry.bind("<Escape>", lambda e: self.title_entry.place_forget())
-        self.bind("<FocusOut>", self.focus_out)
-        self.title_label.bind('<Button-3>', self.show_menu)
-        self.txt.bind('<Button-3>', self.show_menu_txt)
-        self.txt.bind("<Control-v>", self.paste)
-        self.bind_class('Text', '<Control-a>', self.select_all_text)
-        self.bind_class('TEntry', '<Control-a>', self.select_all_entry)
-        # remove Ctrl+Y from shortcuts since it's pasting things like Ctrl+V
-        self.txt.unbind_class('Text', '<Control-y>')
-        self.corner.bind('<ButtonRelease-1>', self.resize)
-        self.bind('<Configure>', self.bouge)
-
         self.lock()
         if kwargs.get("rolled", False):
             self.rollnote()
@@ -268,7 +217,57 @@ class Sticky(Toplevel):
             self.set_position_above()
         elif self.position.get() == "below":
             self.set_position_below()
+
+        ### placement
+        # titlebar
+        if CONFIG.get("General", "buttons_position") == "right":
+            # right = lock icon - title - roll - close
+            self.columnconfigure(1, weight=1)
+            self.roll.grid(row=0, column=2, sticky="e")
+            self.close.grid(row=0, column=3, sticky="e")
+            self.cadenas.grid(row=0,column=0, sticky="w")
+            self.title_label.grid(row=0, column=1, sticky="ew", pady=(1,0))
+        else:
+            # left = close - roll - title - lock icon
+            self.columnconfigure(2, weight=1)
+            self.roll.grid(row=0, column=1, sticky="w")
+            self.close.grid(row=0, column=0, sticky="w")
+            self.cadenas.grid(row=0,column=3, sticky="e")
+            self.title_label.grid(row=0, column=2, sticky="ew", pady=(1,0))
+        # body
+        self.txt.grid(row=1, columnspan=4, column=0, sticky="ewsn",
+                      pady=(1,4), padx=4)
+        self.corner.lift(self.txt)
+        self.corner.place(relx=1.0, rely=1.0, anchor="se")
+
+        ### bindings
+        self.bind("<FocusOut>", self.focus_out)
+        self.bind('<Configure>', self.bouge)
         self.bind('<Button-1>', self.change_focus, True)
+        self.close.bind("<Button-1>", self.hide)
+        self.close.bind("<Enter>", self.enter_close)
+        self.close.bind("<Leave>", self.leave_close)
+        self.roll.bind("<Button-1>", self.rollnote)
+        self.roll.bind("<Enter>", self.enter_roll)
+        self.roll.bind("<Leave >", self.leave_roll)
+        self.title_label.bind("<Double-Button-1>", self.edit_title)
+        self.title_label.bind("<ButtonPress-1>", self.start_move)
+        self.title_label.bind("<ButtonRelease-1>", self.stop_move)
+        self.title_label.bind("<B1-Motion>", self.move)
+        self.title_label.bind('<Button-3>', self.show_menu)
+        self.title_entry.bind("<Return>", lambda e: self.title_entry.place_forget())
+        self.title_entry.bind("<FocusOut>", lambda e: self.title_entry.place_forget())
+        self.title_entry.bind("<Escape>", lambda e: self.title_entry.place_forget())
+        self.txt.bind('<Button-3>', self.show_menu_txt)
+        # add binding to the existing class binding so that the selected text
+        # is erased on pasting
+        self.txt.bind("<Control-v>", self.paste)
+        # change Ctrl+A to select all instead of go to the beginning of the line
+        self.bind_class('Text', '<Control-a>', self.select_all_text)
+        self.bind_class('TEntry', '<Control-a>', self.select_all_entry)
+        # remove Ctrl+Y from shortcuts since it's pasting things like Ctrl+V
+        self.txt.unbind_class('Text', '<Control-y>')
+        self.corner.bind('<ButtonRelease-1>', self.resize)
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -372,6 +371,7 @@ class Sticky(Toplevel):
 
     def change_category(self, category):
         self.color = CONFIG.get("Categories", category)
+        self.category.set(category)
 
     def set_position_above(self):
         e = ewmh.EWMH()
@@ -395,7 +395,7 @@ class Sticky(Toplevel):
                 e.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
         e.display.flush()
 
-    #----bindings----
+    ### bindings
     def enter_roll(self, event):
         """ mouse is over the roll icon """
         self.roll.configure(image="img_rollactive")
@@ -489,7 +489,7 @@ class Sticky(Toplevel):
         self.master.save()
         self.destroy()
 
-    #----Settings update----
+    ### Settings update
     def update_title_font(self):
         font = "%s %s" %(CONFIG.get("Font", "title_family").replace(" ", "\ "),
                          CONFIG.get("Font", "title_size"))
@@ -511,7 +511,25 @@ class Sticky(Toplevel):
             self.menu_categories.add_radiobutton(label=cat.capitalize(), value=cat,
                                                  variable=self.category,
                                                  command=lambda category=cat: self.change_category(category))
-    #----Text edition----
+    def update_titlebar(self):
+        if CONFIG.get("General", "buttons_position") == "right":
+            # right = lock icon - title - roll - close
+            self.columnconfigure(1, weight=1)
+            self.columnconfigure(2, weight=0)
+            self.roll.grid_configure(row=0, column=2, sticky="e")
+            self.close.grid_configure(row=0, column=3, sticky="e")
+            self.cadenas.grid_configure(row=0,column=0, sticky="w")
+            self.title_label.grid_configure(row=0, column=1, sticky="ew", pady=(1,0))
+        else:
+            # left = close - roll - title - lock icon
+            self.columnconfigure(2, weight=1)
+            self.columnconfigure(1, weight=0)
+            self.roll.grid_configure(row=0, column=1, sticky="w")
+            self.close.grid_configure(row=0, column=0, sticky="w")
+            self.cadenas.grid_configure(row=0,column=3, sticky="e")
+            self.title_label.grid_configure(row=0, column=2, sticky="ew", pady=(1,0))
+
+    ### Text edition
     def add_checkbox(self):
         ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
         self.txt.window_create("current", window=ch)

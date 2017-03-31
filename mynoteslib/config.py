@@ -23,8 +23,10 @@ Configuration Window
 
 from tkinter import Toplevel, StringVar, Menu
 from tkinter.messagebox import showinfo
-from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator, Combobox, Frame, Menubutton, Checkbutton
-from mynoteslib.constantes import CONFIG, LANG, save_config
+from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator
+from tkinter.ttk import Notebook, Combobox, Frame, Menubutton, Checkbutton
+from mynoteslib.constantes import CONFIG, save_config, COLORS
+from mynoteslib.categories import CategoryManager
 from tkinter import font
 
 class Config(Toplevel):
@@ -35,10 +37,9 @@ class Config(Toplevel):
         self.grab_set()
         self.resizable(False, False)
         self.protocol("WM_DELETE_WINDOW", self.quit)
-        self.rowconfigure(0,weight=1)
+        self.changes = None
 
-        self._validate_size = self.register(self.validate_font_size)
-
+        ### style
         style = Style(self)
         style.theme_use("clam")
         style.configure("TScale", sliderlength=20)
@@ -48,12 +49,115 @@ class Config(Toplevel):
                   selectforeground=[('readonly', 'black')])
         style.configure("prev.TLabel", background="white")
         style.map("prev.TLabel", background=[("active", "white")])
+        color = CONFIG.get("Categories",
+                           CONFIG.get("General", "default_category"))
+        style.configure("titlebar.TFrame", background=color)
+        style.configure("titlebar.TLabel", background=color)
 
-        #----Font----
-        Label(self, text=_("Font")).grid(row=0, sticky="w", padx=4, pady=4)
-        Label(self, text=_("Title")).grid(row=1, columnspan=2, padx=4, pady=4)
-        fonttitle_frame = Frame(self)
-        fonttitle_frame.grid(row=2, columnspan=2)
+        ### body
+        self.notebook = Notebook(self)
+        okcancel_frame = Frame(self)
+        okcancel_frame.columnconfigure(0, weight=1)
+        okcancel_frame.columnconfigure(1, weight=1)
+        self.notebook.pack(expand=True, fill="both")
+        okcancel_frame.pack(fill="x", expand=True)
+
+        ### * general settings
+        general_settings = Frame(self.notebook)
+        general_settings.columnconfigure(0, weight=1)
+        self.notebook.add(general_settings, text=_("General"),
+                          sticky="ewsn", padding=4)
+
+        ### *- language
+        lang = {"fr": "Français", "en": "English"}
+        self.lang = StringVar(self, lang[CONFIG.get("General","language")])
+        lang_frame = Frame(general_settings)
+        Label(lang_frame, text=_("Language")).grid(row=0, sticky="w", padx=4,
+                                                   pady=4)
+        menu_lang = Menu(lang_frame, tearoff=False)
+        Menubutton(lang_frame, menu=menu_lang, width=9,
+                   textvariable=self.lang).grid(row=0, column=1, padx=8, pady=4)
+        menu_lang.add_radiobutton(label="English", value="English",
+                                  variable=self.lang, command=self.translate)
+        menu_lang.add_radiobutton(label="Français", value="Français",
+                                  variable=self.lang, command=self.translate)
+        ### *- opacity
+        self.opacity_scale = Scale(general_settings, orient="horizontal", length=200,
+                                   from_=0, to=100,
+                                   value=CONFIG.get("General", "opacity"),
+                                   command=self.display_label)
+        self.opacity_label = Label(general_settings,
+                                   text="{val}%".format(val=self.opacity_scale.get()))
+        ### *- position
+        frame_position = Frame(general_settings)
+        self.position = StringVar(self, CONFIG.get("General", "position"))
+        Label(frame_position,
+              text=_("Default position of the notes")).grid(row=0,
+                                                            columnspan=3,
+                                                            sticky="w",
+                                                            padx=4, pady=4)
+        Radiobutton(frame_position, text=_("Always above"), value="above",
+                    variable=self.position).grid(row=1,column=0)
+        Radiobutton(frame_position, text=_("Always below"), value="below",
+                    variable=self.position).grid(row=1,column=1)
+        Radiobutton(frame_position, text=_("Normal"), value="normal",
+                    variable=self.position).grid(row=1,column=2)
+        ### *- titlebar
+        self.titlebar_disposition = StringVar(self, CONFIG.get("General",
+                                                               "buttons_position"))
+        font_title = "%s %s" %(CONFIG.get("Font", "title_family").replace(" ", "\ "),
+                               CONFIG.get("Font", "title_size"))
+        style = CONFIG.get("Font", "title_style").split(",")
+        if style:
+            font_title += " "
+            font_title += " ".join(style)
+
+        frame_titlebar = Frame(general_settings)
+        frame_titlebar.columnconfigure(1, weight=1)
+        frame_titlebar.columnconfigure(3, weight=1)
+        Label(frame_titlebar,
+              text=_("Title bar disposition")).grid(row=0, columnspan=4,
+                                                    sticky="w", padx=4, pady=4)
+        Radiobutton(frame_titlebar, value="right",
+                    variable=self.titlebar_disposition).grid(row=1, column=0)
+        right = Frame(frame_titlebar, style="titlebar.TFrame")
+        right.grid(row=1, column=1, sticky="ew")
+        Label(right, text=_("Title"), style="titlebar.TLabel", anchor="center",
+              font=font_title).pack(side="left", fill="x", expand=True)
+        Label(right, image="img_close", style="titlebar.TLabel").pack(side="right")
+        Label(right, image="img_roll", style="titlebar.TLabel").pack(side="right")
+        Radiobutton(frame_titlebar, value="left",
+                    variable=self.titlebar_disposition).grid(row=1, column=2)
+        left = Frame(frame_titlebar, style="titlebar.TFrame")
+        left.grid(row=1, column=3, sticky="ew")
+        Label(left, image="img_close", style="titlebar.TLabel").pack(side="left")
+        Label(left, image="img_roll", style="titlebar.TLabel").pack(side="left")
+        Label(left, text=_("Title"), style="titlebar.TLabel", anchor="center",
+              font=font_title).pack(side="right", fill="x", expand=True)
+        ### *- placement
+        lang_frame.grid(row=0, sticky="w")
+        Separator(general_settings,
+                  orient="horizontal").grid(row=1, sticky="ew", pady=10)
+        Label(general_settings,
+              text=_("Opacity")).grid(row=2, sticky="w", padx=4, pady=4)
+        self.opacity_scale.grid(row=3, padx=4, pady=(4,10))
+        self.opacity_label.place(in_=self.opacity_scale, relx=1, rely=0.5,
+                                 anchor="w", bordermode="outside")
+        Separator(general_settings,
+                  orient="horizontal").grid(row=4, sticky="ew", pady=10)
+        frame_position.grid(row=5, sticky="ew")
+        Separator(general_settings,
+                  orient="horizontal").grid(row=6, sticky="ew", pady=10)
+        frame_titlebar.grid(row=7, sticky="ew", pady=4)
+
+        ### * font settings
+        font_settings = Frame(self.notebook)
+        font_settings.columnconfigure(0, weight=1)
+        self.notebook.add(font_settings, text=_("Font"),
+                          sticky="ewsn", padding=4)
+
+        ### *- title
+        fonttitle_frame = Frame(font_settings)
 
         title_size = CONFIG.get("Font", "title_size")
         title_family = CONFIG.get("Font", "title_family")
@@ -72,6 +176,7 @@ class Config(Toplevel):
         self.fonttitle_family = Combobox(fonttitle_frame, values=self.fonts, width=(w*2)//3,
                                          exportselection=False,
                                          validate="key")
+        self._validate_size = self.register(self.validate_font_size)
         self._validate_title_family = self.register(lambda *args: self.validate_font_family(self.fonttitle_family, *args))
         self.fonttitle_family.configure(validatecommand=(self._validate_title_family,
                                                          "%d", "%S","%i", "%s", "%V"))
@@ -104,14 +209,11 @@ class Config(Toplevel):
         self.is_underlined.pack(side="left")
 
         self.update_preview_title()
-
-        Label(self, text=_("Text")).grid(row=3, column=0, columnspan=2)
-
+        ### *- text
         size = CONFIG.get("Font", "text_size")
         family = CONFIG.get("Font", "text_family")
 
-        font_frame = Frame(self)
-        font_frame.grid(row=4, columnspan=2)
+        font_frame = Frame(font_settings)
         self.sample = Label(font_frame, text = _("Sample text"), anchor="center",
                             style="prev.TLabel", relief="groove")
         self.sample.grid(row=1, columnspan=2, padx=4, pady=6,
@@ -133,61 +235,26 @@ class Config(Toplevel):
 
         self.update_preview()
 
-        Separator(self, orient="horizontal").grid(row=5, columnspan=2,
-                                                  sticky="ew", pady=10)
+        ### *- placement
+        Label(font_settings,
+              text=_("Title")).grid(row=0, padx=4, pady=4, sticky="w")
+        fonttitle_frame.grid(row=1)
+        Separator(font_settings, orient="horizontal").grid(row=2, sticky="ew", pady=10)
+        Label(font_settings,
+              text=_("Text")).grid(row=3, padx=4, pady=4, sticky="w")
+        font_frame.grid(row=4)
 
-        #----Opacity----
-        Label(self, text=_("Opacity")).grid(row=6, sticky="w", padx=4, pady=4)
-        self.opacity_scale = Scale(self, orient="horizontal", length=200,
-                                   from_=0, to=100,
-                                   value=CONFIG.get("General", "opacity"),
-                                   command=self.display_label)
-        self.opacity_label = Label(self, text="{val}%".format(val=self.opacity_scale.get()))
-        self.opacity_scale.grid(row=7, columnspan=2, padx=4, pady=(4,10))
-        self.opacity_label.place(in_=self.opacity_scale, relx=1, rely=0.5,
-                                 anchor="w", bordermode="outside")
+        ### * categories
+        self.category_settings = CategoryManager(self.notebook, master)
+        self.notebook.add(self.category_settings, text=_("Categories"),
+                          sticky="ewsn", padding=4)
 
-        Separator(self, orient="horizontal").grid(row=8, columnspan=2, sticky="ew", pady=10)
-
-        #----Language----
-        lang = {"fr":"Français", "en":"English"}
-        self.lang = StringVar(self, lang[CONFIG.get("General","language")])
-        lang_frame = Frame(self)
-        lang_frame.grid(row=9, columnspan=2, sticky="w")
-        Label(lang_frame, text=_("Language")).grid(row=0, sticky="w", padx=4, pady=4)
-        menu_lang = Menu(lang_frame, tearoff=False)
-        Menubutton(lang_frame, menu=menu_lang, width=9,
-                   textvariable=self.lang).grid(row=0, column=1, padx=8, pady=4)
-        menu_lang.add_radiobutton(label="English", value="English",
-                                  variable=self.lang, command=self.translate)
-        menu_lang.add_radiobutton(label="Français", value="Français",
-                                  variable=self.lang, command=self.translate)
-
-        Separator(self, orient="horizontal").grid(row=10, columnspan=2,
-                                                 sticky="ew", pady=10)
-        #----Position----
-        frame_position = Frame(self)
-        frame_position.grid(row=11, columnspan=2)
-        self.position = StringVar(self, CONFIG.get("General", "position"))
-        print(self.position.get())
-        Label(frame_position, text=_("Default position")).grid(row=0, columnspan=3)
-        Radiobutton(frame_position, text=_("Always above"), value="above",
-                    variable=self.position).grid(row=1,column=0)
-        Radiobutton(frame_position, text=_("Always below"), value="below",
-                    variable=self.position).grid(row=1,column=1)
-        Radiobutton(frame_position, text=_("Normal"), value="normal",
-                    variable=self.position).grid(row=1,column=2)
-
-        Separator(self, orient="horizontal").grid(row=12, columnspan=2,
-                                                  sticky="ew", pady=10)
-        #----Ok/Cancel----
-        frame = Frame(self)
-        frame.grid(row=13, columnspan=2)
-        Button(frame, text="Ok", command=self.ok).grid(row=1, column=0,
-                                                       padx=8, pady=4)
-        Button(frame, text=_("Cancel"),  command=self.destroy).grid(row=1, column=1,
-                                                                    padx=4, pady=4)
-
+        ### Ok/Cancel buttons
+        Button(okcancel_frame, text="Ok",
+               command=self.ok).grid(row=1, column=0, padx=4, pady=10, sticky="e")
+        Button(okcancel_frame, text=_("Cancel"),
+               command=self.destroy).grid(row=1, column=1, padx=4, pady=10, sticky="w")
+        ### bindings
         self.font_family.bind('<<ComboboxSelected>>', self.update_preview)
         self.font_family.bind('<Return>', self.update_preview)
         self.font_size.bind('<<ComboboxSelected>>', self.update_preview, add=True)
@@ -251,17 +318,36 @@ class Config(Toplevel):
             style += "underline,"
         if style:
             style = style[:-1]
+
+        CONFIG.set("General", "default_category",
+                   self.category_settings.default_category.get().lower())
         CONFIG.set("General", "language", language)
         CONFIG.set("General", "opacity", opacity)
         CONFIG.set("General", "position", self.position.get())
+        CONFIG.set("General", "buttons_position", self.titlebar_disposition.get())
         CONFIG.set("Font", "text_size", size)
         CONFIG.set("Font", "text_family", family)
         CONFIG.set("Font", "title_family",familytitle)
         CONFIG.set("Font", "title_size", sizetitle)
         CONFIG.set("Font", "title_style", style)
 
+        changes = {}
+        for cat in self.category_settings.categories:
+            if cat in CONFIG.options("Categories"):
+                old_color = CONFIG.get("Categories", cat)
+                new_color = COLORS[self.category_settings.cat_colors[cat].get()]
+                CONFIG.set("Categories", cat, new_color)
+                if old_color != new_color:
+                    changes[cat] = (old_color, new_color)
+            else:
+                CONFIG.set("Categories", cat,
+                           COLORS[self.category_settings.cat_colors[cat].get()])
         save_config()
+        self.changes = changes
         self.destroy()
+
+    def get_changes(self):
+        return self.changes
 
     def translate(self):
         showinfo("Information",

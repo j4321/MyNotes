@@ -33,7 +33,6 @@ import mynoteslib.constantes as cst
 from mynoteslib.config import Config
 from mynoteslib.sticky import Sticky
 from mynoteslib.about import About
-from mynoteslib.categories import CategoryManager
 import ewmh
 
 
@@ -80,8 +79,6 @@ class App(Tk):
         self.icon.menu.add_cascade(label=_('Hide Category'),
                                    menu=self.menu_hide_cat)
         self.icon.menu.add_separator()
-        self.icon.menu.add_command(label=_("Manage Categories"),
-                                   command=self.manage_cat)
         self.icon.menu.add_command(label=_("Preferences"),
                                    command=self.config)
         self.icon.menu.add_separator()
@@ -205,19 +202,21 @@ class App(Tk):
             if self.note_data[key]["category"] == category:
                 self.notes[key].hide()
 
-    def manage_cat(self):
-        """ Launch the Category Manager """
-        CategoryManager(self)
-
     def config(self):
         """ Launch the setting manager """
         conf = Config(self)
         self.wait_window(conf)
-        alpha = CONFIG.getint("General", "opacity")/100
-        for note in self.notes.values():
-            note.attributes("-alpha", alpha)
-            note.update_title_font()
-            note.update_text_font()
+        changes = conf.get_changes()
+        if changes is not None:
+            self.update_cat_colors(changes)
+            self.update_notes()
+            self.update_menu()
+            alpha = CONFIG.getint("General", "opacity")/100
+            for note in self.notes.values():
+                note.attributes("-alpha", alpha)
+                note.update_title_font()
+                note.update_text_font()
+                note.update_titlebar()
 
     def delete_cat(self, category):
         """ Delete all notes belonging to category """

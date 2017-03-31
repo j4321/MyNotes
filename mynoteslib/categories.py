@@ -21,21 +21,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Category Manager
 """
 
-from tkinter import Toplevel, StringVar, PhotoImage
+from tkinter import StringVar, PhotoImage, Toplevel
 from mynoteslib.constantes import CONFIG, LANG, COLORS, INV_COLORS, IM_PLUS, IM_MOINS
 from mynoteslib.constantes import save_config, fill, optionmenu_patch
 from tkinter.ttk import Label, Button, OptionMenu, Style, Separator, Entry, Frame
 from tkinter.messagebox import askyesnocancel
 
-class CategoryManager(Toplevel):
+class CategoryManager(Frame):
     """ Category manager for the sticky notes """
 
-    def __init__(self, master):
-        Toplevel.__init__(self, master)
-        self.title(_("Category Manager"))
-        self.grab_set()
-        self.resizable(False, False)
-        self.protocol("WM_DELETE_WINDOW", self.quit)
+    def __init__(self, master, app, **kwargs):
+        Frame.__init__(self, master, **kwargs)
+        self.columnconfigure(0, weight=1)
+
+        self.app = app
 
         self.style = Style(self)
         self.style.theme_use("clam")
@@ -43,30 +42,26 @@ class CategoryManager(Toplevel):
         self.im_plus = PhotoImage(file=IM_PLUS)
         self.im_moins = PhotoImage(file=IM_MOINS)
 
-        self.frame_cat = Frame(self)
-        self.frame_cat.grid(row=0, column=0, sticky="eswn")
-
-        # Default category
-        self.default_category = StringVar(self.frame_cat,
+        ### Default category
+        self.frame_def_cat = Frame(self)
+        self.default_category = StringVar(self.frame_def_cat,
                                           CONFIG.get("General",
                                                      "default_category").capitalize())
-        Label(self.frame_cat, text=_("Default category ")).grid(row=0, column=0,
+        Label(self.frame_def_cat, text=_("Default category ")).grid(row=0, column=0,
                                                                 sticky="e",
                                                                 padx=(4, 0))
         self.categories = CONFIG.options("Categories")
         self.categories.sort()
         categories = [cat.capitalize() for cat in self.categories]
-        self.def_cat_menu = OptionMenu(self.frame_cat, self.default_category,
+        self.def_cat_menu = OptionMenu(self.frame_def_cat, self.default_category,
                                        CONFIG.get("General",
                                                   "default_category").capitalize(),
                                        *categories)
         optionmenu_patch(self.def_cat_menu, self.default_category)
         self.def_cat_menu.grid(row=0, column=1, sticky="w", padx=4, pady=4)
 
-        Separator(self.frame_cat, orient="horizontal").grid(row=1,
-                                                            columnspan=3,
-                                                            sticky="ew")
-        # Category colors, names ...
+        ### Category colors, names ...
+        self.frame_cat = Frame(self)
         self.colors = list(COLORS.keys())
         self.colors.sort()
         self.images = []
@@ -95,10 +90,16 @@ class CategoryManager(Toplevel):
 
         self.add_cat_button = Button(self.frame_cat, image=self.im_plus,
                                      command=self.add_cat)
-        self.add_cat_button.grid(row=i+3, column=0, sticky="e", pady=(0,4))
+        self.add_cat_button.grid(row=i+3, column=0, pady=(0,4))
 
         if len(self.categories) == 1:
             self.cat_buttons[self.categories[0]].configure(state="disabled")
+
+        ### placement
+        self.frame_def_cat.grid(row=0, column=0, sticky="eswn")
+        Separator(self, orient="horizontal").grid(row=1, columnspan=3,
+                                                  pady=10, sticky="ew")
+        self.frame_cat.grid(row=2, column=0, sticky="eswn")
 
     def change_menubutton_color(self, color, cat):
         """ change the color of the menubutton of the category cat when its
@@ -124,15 +125,14 @@ the notes will belong to the default category." % {"category": category}))
                 self.def_cat_menu.destroy()
                 self.default_category.set(self.categories[0].capitalize())
                 categories = [cat.capitalize() for cat in self.categories]
-                self.def_cat_menu = OptionMenu(self.frame_cat, self.default_category,
+                self.def_cat_menu = OptionMenu(self.frame_def_cat, self.default_category,
                                                None, *categories)
                 optionmenu_patch(self.def_cat_menu, self.default_category)
                 self.def_cat_menu.grid(row=0, column=1, sticky="w", padx=4, pady=4)
             if len(self.categories) == 1:
                 self.cat_buttons[self.categories[0]].configure(state="disabled")
             if rep:
-                self.master.delete_cat(category)
-
+                self.app.delete_cat(category)
 
     def add_cat(self):
         top = Toplevel(self)
@@ -165,7 +165,7 @@ the notes will belong to the default category." % {"category": category}))
                self.categories.sort()
                self.def_cat_menu.destroy()
                categories = [cat.capitalize() for cat in self.categories]
-               self.def_cat_menu = OptionMenu(self.frame_cat, self.default_category,
+               self.def_cat_menu = OptionMenu(self.frame_def_cat, self.default_category,
                                               None, *categories)
                optionmenu_patch(self.def_cat_menu, self.default_category)
                self.def_cat_menu.grid(row=0, column=1, sticky="w", padx=4, pady=4)
@@ -178,26 +178,3 @@ the notes will belong to the default category." % {"category": category}))
         Button(top, text="Ok", command=valide).grid(row=1, column=0, sticky="nswe")
         Button(top, text=_("Cancel"),
                command=top.destroy).grid(row=1, column=1, sticky="nswe")
-
-    def quit(self):
-        CONFIG.set("General", "default_category", self.default_category.get().lower())
-        changes = {}
-        for cat in self.categories:
-            if cat in CONFIG.options("Categories"):
-                old_color = CONFIG.get("Categories", cat)
-                new_color = COLORS[self.cat_colors[cat].get()]
-                CONFIG.set("Categories", cat, new_color)
-                if old_color != new_color:
-                    changes[cat] = (old_color, new_color)
-            else:
-                CONFIG.set("Categories", cat, COLORS[self.cat_colors[cat].get()])
-        self.master.update_cat_colors(changes)
-        self.master.update_notes()
-        self.master.update_menu()
-        save_config()
-        self.destroy()
-
-
-
-
-

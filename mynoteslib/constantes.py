@@ -28,10 +28,10 @@ from configparser import ConfigParser
 from locale import getdefaultlocale, setlocale, LC_ALL
 from subprocess import check_output, CalledProcessError
 
-VERSION = "1.0.0"
+VERSION = "2.0.0"
+SYMBOLS = 'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩαβγδεζηθικλμνξοπρςστυφχψωϐϑϒϕϖæœ«»¡¿£¥$€§ø∞∀∃∄∈∉∫∧∨∩∪÷±√∝∼≃≅≡≤≥≪≫≲≳▪•✭✦➔➢✔▴▸✗✚✳☎✉✎♫⚠⇒⇔'
 
-setlocale(LC_ALL, '')
-
+#----paths----
 PATH = os.path.dirname(__file__)
 
 if os.access(PATH, os.W_OK):
@@ -55,7 +55,7 @@ PATH_CONFIG = os.path.join(LOCAL_PATH, "mynotes.ini")
 PATH_DATA = os.path.join(LOCAL_PATH, "notes")
 PATH_IMAGES = os.path.join(PATH, "images")
 
-# images files
+#----images files----
 IM_ICON = os.path.join(PATH_IMAGES, "mynotes.png")
 IM_ICON_24 = os.path.join(PATH_IMAGES, "mynotes24.png")
 IM_ICON_48 = os.path.join(PATH_IMAGES, "mynotes48.png")
@@ -66,23 +66,23 @@ IM_ROLL_ACTIVE = os.path.join(PATH_IMAGES, "roll_active.png")
 IM_LOCK = os.path.join(PATH_IMAGES, "verr.png")
 IM_PLUS = os.path.join(PATH_IMAGES, "plus.png")
 IM_MOINS = os.path.join(PATH_IMAGES, "moins.png")
-#NB_SYMB = 15
-#IM_SYMB = [os.path.join(PATH_IMAGES, "puce%i.png" % i) for i in range(NB_SYMB)]
-SYMBOLS = 'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩαβγδεζηθικλμνξοπρςστυφχψωϐϑϒϕϖæœ«»¡¿£¥$€§ø∞∀∃∄∈∉∫∧∨∩∪÷±√∝∼≃≅≡≤≥≪≫≲≳▪•✭✦➔➢✔▴▸✗✚✳☎✉✎♫⚠⇒⇔'
 
-# read config file
+#----config file----
 CONFIG = ConfigParser()
 if os.path.exists(PATH_CONFIG):
     CONFIG.read(PATH_CONFIG)
     LANGUE = CONFIG.get("General","language")
     if not CONFIG.has_option("General", "position"):
         CONFIG.set("General", "position", "normal")
+    if not CONFIG.has_option("General", "buttons_position"):
+        CONFIG.set("General", "buttons_position", "right")
 else:
     LANGUE = ""
     CONFIG.add_section("General")
     CONFIG.set("General", "language", "en")
     CONFIG.set("General", "opacity", "82")
     CONFIG.set("General", "position", "normal")
+    CONFIG.set("General", "buttons_position", "right")
     CONFIG.add_section("Font")
     CONFIG.set("Font", "text_family", "TkDefaultFont")
     CONFIG.set("Font", "text_size", "12")
@@ -90,6 +90,9 @@ else:
     CONFIG.set("Font", "title_size", "14")
     CONFIG.set("Font", "title_style", "bold")
     CONFIG.add_section("Categories")
+
+#----language----
+setlocale(LC_ALL, '')
 
 APP_NAME = "MyNotes"
 
@@ -111,7 +114,13 @@ LANG = gettext.translation(APP_NAME, PATH_LOCALE,
                            languages=[LANGUE], fallback=True)
 LANG.install()
 
-# colors
+#----default categories----
+if not CONFIG.has_option("General", "default_category"):
+    CONFIG.set("General", "default_category", _("Home"))
+    CONFIG.set("Categories", _("home"), '#F9F3A9')
+    CONFIG.set("Categories", _("office"), '#A7B6D6')
+
+#----colors----
 COLORS = {_("Blue"): '#A7B6D6', _("Turquoise"): "#9FC9E2",
           _("Orange"): "#E1C59A",  _("Red"): "#CD9293",
           _("Grey"): "#CECECE",  _("White"): "#FFFFFF",
@@ -128,13 +137,8 @@ TEXT_COLORS = {_("Black"): "black", _("White"): "white",
                _("Grey"): "grey", _("Orange"):"orange",
                }
 
-if not CONFIG.has_option("General", "default_category"):
-    CONFIG.set("General", "default_category", _("Home"))
-    CONFIG.set("Categories", _("home"), '#F9F3A9')
-    CONFIG.set("Categories", _("office"), '#A7B6D6')
 
-
-# filebrowser
+#----filebrowser----
 ZENITY = False
 
 paths = os.environ['PATH'].split(":")
@@ -148,7 +152,8 @@ except ImportError:
     tkfb = False
     from tkinter import filedialog
 
-def askopenfilename(defaultextension, filetypes, initialdir, initialfile="", title=_('Open'), **options):
+def askopenfilename(defaultextension, filetypes, initialdir, initialfile="",
+                    title=_('Open'), **options):
     """ file browser:
             - defaultextension: extension added if none is given
             - initialdir: directory where the filebrowser is opened
@@ -190,7 +195,8 @@ def askopenfilename(defaultextension, filetypes, initialdir, initialfile="", tit
                                           initialfile=initialfile,
                                           **options)
 
-def asksaveasfilename(defaultextension, filetypes, initialdir=".", initialfile="", title=_('Save As'), **options):
+def asksaveasfilename(defaultextension, filetypes, initialdir=".", initialfile="",
+                      title=_('Save As'), **options):
     """ plateform specific file browser for saving a file:
             - defaultextension: extension added if none is given
             - initialdir: directory where the filebrowser is opened
@@ -236,6 +242,7 @@ def asksaveasfilename(defaultextension, filetypes, initialdir=".", initialfile="
                                             initialfile=initialfile,
                                             **options)
 
+#----miscellaneous functions----
 def fill(image, color):
      """Fill image with a color=#hex."""
      width = image.width()
@@ -254,7 +261,9 @@ def save_config():
         CONFIG.write(fichier)
 
 def backup(nb_backup=12):
-    backups = [int(f.split(".")[-1][6:]) for f in os.listdir(os.path.dirname(PATH_DATA_BACKUP)) if f[:12] == "notes.backup"]
+    backups = [int(f.split(".")[-1][6:])
+               for f in os.listdir(os.path.dirname(PATH_DATA_BACKUP))
+               if f[:12] == "notes.backup"]
     if len(backups) < nb_backup:
         os.rename(PATH_DATA, PATH_DATA_BACKUP % len(backups))
     else:
