@@ -100,6 +100,7 @@ class Sticky(Toplevel):
                         selectforeground='white',
                         inactiveselectbackground=selectbg,
                         selectbackground=selectbg,
+                        tabs=("10", 'center', '20', 'left'),
                         relief="flat", borderwidth=0,
                         highlightthickness=0, font=font_text)
         # tags
@@ -131,9 +132,10 @@ class Sticky(Toplevel):
         categories = CONFIG.options("Categories")
         categories.sort()
         for cat in categories:
-            self.menu_categories.add_radiobutton(label=cat.capitalize(), value=cat,
+            self.menu_categories.add_radiobutton(label=cat.capitalize(),
+                                                 value=cat,
                                                  variable=self.category,
-                                                 command=lambda category=cat: self.change_category(category))
+                                                 command=self.change_category)
         # position: normal, always above, always below
         self.position = StringVar(self,
                                   kwargs.get("position",
@@ -145,15 +147,32 @@ class Sticky(Toplevel):
                                       command=self.set_position_above)
         menu_position.add_radiobutton(label=_("Always below"),
                                       value="below",
-                                      variable=self.position, command=self.set_position_below)
+                                      variable=self.position,
+                                      command=self.set_position_below)
         menu_position.add_radiobutton(label=_("Normal"),
                                       value="normal",
-                                      variable=self.position,command=self.set_position_normal)
+                                      variable=self.position,
+                                      command=self.set_position_normal)
+        # mode: note, list, todo list
+        menu_mode = Menu(self.menu, tearoff=False)
+        self.mode = StringVar(self,
+                              kwargs.get("mode", "note"))
+        menu_mode.add_radiobutton(label=_("Note"), value="note",
+                                  variable=self.mode,
+                                  command=self.set_mode_note)
+        menu_mode.add_radiobutton(label=_("List"), value="list",
+                                  variable=self.mode,
+                                  command=self.set_mode_list)
+        menu_mode.add_radiobutton(label=_("ToDo List"), value="todolist",
+                                  variable=self.mode,
+                                  command=self.set_mode_todolist)
+
         self.menu.add_command(label=_("Delete"), command=self.delete)
         self.menu.add_cascade(label=_("Category"), menu=self.menu_categories)
         self.menu.add_cascade(label=_("Color"), menu=menu_note_color)
         self.menu.add_command(label=_("Lock"), command=self.lock)
         self.menu.add_cascade(label=_("Position"), menu=menu_position)
+        self.menu.add_cascade(label=_("Mode"), menu=menu_mode)
 
         ### * menu on main text
         self.menu_txt = Menu(self.txt, tearoff=False)
@@ -224,14 +243,14 @@ class Sticky(Toplevel):
             # right = lock icon - title - roll - close
             self.columnconfigure(1, weight=1)
             self.roll.grid(row=0, column=2, sticky="e")
-            self.close.grid(row=0, column=3, sticky="e")
+            self.close.grid(row=0, column=3, sticky="e", padx=(0,2))
             self.cadenas.grid(row=0,column=0, sticky="w")
             self.title_label.grid(row=0, column=1, sticky="ew", pady=(1,0))
         else:
             # left = close - roll - title - lock icon
             self.columnconfigure(2, weight=1)
             self.roll.grid(row=0, column=1, sticky="w")
-            self.close.grid(row=0, column=0, sticky="w")
+            self.close.grid(row=0, column=0, sticky="w", padx=(2,0))
             self.cadenas.grid(row=0,column=3, sticky="e")
             self.title_label.grid(row=0, column=2, sticky="ew", pady=(1,0))
         # body
@@ -268,6 +287,10 @@ class Sticky(Toplevel):
         # remove Ctrl+Y from shortcuts since it's pasting things like Ctrl+V
         self.txt.unbind_class('Text', '<Control-y>')
         self.corner.bind('<ButtonRelease-1>', self.resize)
+        if self.mode.get() == "list":
+            self.txt.bind_class("Text", "<Return>", self.insert_bullet)
+        elif self.mode.get() == "todolist":
+            self.txt.bind_class("Text", "<Return>", self.insert_checkbox)
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -340,6 +363,7 @@ class Sticky(Toplevel):
             self.menu.entryconfigure(3, label=_("Unlock"))
             self.title_label.unbind("<Double-Button-1>")
             self.txt.unbind('<Button-3>')
+        self.focus_out()
 
     def save_info(self):
         """ Return the dictionnary containing all the note data """
@@ -354,6 +378,7 @@ class Sticky(Toplevel):
         data["category"] = self.category.get()
         data["color"] = self.color
         data["locked"] = self.is_locked
+        data["mode"] = self.mode.get()
         data["inserted_objects"] = {}
         data["rolled"] = not self.txt.winfo_ismapped()
         data["position"] = self.position.get()
@@ -368,24 +393,31 @@ class Sticky(Toplevel):
 
     def change_color(self, key):
         self.color = COLORS[key]
+        self.focus_out()
 
-    def change_category(self, category):
-        self.color = CONFIG.get("Categories", category)
-        self.category.set(category)
+    def change_category(self, category=None):
+        if category:
+            self.category.set(category)
+        self.color = CONFIG.get("Categories", self.category.get())
+        self.focus_out()
 
     def set_position_above(self):
         e = ewmh.EWMH()
         for w in e.getClientList():
             if w.get_wm_name() == 'mynotes%s' % self.id:
                 e.setWmState(w, 1, '_NET_WM_STATE_ABOVE')
+                e.setWmState(w, 0, '_NET_WM_STATE_BELOW')
         e.display.flush()
+        self.focus_out()
 
     def set_position_below(self):
         e = ewmh.EWMH()
         for w in e.getClientList():
             if w.get_wm_name() == 'mynotes%s' % self.id:
+                e.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
                 e.setWmState(w, 1, '_NET_WM_STATE_BELOW')
         e.display.flush()
+        self.focus_out()
 
     def set_position_normal(self):
         e = ewmh.EWMH()
@@ -394,8 +426,45 @@ class Sticky(Toplevel):
                 e.setWmState(w, 0, '_NET_WM_STATE_BELOW')
                 e.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
         e.display.flush()
+        self.focus_out()
+
+    def set_mode_note(self):
+        self.txt.bind_class("Text", "<Return>", self.insert_newline)
+        self.focus_out()
+
+    def set_mode_list(self):
+        self.txt.bind_class("Text", "<Return>", self.insert_bullet)
+        index = self.txt.index("insert")
+        if index.split(".")[-1] == "0":
+            self.txt.insert("insert", "\t•\t")
+        else:
+            self.txt.insert("insert", "\n\t•\t")
+        self.focus_out()
+
+    def set_mode_todolist(self):
+        self.txt.bind_class("Text", "<Return>", self.insert_checkbox)
+        index = self.txt.index("insert")
+        if index.split(".")[-1] == "0":
+            ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
+            self.txt.window_create("insert", window=ch)
+        else:
+            self.txt.insert("insert", "\n")
+            ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
+            self.txt.window_create("insert", window=ch)
+        self.focus_out()
 
     ### bindings
+    def insert_newline(self, event):
+        self.txt.insert("insert", "\n")
+
+    def insert_bullet(self, event):
+        self.txt.insert("insert", "\n\t•\t")
+
+    def insert_checkbox(self, event):
+        self.txt.insert("insert", "\n")
+        ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
+        self.txt.window_create("insert", window=ch)
+
     def enter_roll(self, event):
         """ mouse is over the roll icon """
         self.roll.configure(image="img_rollactive")
@@ -458,7 +527,7 @@ class Sticky(Toplevel):
             y = self.winfo_y() + deltay
             self.geometry("+%s+%s" % (x, y))
 
-    def focus_out(self, event):
+    def focus_out(self, event=None):
         data = self.save_info()
         data["visible"] = True
         self.master.note_data[self.id] = data
@@ -510,14 +579,14 @@ class Sticky(Toplevel):
         for cat in categories:
             self.menu_categories.add_radiobutton(label=cat.capitalize(), value=cat,
                                                  variable=self.category,
-                                                 command=lambda category=cat: self.change_category(category))
+                                                 command=self.change_category)
     def update_titlebar(self):
         if CONFIG.get("General", "buttons_position") == "right":
             # right = lock icon - title - roll - close
             self.columnconfigure(1, weight=1)
             self.columnconfigure(2, weight=0)
             self.roll.grid_configure(row=0, column=2, sticky="e")
-            self.close.grid_configure(row=0, column=3, sticky="e")
+            self.close.grid_configure(row=0, column=3, sticky="e", padx=(0,2))
             self.cadenas.grid_configure(row=0,column=0, sticky="w")
             self.title_label.grid_configure(row=0, column=1, sticky="ew", pady=(1,0))
         else:
@@ -525,7 +594,7 @@ class Sticky(Toplevel):
             self.columnconfigure(2, weight=1)
             self.columnconfigure(1, weight=0)
             self.roll.grid_configure(row=0, column=1, sticky="w")
-            self.close.grid_configure(row=0, column=0, sticky="w")
+            self.close.grid_configure(row=0, column=0, sticky="w", padx=(2,0))
             self.cadenas.grid_configure(row=0,column=3, sticky="e")
             self.title_label.grid_configure(row=0, column=2, sticky="ew", pady=(1,0))
 
@@ -552,11 +621,10 @@ class Sticky(Toplevel):
             showerror("Erreur", "L'image %s n'existe pas" % fichier)
 
     def add_symbols(self):
-        symbols = pick_symbol(self, CONFIG.get("Font", "text_family"), SYMBOLS)
+        symbols = pick_symbol(self,
+                              CONFIG.get("Font", "text_family").replace(" ", "\ "),
+                              SYMBOLS)
         self.txt.insert("current", symbols)
-#        self.txt.image_create("insert", image=self.symbols[nb], name="symb%i" % nb)
-#    def add_symbol(self,symbol):
-#        self.txt.insert("current", symbol)
 
     def toggle_text_style(self, style):
         '''Toggle the style of the selected text'''

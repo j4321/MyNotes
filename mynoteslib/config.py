@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Configuration Window
 """
 
-from tkinter import Toplevel, StringVar, Menu
+from tkinter import Toplevel, StringVar, Menu, TclError
 from tkinter.messagebox import showinfo
 from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator
 from tkinter.ttk import Notebook, Combobox, Frame, Menubutton, Checkbutton
@@ -122,18 +122,26 @@ class Config(Toplevel):
                     variable=self.titlebar_disposition).grid(row=1, column=0)
         right = Frame(frame_titlebar, style="titlebar.TFrame")
         right.grid(row=1, column=1, sticky="ew")
+        def select_right(event):
+            self.titlebar_disposition.set("right")
         Label(right, text=_("Title"), style="titlebar.TLabel", anchor="center",
               font=font_title).pack(side="left", fill="x", expand=True)
         Label(right, image="img_close", style="titlebar.TLabel").pack(side="right")
         Label(right, image="img_roll", style="titlebar.TLabel").pack(side="right")
+        for ch in right.children.values():
+            ch.bind("<Button-1>", select_right)
         Radiobutton(frame_titlebar, value="left",
                     variable=self.titlebar_disposition).grid(row=1, column=2)
         left = Frame(frame_titlebar, style="titlebar.TFrame")
         left.grid(row=1, column=3, sticky="ew")
+        def select_left(event):
+            self.titlebar_disposition.set("left")
         Label(left, image="img_close", style="titlebar.TLabel").pack(side="left")
         Label(left, image="img_roll", style="titlebar.TLabel").pack(side="left")
         Label(left, text=_("Title"), style="titlebar.TLabel", anchor="center",
               font=font_title).pack(side="right", fill="x", expand=True)
+        for ch in left.children.values():
+            ch.bind("<Button-1>", select_left)
         ### *- placement
         lang_frame.grid(row=0, sticky="w")
         Separator(general_settings,
@@ -176,7 +184,7 @@ class Config(Toplevel):
         self.fonttitle_family = Combobox(fonttitle_frame, values=self.fonts, width=(w*2)//3,
                                          exportselection=False,
                                          validate="key")
-        self._validate_size = self.register(self.validate_font_size)
+        self._validate_title_size = self.register(lambda *args: self.validate_font_size(self.fonttitle_size, *args))
         self._validate_title_family = self.register(lambda *args: self.validate_font_family(self.fonttitle_family, *args))
         self.fonttitle_family.configure(validatecommand=(self._validate_title_family,
                                                          "%d", "%S","%i", "%s", "%V"))
@@ -185,7 +193,7 @@ class Config(Toplevel):
         self.fonttitle_size = Combobox(fonttitle_frame, values=self.sizes, width=5,
                                        exportselection=False,
                                        validate="key",
-                                       validatecommand=(self._validate_size, "%d", "%P", "%V"))
+                                       validatecommand=(self._validate_title_size, "%d", "%P", "%V"))
         self.fonttitle_size.current(self.sizes.index(title_size))
         self.fonttitle_size.grid(row=0, column=1, padx=4, pady=4)
 
@@ -222,6 +230,7 @@ class Config(Toplevel):
         self.font_family = Combobox(font_frame, values=self.fonts, width=(w*2)//3,
                                     exportselection=False, validate="key")
         self._validate_family = self.register(lambda *args: self.validate_font_family(self.font_family, *args))
+        self._validate_size = self.register(lambda *args: self.validate_font_size(self.font_size, *args))
         self.font_family.configure(validatecommand=(self._validate_family,
                                                     "%d", "%S","%i", "%s", "%V"))
         self.font_family.current(self.fonts.index(family))
@@ -264,13 +273,16 @@ class Config(Toplevel):
         self.fonttitle_family.bind('<Return>', self.update_preview_title)
         self.fonttitle_size.bind('<Return>', self.update_preview_title, add=True)
 
-    def validate_font_size(self, d, ch, V):
+    def validate_font_size(self, combo, d, ch, V):
         ''' Validation of the size entry content '''
-        l = [i for i in self.sizes if i[:len(ch)] == ch]
-        if l:
-            i = self.sizes.index(l[0])
-            self.font_size.current(i)
         if d == '1':
+            l = [i for i in self.sizes if i[:len(ch)] == ch]
+            if l:
+                i = self.sizes.index(l[0])
+                combo.current(i)
+                index = combo.index("insert")
+                combo.selection_range(index + 1, "end")
+                combo.icursor(index + 1)
             return ch.isdigit()
         else:
             return True
@@ -278,18 +290,17 @@ class Config(Toplevel):
     def validate_font_family(self, combo, action, modif, pos, prev_txt, V):
         """ completion of the text in the path entry with existing
             folder/file names """
-        if combo.selection_present():
+        try:
             sel = combo.selection_get()
             txt = prev_txt.replace(sel, '')
-        else:
+        except TclError:
             txt = prev_txt
         if action == "0":
             txt = txt[:int(pos)] + txt[int(pos)+1:]
             return True
         else:
             txt = txt[:int(pos)] + modif + txt[int(pos):]
-            ch = txt.replace(" ", "\ ")
-            l = [i for i in self.fonts if i[:len(ch)] == ch]
+            l = [i for i in self.fonts if i[:len(txt)] == txt]
             if l:
                 i = self.fonts.index(l[0])
                 combo.current(i)

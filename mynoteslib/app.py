@@ -21,8 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Main class
 """
 
-from tkinter import Tk, PhotoImage, Menu
-from tkinter.ttk import Style
+from tkinter import Tk, PhotoImage, Menu, Toplevel
+from tkinter.ttk import Style, Label, Checkbutton, Button
+from tkinter.messagebox import askokcancel, showerror
 import tktray
 import os
 from shutil import copy
@@ -31,6 +32,7 @@ from mynoteslib.constantes import CONFIG, PATH_DATA, PATH_DATA_BACKUP, LOCAL_PAT
 from mynoteslib.constantes import backup, asksaveasfilename, askopenfilename
 import mynoteslib.constantes as cst
 from mynoteslib.config import Config
+from mynoteslib.export import Export
 from mynoteslib.sticky import Sticky
 from mynoteslib.about import About
 import ewmh
@@ -84,6 +86,9 @@ class App(Tk):
         self.icon.menu.add_separator()
         self.icon.menu.add_command(label=_("Backup Notes"), command=self.backup)
         self.icon.menu.add_command(label=_("Restore Backup"), command=self.restore)
+        self.icon.menu.add_separator()
+        self.icon.menu.add_command(label=_("Export"), command=self.export_notes)
+        self.icon.menu.add_command(label=_("Import"), command=self.import_notes)
         self.icon.menu.add_separator()
         self.icon.menu.add_command(label=_('About'), command=lambda: About(self))
         self.icon.menu.add_command(label=_('Quit'), command=self.quit)
@@ -148,33 +153,51 @@ class App(Tk):
 
     def restore(self):
         """ restore notes from backup """
-        fichier = askopenfilename(defaultextension=".backup",
-                                  filetypes=[],
-                                  initialdir=LOCAL_PATH,
-                                  initialfile="",
-                                  title=_('Restore Backup'))
-        if fichier:
-            self.show_all()
-            keys = list(self.notes.keys())
-            for key in keys:
-                self.notes[key].delete(confirmation=False)
-            copy(fichier, PATH_DATA)
-            with open(PATH_DATA, "rb") as fich:
-                dp = pickle.Unpickler(fich)
-                note_data = dp.load()
+        rep = askokcancel(_("Warning"),
+                          _("Restoring a backup will erase the current notes."),
+                          icon="warning")
+        if rep:
+            fichier = askopenfilename(defaultextension=".backup",
+                                      filetypes=[],
+                                      initialdir=LOCAL_PATH,
+                                      initialfile="",
+                                      title=_('Restore Backup'))
+            if fichier:
+                self.show_all()
+                keys = list(self.notes.keys())
+                for key in keys:
+                    self.notes[key].delete(confirmation=False)
+                copy(fichier, PATH_DATA)
+                with open(PATH_DATA, "rb") as fich:
+                    dp = pickle.Unpickler(fich)
+                    note_data = dp.load()
                 for i, key in enumerate(note_data):
-                    self.note_data["%i" % i] = note_data[key]
-            for key in self.note_data:
-                data = self.note_data[key]
-                if data["visible"]:
-                    self.notes[key] = Sticky(self, key, **data)
-                else:
-                    title = self.menu_notes_title(data["title"])
-                    self.hidden_notes[key] = title
-                    self.menu_notes.add_command(label=title,
-                                                command=lambda nb=key: self.show_note(nb))
-                    self.icon.menu.entryconfigure(4, state="normal")
-            self.nb = len(self.note_data)
+                    data = note_data[key]
+                    note_id = "%i" % i
+                    self.note_data[note_id] = data
+                    cat = data["category"]
+                    if not CONFIG.has_option("Categories", cat):
+                        CONFIG.set("Categories", cat, data["color"])
+                    if data["visible"]:
+                        self.notes[note_id] = Sticky(self, key, **data)
+                    else:
+                        title = self.menu_notes_title(data["title"])
+                        self.hidden_notes[note_id] = title
+                        self.menu_notes.add_command(label=title,
+                                                    command=lambda nb=note_id: self.show_note(nb))
+                        self.icon.menu.entryconfigure(4, state="normal")
+
+#                for key in self.note_data:
+#                    data = self.note_data[key]
+#                    if data["visible"]:
+#                        self.notes[key] = Sticky(self, key, **data)
+#                    else:
+#                        title = self.menu_notes_title(data["title"])
+#                        self.hidden_notes[key] = title
+#                        self.menu_notes.add_command(label=title,
+#                                                    command=lambda nb=key: self.show_note(nb))
+#                        self.icon.menu.entryconfigure(4, state="normal")
+                self.nb = len(self.note_data)
 
     def show_all(self):
         """ Show all notes """
@@ -208,9 +231,9 @@ class App(Tk):
         self.wait_window(conf)
         changes = conf.get_changes()
         if changes is not None:
-            self.update_cat_colors(changes)
             self.update_notes()
             self.update_menu()
+            self.update_cat_colors(changes)
             alpha = CONFIG.getint("General", "opacity")/100
             for note in self.notes.values():
                 note.attributes("-alpha", alpha)
@@ -293,6 +316,89 @@ class App(Tk):
         self.note_data[key] = data
         self.nb += 1
         self.make_notes_sticky()
+
+    def export_notes(self):
+        export = Export(self)
+        self.wait_window(export)
+        categories_to_export = export.get_export()
+        if categories_to_export:
+            initialdir, initialfile = os.path.split(PATH_DATA_BACKUP % 0)
+            fichier = asksaveasfilename(defaultextension=".notes",
+                                        filetypes=[(_("Notes (.notes)"), "*.notes"),
+                                                   (_("Text file (.txt)"), "*.txt"),
+                                                   (_("All files"), "*")],
+                                        initialdir=initialdir,
+                                        initialfile="",
+                                        title=_('Export Notes As'))
+            if fichier:
+                if os.path.splitext(fichier)[-1] == ".txt":
+                    # export notes to .txt: all formatting is lost
+                    cats = {cat: [] for cat in categories_to_export}
+                    for key in self.note_data:
+                        cat = self.note_data[key]["category"]
+                        if cat in cats:
+                            cats[cat].append((self.note_data[key]["title"],
+                                              self.note_data[key]["txt"]))
+                    text = ""
+                    for cat in cats:
+                        cat_txt = _("Category: {category}\n").format(category=cat)
+                        text += cat_txt
+                        text += "="*len(cat_txt)
+                        text += "\n\n"
+                        for title, txt in cats[cat]:
+                            text += title
+                            text += "\n"
+                            text += "-"*len(title)
+                            text += "\n\n"
+                            text += txt
+                            text += "\n\n"
+                            text += "-"*30
+                            text += "\n\n"
+                        text += "#"*30
+                        text += "\n\n"
+                    with open(fichier, "w") as fich:
+                        fich.write(text)
+
+                else:
+                    note_data = {}
+                    for key in self.note_data:
+                        if self.note_data[key]["category"] in categories_to_export:
+                            note_data[key] = self.note_data[key]
+
+                    with open(fichier, "wb") as fich:
+                        dp = pickle.Pickler(fich)
+                        dp.dump(note_data)
+
+    def import_notes(self):
+        fichier = askopenfilename(defaultextension=".backup",
+                                  filetypes=[(_("Notes (.notes)"), "*.notes"),
+                                             (_("All files"), "*")],
+                                  initialdir=LOCAL_PATH,
+                                  initialfile="",
+                                  title=_('Import'))
+        if fichier:
+            try:
+                with open(fichier, "rb") as fich:
+                    dp = pickle.Unpickler(fich)
+                    note_data = dp.load()
+                for i, key in enumerate(note_data):
+                    data = note_data[key]
+                    note_id = "%i" % (i + self.nb)
+                    self.note_data[note_id] = data
+                    cat = data["category"]
+                    if not CONFIG.has_option("Categories", cat):
+                        CONFIG.set("Categories", cat, data["color"])
+                    if data["visible"]:
+                        self.notes[note_id] = Sticky(self, note_id, **data)
+                    else:
+                        title = self.menu_notes_title(data["title"])
+                        self.hidden_notes[note_id] = title
+                        self.menu_notes.add_command(label=title,
+                                                    command=lambda nb=note_id: self.show_note(nb))
+                        self.icon.menu.entryconfigure(4, state="normal")
+                self.nb = len(self.note_data)
+            except Exception:
+                showerror(_("Error"), _("The file {file} is not a valid .notes file.".format(file=fichier)))
 
     def quit(self):
         self.destroy()

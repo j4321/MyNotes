@@ -110,7 +110,8 @@ class CategoryManager(Frame):
         rep = askyesnocancel(_("Question"),
                              _("Do you want to delete all notes belonging to \
 the category %(category)s? If you answer 'No', the category will be deleted but \
-the notes will belong to the default category." % {"category": category}))
+the notes will belong to the default category. Be careful, the change will take \
+effect immediately and cannot be undone." % {"category": category}))
         if rep is not None:
             del(self.cat_colors[category])
             self.cat_buttons[category].grid_forget()
@@ -124,6 +125,7 @@ the notes will belong to the default category." % {"category": category}))
             if self.default_category.get().lower() == category:
                 self.def_cat_menu.destroy()
                 self.default_category.set(self.categories[0].capitalize())
+                CONFIG.set("General", "default_category", self.categories[0])
                 categories = [cat.capitalize() for cat in self.categories]
                 self.def_cat_menu = OptionMenu(self.frame_def_cat, self.default_category,
                                                None, *categories)
@@ -133,6 +135,8 @@ the notes will belong to the default category." % {"category": category}))
                 self.cat_buttons[self.categories[0]].configure(state="disabled")
             if rep:
                 self.app.delete_cat(category)
+            self.app.update_notes()
+            self.app.update_menu()
 
     def add_cat(self):
         top = Toplevel(self)
