@@ -1,4 +1,4 @@
-CHANGELOG.txt
+CHANGELOG.rst
 COPYING.txt
 MANIFEST.in
 README.rst
@@ -19,6 +19,7 @@ mynoteslib/constantes.py
 mynoteslib/export.py
 mynoteslib/sticky.py
 mynoteslib/symbols.py
+mynoteslib/sync.py
 mynoteslib/tktray.py
 mynoteslib/images/close.png
 mynoteslib/images/close_active.png

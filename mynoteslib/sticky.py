@@ -158,14 +158,11 @@ class Sticky(Toplevel):
         self.mode = StringVar(self,
                               kwargs.get("mode", "note"))
         menu_mode.add_radiobutton(label=_("Note"), value="note",
-                                  variable=self.mode,
-                                  command=self.set_mode_note)
+                                  variable=self.mode)
         menu_mode.add_radiobutton(label=_("List"), value="list",
-                                  variable=self.mode,
-                                  command=self.set_mode_list)
+                                  variable=self.mode)
         menu_mode.add_radiobutton(label=_("ToDo List"), value="todolist",
-                                  variable=self.mode,
-                                  command=self.set_mode_todolist)
+                                  variable=self.mode)
 
         self.menu.add_command(label=_("Delete"), command=self.delete)
         self.menu.add_cascade(label=_("Category"), menu=self.menu_categories)
@@ -281,16 +278,7 @@ class Sticky(Toplevel):
         # add binding to the existing class binding so that the selected text
         # is erased on pasting
         self.txt.bind("<Control-v>", self.paste)
-        # change Ctrl+A to select all instead of go to the beginning of the line
-        self.bind_class('Text', '<Control-a>', self.select_all_text)
-        self.bind_class('TEntry', '<Control-a>', self.select_all_entry)
-        # remove Ctrl+Y from shortcuts since it's pasting things like Ctrl+V
-        self.txt.unbind_class('Text', '<Control-y>')
         self.corner.bind('<ButtonRelease-1>', self.resize)
-        if self.mode.get() == "list":
-            self.txt.bind_class("Text", "<Return>", self.insert_bullet)
-        elif self.mode.get() == "todolist":
-            self.txt.bind_class("Text", "<Return>", self.insert_checkbox)
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -428,43 +416,7 @@ class Sticky(Toplevel):
         e.display.flush()
         self.focus_out()
 
-    def set_mode_note(self):
-        self.txt.bind_class("Text", "<Return>", self.insert_newline)
-        self.focus_out()
-
-    def set_mode_list(self):
-        self.txt.bind_class("Text", "<Return>", self.insert_bullet)
-        index = self.txt.index("insert")
-        if index.split(".")[-1] == "0":
-            self.txt.insert("insert", "\t•\t")
-        else:
-            self.txt.insert("insert", "\n\t•\t")
-        self.focus_out()
-
-    def set_mode_todolist(self):
-        self.txt.bind_class("Text", "<Return>", self.insert_checkbox)
-        index = self.txt.index("insert")
-        if index.split(".")[-1] == "0":
-            ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
-            self.txt.window_create("insert", window=ch)
-        else:
-            self.txt.insert("insert", "\n")
-            ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
-            self.txt.window_create("insert", window=ch)
-        self.focus_out()
-
     ### bindings
-    def insert_newline(self, event):
-        self.txt.insert("insert", "\n")
-
-    def insert_bullet(self, event):
-        self.txt.insert("insert", "\n\t•\t")
-
-    def insert_checkbox(self, event):
-        self.txt.insert("insert", "\n")
-        ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
-        self.txt.window_create("insert", window=ch)
-
     def enter_roll(self, event):
         """ mouse is over the roll icon """
         self.roll.configure(image="img_rollactive")
@@ -480,12 +432,6 @@ class Sticky(Toplevel):
     def leave_close(self, event):
         """ mouse leaves the close icon """
         self.close.configure(image="img_close")
-
-    def select_all_text(self, event):
-        event.widget.tag_add("sel","1.0","end")
-
-    def select_all_entry(self, event):
-        event.widget.selection_range(0, "end")
 
     def change_focus(self, event):
         if not self.is_locked:

@@ -139,6 +139,32 @@ class App(Tk):
         self.nb = len(self.note_data)
         self.make_notes_sticky()
 
+        # newline depending on mode
+        self.bind_class("Text", "<Return>",  self.insert_newline)
+        # change Ctrl+A to select all instead of go to the beginning of the line
+        self.bind_class('Text', '<Control-a>', self.select_all_text)
+        self.bind_class('TEntry', '<Control-a>', self.select_all_entry)
+        # remove Ctrl+Y from shortcuts since it's pasting things like Ctrl+V
+        self.unbind_class('Text', '<Control-y>')
+
+    ### class bindings
+    def select_all_entry(self, event):
+        event.widget.selection_range(0, "end")
+
+    def select_all_text(self, event):
+        event.widget.tag_add("sel","1.0","end")
+
+    def insert_newline(self, event):
+        mode = event.widget.master.mode.get()
+        if mode == "list":
+            event.widget.insert("insert", "\n\t•\t")
+        elif mode == "todolist":
+            event.widget.insert("insert", "\n")
+            ch = Checkbutton(event.widget, style=event.widget.master.id + ".TCheckbutton")
+            event.widget.window_create("insert", window=ch)
+        else:
+            event.widget.insert("insert", "\n")
+
     def make_notes_sticky(self):
         for w in self.ewmh.getClientList():
             if w.get_wm_name()[:7] == 'mynotes':

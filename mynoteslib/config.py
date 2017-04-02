@@ -260,7 +260,7 @@ class Config(Toplevel):
                           sticky="ewsn", padding=4)
         ### * Sync
         self.sync_settings = SyncSettings(self.notebook, self.master.get_password())
-        self.notebook.add(self.sync_settings, text=_("WebDav Sync"),
+        self.notebook.add(self.sync_settings, text=_("Sync"),
                           sticky="ewsn", padding=4)
 
         ### Ok/Cancel buttons

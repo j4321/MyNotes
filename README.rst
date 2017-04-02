@@ -3,13 +3,13 @@ MyNotes - Sticky notes/post-it
 Copyright 2016-2017 Juliette Monsel <j_4321@protonmail.com>
 
 MyNotes is a sticky note application. An icon appears in the system tray
-and from it you can create and manage your sticky notes. Notes can be 
+and from it you can create and manage your sticky notes. Notes can be
 organized in categories and you can set a default color for each category.
 Checkboxes and images can be incorporated in the notes. If your desktop
 environment supports compositing, the opacity of the notes can be modified.
 
 MyNotes is designed for Linux. It is written in Python 3 and relies on
-Tk GUI toolkit. 
+Tk GUI toolkit.
 
 Install
 -------
@@ -22,14 +22,14 @@ For instance, in Ubuntu/Debian you will need to install the following packages:
 python3-tk, tk-tktray, python3-ewmh (available in zesty only)
 
 In Archlinux, you will need to install the following packages:
-tk, tktray (AUR), python-ewmh (AUR)
+tk, tktray (`AUR <https://aur.archlinux.org/packages/tktray>`__), python-ewmh (`AUR <https://aur.archlinux.org/packages/python-ewmh>`__)
 
 ewmh can be installed with pip:
 ::
     $ sudo pip3 install ewmh
 
 Then install the application:
-:: 
+::
     $ sudo python3 setup.py install
 
 You can now launch it from `Menu > Utility > MyNotes`. You can launch

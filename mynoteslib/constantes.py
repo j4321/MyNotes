@@ -124,6 +124,7 @@ if os.path.exists(PATH_CONFIG):
     if not CONFIG.has_section("Sync"):
         CONFIG.add_section("Sync")
         CONFIG.set("Sync", "on", "False")
+        CONFIG.set("Sync", "server_type", "FTP")
         CONFIG.set("Sync", "server", "")
         CONFIG.set("Sync", "username", "")
         CONFIG.set("Sync", "protocol", "https")
@@ -146,6 +147,7 @@ else:
     CONFIG.add_section("Sync")
     CONFIG.set("Sync", "on", "False")
     CONFIG.set("Sync", "server", "")
+    CONFIG.set("Sync", "server_type", "FTP")
     CONFIG.set("Sync", "username", "")
     CONFIG.set("Sync", "protocol", "https")
     CONFIG.set("Sync", "port", "443")
