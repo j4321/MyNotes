@@ -109,7 +109,8 @@ class App(Tk):
                     res = download_from_server(self.password)
                     if not res:
                         showinfo(_("Information"),
-                                 _("There was an error during the synchronization so the local notes have not been synchronized with the server."))
+                                 _("There was an error during the synchronization so synchronization has been disabled."))
+                        CONFIG.set("Sync", "on", "False")
             else:
                 showinfo(_("Information"),
                          _("No password has been given so synchronization has been disabled."))
@@ -503,7 +504,7 @@ class App(Tk):
         user.insert(0, CONFIG.get("Sync", "username"))
         pwd = Entry(top, show="*")
 
-        ch = Checkbutton(top, text=_("Synchronize note with server"), command=toggle)
+        ch = Checkbutton(top, text=_("Synchronize notes with server"), command=toggle)
         ch.state(("selected",))
         ch.grid(row=0, columnspan=2, padx=4, pady=4, sticky="w")
         Label(top, text=_("Username")).grid(row=1, column=0, padx=4, pady=4)

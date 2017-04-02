@@ -38,7 +38,7 @@ class SyncSettings(Frame):
         self.columnconfigure(1, weight=1)
 
         self.sync_state = Checkbutton(self,
-                                      text=_("Synchronize note with server"),
+                                      text=_("Synchronize notes with server"),
                                       command=self.toggle_sync)
         if CONFIG.getboolean("Sync", "on"):
             self.sync_state.state(("selected",))
@@ -216,7 +216,6 @@ def download_from_server_ftp(password):
                 mtime_local = time.gmtime(os.path.getmtime(local_path))
                 mtime_local = time.strftime("%Y%m%d%H%M%S", mtime_local)
                 mtime_local = time.mktime(time.strptime(mtime_local, "%Y%m%d%H%M%S"))
-                print(mtime_server//60 - mtime_local//60)
                 if mtime_server//60 - mtime_local//60 >= -1:
                     # file is more recent on server
                     ftp.retrbinary('RETR ' + filename, open(local_path, 'wb').write)
@@ -270,7 +269,6 @@ def upload_to_server_ftp(password):
             mtime_local = time.gmtime(os.path.getmtime(local_path))
             mtime_local = time.strftime("%Y%m%d%H%M%S", mtime_local)
             mtime_local = time.mktime(time.strptime(mtime_local, "%Y%m%d%H%M%S"))
-            print(mtime_server//60 - mtime_local//60)
             if mtime_local//60 - mtime_server//60 >= -1:
                 # local file is more recent than remote one
                 ftp.storbinary("STOR " + filename, open(local_path, "rb"))
