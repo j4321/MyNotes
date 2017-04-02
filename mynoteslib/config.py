@@ -27,6 +27,7 @@ from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator
 from tkinter.ttk import Notebook, Combobox, Frame, Menubutton, Checkbutton
 from mynoteslib.constantes import CONFIG, save_config, COLORS
 from mynoteslib.categories import CategoryManager
+from mynoteslib.sync import SyncSettings
 from tkinter import font
 
 class Config(Toplevel):
@@ -62,13 +63,13 @@ class Config(Toplevel):
         self.notebook.pack(expand=True, fill="both")
         okcancel_frame.pack(fill="x", expand=True)
 
-        ### * general settings
+        ### * General settings
         general_settings = Frame(self.notebook)
         general_settings.columnconfigure(0, weight=1)
         self.notebook.add(general_settings, text=_("General"),
                           sticky="ewsn", padding=4)
 
-        ### *- language
+        ### *-- language
         lang = {"fr": "Français", "en": "English"}
         self.lang = StringVar(self, lang[CONFIG.get("General","language")])
         lang_frame = Frame(general_settings)
@@ -81,14 +82,14 @@ class Config(Toplevel):
                                   variable=self.lang, command=self.translate)
         menu_lang.add_radiobutton(label="Français", value="Français",
                                   variable=self.lang, command=self.translate)
-        ### *- opacity
+        ### *-- opacity
         self.opacity_scale = Scale(general_settings, orient="horizontal", length=200,
                                    from_=0, to=100,
                                    value=CONFIG.get("General", "opacity"),
                                    command=self.display_label)
         self.opacity_label = Label(general_settings,
                                    text="{val}%".format(val=self.opacity_scale.get()))
-        ### *- position
+        ### *-- position
         frame_position = Frame(general_settings)
         self.position = StringVar(self, CONFIG.get("General", "position"))
         Label(frame_position,
@@ -102,7 +103,7 @@ class Config(Toplevel):
                     variable=self.position).grid(row=1,column=1)
         Radiobutton(frame_position, text=_("Normal"), value="normal",
                     variable=self.position).grid(row=1,column=2)
-        ### *- titlebar
+        ### *-- titlebar
         self.titlebar_disposition = StringVar(self, CONFIG.get("General",
                                                                "buttons_position"))
         font_title = "%s %s" %(CONFIG.get("Font", "title_family").replace(" ", "\ "),
@@ -142,7 +143,7 @@ class Config(Toplevel):
               font=font_title).pack(side="right", fill="x", expand=True)
         for ch in left.children.values():
             ch.bind("<Button-1>", select_left)
-        ### *- placement
+        ### *-- placement
         lang_frame.grid(row=0, sticky="w")
         Separator(general_settings,
                   orient="horizontal").grid(row=1, sticky="ew", pady=10)
@@ -158,13 +159,13 @@ class Config(Toplevel):
                   orient="horizontal").grid(row=6, sticky="ew", pady=10)
         frame_titlebar.grid(row=7, sticky="ew", pady=4)
 
-        ### * font settings
+        ### * Font settings
         font_settings = Frame(self.notebook)
         font_settings.columnconfigure(0, weight=1)
         self.notebook.add(font_settings, text=_("Font"),
                           sticky="ewsn", padding=4)
 
-        ### *- title
+        ### *-- title
         fonttitle_frame = Frame(font_settings)
 
         title_size = CONFIG.get("Font", "title_size")
@@ -217,7 +218,7 @@ class Config(Toplevel):
         self.is_underlined.pack(side="left")
 
         self.update_preview_title()
-        ### *- text
+        ### *-- text
         size = CONFIG.get("Font", "text_size")
         family = CONFIG.get("Font", "text_family")
 
@@ -244,7 +245,7 @@ class Config(Toplevel):
 
         self.update_preview()
 
-        ### *- placement
+        ### *-- placement
         Label(font_settings,
               text=_("Title")).grid(row=0, padx=4, pady=4, sticky="w")
         fonttitle_frame.grid(row=1)
@@ -253,9 +254,13 @@ class Config(Toplevel):
               text=_("Text")).grid(row=3, padx=4, pady=4, sticky="w")
         font_frame.grid(row=4)
 
-        ### * categories
+        ### * Categories
         self.category_settings = CategoryManager(self.notebook, master)
         self.notebook.add(self.category_settings, text=_("Categories"),
+                          sticky="ewsn", padding=4)
+        ### * Sync
+        self.sync_settings = SyncSettings(self.notebook, self.master.get_password())
+        self.notebook.add(self.sync_settings, text=_("WebDav Sync"),
                           sticky="ewsn", padding=4)
 
         ### Ok/Cancel buttons
@@ -341,6 +346,7 @@ class Config(Toplevel):
         CONFIG.set("Font", "title_family",familytitle)
         CONFIG.set("Font", "title_size", sizetitle)
         CONFIG.set("Font", "title_style", style)
+        self.master.set_password(self.sync_settings.save_sync_settings())
 
         changes = {}
         for cat in self.category_settings.categories:

@@ -22,8 +22,8 @@ Main class
 """
 
 from tkinter import Tk, PhotoImage, Menu, Toplevel
-from tkinter.ttk import Style, Label, Checkbutton, Button
-from tkinter.messagebox import askokcancel, showerror
+from tkinter.ttk import Style, Label, Checkbutton, Button, Entry
+from tkinter.messagebox import askokcancel, showerror, showinfo
 import tktray
 import os
 from shutil import copy
@@ -32,6 +32,7 @@ from mynoteslib.constantes import CONFIG, PATH_DATA, PATH_DATA_BACKUP, LOCAL_PAT
 from mynoteslib.constantes import backup, asksaveasfilename, askopenfilename
 import mynoteslib.constantes as cst
 from mynoteslib.config import Config
+from mynoteslib.sync import download_from_server, upload_to_server, check_login_info
 from mynoteslib.export import Export
 from mynoteslib.sticky import Sticky
 from mynoteslib.about import About
@@ -61,6 +62,8 @@ class App(Tk):
 
         self.protocol("WM_DELETE_WINDOW", self.quit)
         self.icon = tktray.Icon(self, docked=True)
+
+        ### Menu
         self.menu_notes = Menu(self.icon.menu, tearoff=False)
         self.hidden_notes = {}
         self.menu_show_cat = Menu(self.icon.menu, tearoff=False)
@@ -92,6 +95,29 @@ class App(Tk):
         self.icon.menu.add_separator()
         self.icon.menu.add_command(label=_('About'), command=lambda: About(self))
         self.icon.menu.add_command(label=_('Quit'), command=self.quit)
+
+        ### Sync
+
+        self.password = ""
+
+        if CONFIG.getboolean("Sync", "on"):
+            self.get_server_pwd()
+            if self.password:
+                while (not check_login_info(self.password)) and self.password:
+                    self.get_server_login()
+                if self.password:
+                    res = download_from_server(self.password)
+                    if not res:
+                        showinfo(_("Information"),
+                                 _("There was an error during the synchronization so the local notes have not been synchronized with the server."))
+            else:
+                showinfo(_("Information"),
+                         _("No password has been given so synchronization has been disabled."))
+                CONFIG.set("Sync", "on", "False")
+
+
+        ### Restore notes
+
         self.note_data = {}
         if os.path.exists(PATH_DATA):
             with open(PATH_DATA, "rb") as fich:
@@ -402,3 +428,76 @@ class App(Tk):
 
     def quit(self):
         self.destroy()
+#        if CONFIG.getboolean("Sync", "on"):
+#            upload_to_server(self.password)
+
+    def get_server_pwd(self):
+        def ok(event=None):
+            self.password = pwd.get()
+            top.destroy()
+
+        top = Toplevel(self)
+        top.title(_("Sync"))
+        top.grab_set()
+        top.resizable(False, False)
+        pwd = Entry(top, show="*", justify="center")
+
+        Label(top, text="Server password").pack(padx=4, pady=4)
+        pwd.pack(padx=4, pady=4)
+        Button(top, text=_("Connect"), command=ok).pack(padx=4, pady=4)
+        pwd.bind("<Return>", ok)
+        pwd.focus_set()
+        self.wait_window(top)
+
+    def get_server_login(self):
+        def ok(event=None):
+            if "selected" in ch.state():
+                username = user.get()
+                CONFIG.set("Sync", "username", username)
+                self.password = pwd.get()
+            else:
+                CONFIG.set("Sync", "on", "False")
+                self.password = ""
+            top.destroy()
+
+        def toggle():
+            if "selected" in ch.state():
+                state = "!disabled"
+            else:
+                state = "disabled"
+            user.state((state,))
+            pwd.state((state,))
+
+        top = Toplevel(self)
+        top.title(_("Sync"))
+        top.grab_set()
+        top.resizable(False, False)
+
+        user = Entry(top)
+        user.insert(0, CONFIG.get("Sync", "username"))
+        pwd = Entry(top, show="*")
+
+        ch = Checkbutton(top, text=_("Synchronize note with server"), command=toggle)
+        ch.state(("selected",))
+        ch.grid(row=0, columnspan=2, padx=4, pady=4, sticky="w")
+        Label(top, text=_("Username")).grid(row=1, column=0, padx=4, pady=4)
+        Label(top, text=_("Password")).grid(row=2, column=0, padx=4, pady=4)
+        user.grid(row=1, column=1, padx=4, pady=4)
+        pwd.grid(row=2, column=1, padx=4, pady=4)
+        Button(top, text="Ok", command=ok).grid(row=3, columnspan=2)
+        pwd.bind("<Return>", ok)
+        pwd.focus_set()
+        self.wait_window(top)
+
+    def set_password(self, pwd):
+        self.password = pwd
+        if CONFIG.getboolean("Sync", "on"):
+            if not self.password:
+                CONFIG.set("Sync", "on", "False")
+                showinfo(_("Information"),
+                         _("No password has been given so synchronization has been disabled."))
+            while (not check_login_info(self.password)) and self.password:
+                self.get_server_login()
+
+    def get_password(self):
+        return self.password

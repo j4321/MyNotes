@@ -26,8 +26,9 @@ import os
 import sys
 from tkinter.messagebox import showerror
 from tkinter import Tk
-from mynoteslib.constantes import save_config
+from mynoteslib.constantes import save_config, CONFIG
 from mynoteslib.app import App
+from mynoteslib.sync import upload_to_server
 
 # vérifie si mynotes est déjà lancé
 pid = str(os.getpid())
@@ -52,5 +53,6 @@ try:
 finally:
     app.save()
     save_config()
+    if CONFIG.getboolean("Sync", "on"):
+        upload_to_server(app.get_password())
     os.unlink(pidfile)
-
