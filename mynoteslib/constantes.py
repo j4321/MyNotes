@@ -17,6 +17,18 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+IM_ERROR_DATA was taken from "icons.tcl":
+
+	A set of stock icons for use in Tk dialogs. The icons used here
+	were provided by the Tango Desktop project which provides a
+	unified set of high quality icons licensed under the
+	Creative Commons Attribution Share-Alike license
+	(http://creativecommons.org/licenses/by-sa/3.0/)
+
+	See http://tango.freedesktop.org/Tango_Desktop_Project
+
+    Copyright (c) 2009 Pat Thoyts <patthoyts@users.sourceforge.net>
+
 
 Constants
 """
@@ -66,7 +78,6 @@ IM_ROLL_ACTIVE = os.path.join(PATH_IMAGES, "roll_active.png")
 IM_LOCK = os.path.join(PATH_IMAGES, "verr.png")
 IM_PLUS = os.path.join(PATH_IMAGES, "plus.png")
 IM_MOINS = os.path.join(PATH_IMAGES, "moins.png")
-
 
 IM_ERROR_DATA = """
 iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAABiRJREFU
