@@ -5,6 +5,14 @@ Copyright 2016 Juliette Monsel <j_4321@protonmail.com>
 Changelog
 ---------
 
+- Version 2.0.3
+    * Corrected bug: wrong default category in default config file
+    * Corrected bug: selection of a font not on the system
+    * Corrected bug: bold and italic text was always in Liberation Sans
+    * Corrected bug: Alignement only set for fisrt selected line
+    * Corrected bug: ImportError: No module named 'tktray'
+    * Set colored text selected foreground to white
+    
 - Version 2.0.2
     * Corrected bug: import and restore did not update the categories, which lead
       to incomplete menus and errors

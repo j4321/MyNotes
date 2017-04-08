@@ -24,10 +24,10 @@ Main class
 from tkinter import Tk, PhotoImage, Menu, Toplevel
 from tkinter.ttk import Style, Label, Checkbutton, Button
 from tkinter.messagebox import askokcancel, showerror
-import tktray
 import os
 from shutil import copy
 import pickle
+from mynoteslib import tktray
 from mynoteslib.constantes import CONFIG, PATH_DATA, PATH_DATA_BACKUP, LOCAL_PATH
 from mynoteslib.constantes import backup, asksaveasfilename, askopenfilename
 import mynoteslib.constantes as cst

@@ -13,7 +13,7 @@ data_files = [("share/pixmaps", ["mynotes.svg"]),
               ("share/applications", ["mynotes.desktop"])]
 
 setup(name = "mynotes",
-      version = "2.0.2",
+      version = "2.0.3",
       description = "Post-it system tray app",
       author = "Juliette Monsel",
       author_email = "j_4321@protonmail.fr",

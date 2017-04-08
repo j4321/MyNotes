@@ -28,7 +28,7 @@ from configparser import ConfigParser
 from locale import getdefaultlocale, setlocale, LC_ALL
 from subprocess import check_output, CalledProcessError
 
-VERSION = "2.0.0"
+VERSION = "2.0.3"
 SYMBOLS = 'ΓΔΘΛΞΠΣΦΨΩαβγδεζηθικλμνξοπρςστυφχψωϐϑϒϕϖæœ«»¡¿£¥$€§ø∞∀∃∄∈∉∫∧∨∩∪÷±√∝∼≃≅≡≤≥≪≫≲≳▪•✭✦➔➢✔▴▸✗✚✳☎✉✎♫⚠⇒⇔'
 
 #----paths----
@@ -116,7 +116,7 @@ LANG.install()
 
 #----default categories----
 if not CONFIG.has_option("General", "default_category"):
-    CONFIG.set("General", "default_category", _("Home"))
+    CONFIG.set("General", "default_category", _("home"))
     CONFIG.set("Categories", _("home"), '#F9F3A9')
     CONFIG.set("Categories", _("office"), '#A7B6D6')
 

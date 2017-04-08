@@ -100,20 +100,23 @@ class Sticky(Toplevel):
                         selectforeground='white',
                         inactiveselectbackground=selectbg,
                         selectbackground=selectbg,
-                        tabs=("10", 'center', '20', 'left'),
+                        tabs=("10", 'right', '20', 'left'),
                         relief="flat", borderwidth=0,
                         highlightthickness=0, font=font_text)
         # tags
-        self.txt.tag_configure("bold", font="Liberation\ Sans 10 bold")
-        self.txt.tag_configure("italic", font="Liberation\ Sans 10 italic")
-        self.txt.tag_configure("bold-italic", font="Liberation\ Sans 10 bold italic")
+        self.txt.tag_configure("bold", font="%s bold" % font_text)
+        self.txt.tag_configure("italic", font="%s italic" % font_text)
+        self.txt.tag_configure("bold-italic", font="%s bold italic" % font_text)
         self.txt.tag_configure("underline", underline=True)
         self.txt.tag_configure("overstrike", overstrike=True)
         self.txt.tag_configure("center", justify="center")
         self.txt.tag_configure("left", justify="left")
         self.txt.tag_configure("right", justify="right")
+        self.txt.tag_configure("list", lmargin1=0, lmargin2='20')
+        self.txt.tag_configure("todolist", lmargin1=0, lmargin2='20')
+
         for coul in TEXT_COLORS.values():
-            self.txt.tag_configure(coul, foreground=coul)
+            self.txt.tag_configure(coul, foreground=coul, selectforeground="white")
         ### menus
         ### * menu on title
         self.menu = Menu(self, tearoff=False)
@@ -155,17 +158,16 @@ class Sticky(Toplevel):
                                       command=self.set_position_normal)
         # mode: note, list, todo list
         menu_mode = Menu(self.menu, tearoff=False)
-        self.mode = StringVar(self,
-                              kwargs.get("mode", "note"))
+        self.mode = StringVar(self, kwargs.get("mode", "note"))
         menu_mode.add_radiobutton(label=_("Note"), value="note",
-                                  variable=self.mode)
-#                                  command=self.set_mode_note)
+                                  variable=self.mode,
+                                  command=self.set_mode_note)
         menu_mode.add_radiobutton(label=_("List"), value="list",
-                                  variable=self.mode)
-#                                  command=self.set_mode_list)
+                                  variable=self.mode,
+                                  command=self.set_mode_list)
         menu_mode.add_radiobutton(label=_("ToDo List"), value="todolist",
-                                  variable=self.mode)
-#                                  command=self.set_mode_todolist)
+                                  variable=self.mode,
+                                  command=self.set_mode_todolist)
 
         self.menu.add_command(label=_("Delete"), command=self.delete)
         self.menu.add_cascade(label=_("Category"), menu=self.menu_categories)
@@ -260,7 +262,7 @@ class Sticky(Toplevel):
         self.corner.place(relx=1.0, rely=1.0, anchor="se")
 
         ### bindings
-        self.bind("<FocusOut>", self.focus_out)
+        self.bind("<FocusOut>", self.save_note)
         self.bind('<Configure>', self.bouge)
         self.bind('<Button-1>', self.change_focus, True)
         self.close.bind("<Button-1>", self.hide)
@@ -354,7 +356,7 @@ class Sticky(Toplevel):
             self.menu.entryconfigure(3, label=_("Unlock"))
             self.title_label.unbind("<Double-Button-1>")
             self.txt.unbind('<Button-3>')
-        self.focus_out()
+        self.save_note()
 
     def save_info(self):
         """ Return the dictionnary containing all the note data """
@@ -384,13 +386,13 @@ class Sticky(Toplevel):
 
     def change_color(self, key):
         self.color = COLORS[key]
-        self.focus_out()
+        self.save_note()
 
     def change_category(self, category=None):
         if category:
             self.category.set(category)
         self.color = CONFIG.get("Categories", self.category.get())
-        self.focus_out()
+        self.save_note()
 
     def set_position_above(self):
         e = ewmh.EWMH()
@@ -399,7 +401,7 @@ class Sticky(Toplevel):
                 e.setWmState(w, 1, '_NET_WM_STATE_ABOVE')
                 e.setWmState(w, 0, '_NET_WM_STATE_BELOW')
         e.display.flush()
-        self.focus_out()
+        self.save_note()
 
     def set_position_below(self):
         e = ewmh.EWMH()
@@ -408,7 +410,7 @@ class Sticky(Toplevel):
                 e.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
                 e.setWmState(w, 1, '_NET_WM_STATE_BELOW')
         e.display.flush()
-        self.focus_out()
+        self.save_note()
 
     def set_position_normal(self):
         e = ewmh.EWMH()
@@ -417,7 +419,34 @@ class Sticky(Toplevel):
                 e.setWmState(w, 0, '_NET_WM_STATE_BELOW')
                 e.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
         e.display.flush()
-        self.focus_out()
+        self.save_note()
+
+    def set_mode_note(self):
+        self.txt.tag_remove("list", "1.0", "end")
+        self.save_note()
+
+    def set_mode_list(self):
+        index = self.txt.index("insert")
+        if index.split(".")[-1] == "0":
+            self.txt.insert("insert", "\t•\t")
+        else:
+            self.txt.insert("insert", "\n\t•\t")
+        self.txt.tag_add("list", "1.0", "end")
+        self.txt.tag_remove("todolist", "1.0", "end")
+        self.save_note()
+
+    def set_mode_todolist(self):
+        index = self.txt.index("insert")
+        if index.split(".")[-1] == "0":
+            ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
+            self.txt.window_create("insert", window=ch)
+        else:
+            self.txt.insert("insert", "\n")
+            ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
+            self.txt.window_create("insert", window=ch)
+        self.txt.tag_remove("list", "1.0", "end")
+        self.txt.tag_add("todolist", "1.0", "end")
+        self.save_note()
 
     ### bindings
     def enter_roll(self, event):
@@ -476,7 +505,7 @@ class Sticky(Toplevel):
             y = self.winfo_y() + deltay
             self.geometry("+%s+%s" % (x, y))
 
-    def focus_out(self, event=None):
+    def save_note(self, event=None):
         data = self.save_info()
         data["visible"] = True
         self.master.note_data[self.id] = data
@@ -492,6 +521,7 @@ class Sticky(Toplevel):
                           column=0, sticky="ewsn", pady=(1,4), padx=4)
             self.corner.place(relx=1.0, rely=1.0, anchor="se")
             self.geometry(self.save_geometry)
+        self.save_note()
 
     def hide(self, event=None):
         """ Hide note (can be displayed again via app menu) """
@@ -521,6 +551,9 @@ class Sticky(Toplevel):
         font = "%s %s" %(CONFIG.get("Font", "text_family").replace(" ", "\ "),
                          CONFIG.get("Font", "text_size"))
         self.txt.configure(font=font)
+        self.txt.tag_configure("bold", font="%s bold" % font)
+        self.txt.tag_configure("italic", font="%s italic" % font)
+        self.txt.tag_configure("bold-italic", font="%s bold italic" % font)
 
     def update_menu_cat(self, categories):
         """ Update the category submenu """
@@ -608,10 +641,10 @@ class Sticky(Toplevel):
         """ Align the text according to alignment (left, right, center) """
         if self.txt.tag_ranges("sel"):
             line = self.txt.index("sel.first").split(".")[0]
+            line2 = self.txt.index("sel.last").split(".")[0]
             # remove old alignment tag
-            self.txt.tag_remove("left", line + ".0", line + ".end")
-            self.txt.tag_remove("right", line + ".0", line + ".end")
-            self.txt.tag_remove("center", line + ".0", line + ".end")
+            self.txt.tag_remove("left", line + ".0", line2 + ".end")
+            self.txt.tag_remove("right", line + ".0", line2 + ".end")
+            self.txt.tag_remove("center", line + ".0", line2 + ".end")
             # set new alignment tag
-            self.txt.tag_add(alignment, line + ".0", line + ".end")
-
+            self.txt.tag_add(alignment, line + ".0", line2 + ".end")
