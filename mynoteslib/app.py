@@ -61,11 +61,12 @@ class App(Tk):
 
         self.protocol("WM_DELETE_WINDOW", self.quit)
         self.icon = tktray.Icon(self, docked=True)
+
+        ### Menu
         self.menu_notes = Menu(self.icon.menu, tearoff=False)
         self.hidden_notes = {}
         self.menu_show_cat = Menu(self.icon.menu, tearoff=False)
         self.menu_hide_cat = Menu(self.icon.menu, tearoff=False)
-        self.update_menu()
         self.icon.configure(image=self.img)
         self.icon.menu.add_command(label=_("New Note"), command=self.new)
         self.icon.menu.add_separator()
@@ -92,6 +93,8 @@ class App(Tk):
         self.icon.menu.add_separator()
         self.icon.menu.add_command(label=_('About'), command=lambda: About(self))
         self.icon.menu.add_command(label=_('Quit'), command=self.quit)
+
+        ### Restore notes
         self.note_data = {}
         if os.path.exists(PATH_DATA):
             with open(PATH_DATA, "rb") as fich:
@@ -102,6 +105,9 @@ class App(Tk):
             backup()
             for key in self.note_data:
                 data = self.note_data[key]
+                cat = data["category"]
+                if not CONFIG.has_option("Categories", cat):
+                    CONFIG.set("Categories", cat, data["color"])
                 if data["visible"]:
                     self.notes[key] = Sticky(self, key, **data)
                 else:
@@ -111,6 +117,8 @@ class App(Tk):
                                                 command=lambda nb=key: self.show_note(nb))
                     self.icon.menu.entryconfigure(4, state="normal")
         self.nb = len(self.note_data)
+        self.update_menu()
+        self.update_notes()
         self.make_notes_sticky()
 
         # newline depending on mode
@@ -177,53 +185,52 @@ class App(Tk):
                 dp = pickle.Pickler(fich)
                 dp.dump(self.note_data)
 
-    def restore(self):
+    def restore(self, fichier=None, confirmation=True):
         """ restore notes from backup """
-        rep = askokcancel(_("Warning"),
-                          _("Restoring a backup will erase the current notes."),
-                          icon="warning")
+        if confirmation:
+            rep = askokcancel(_("Warning"),
+                              _("Restoring a backup will erase the current notes."),
+                              icon="warning")
+        else:
+            rep = True
         if rep:
-            fichier = askopenfilename(defaultextension=".backup",
-                                      filetypes=[],
-                                      initialdir=LOCAL_PATH,
-                                      initialfile="",
-                                      title=_('Restore Backup'))
+            if fichier is None:
+                fichier = askopenfilename(defaultextension=".backup",
+                                          filetypes=[],
+                                          initialdir=LOCAL_PATH,
+                                          initialfile="",
+                                          title=_('Restore Backup'))
             if fichier:
-                self.show_all()
-                keys = list(self.notes.keys())
-                for key in keys:
-                    self.notes[key].delete(confirmation=False)
-                copy(fichier, PATH_DATA)
-                with open(PATH_DATA, "rb") as fich:
-                    dp = pickle.Unpickler(fich)
-                    note_data = dp.load()
-                for i, key in enumerate(note_data):
-                    data = note_data[key]
-                    note_id = "%i" % i
-                    self.note_data[note_id] = data
-                    cat = data["category"]
-                    if not CONFIG.has_option("Categories", cat):
-                        CONFIG.set("Categories", cat, data["color"])
-                    if data["visible"]:
-                        self.notes[note_id] = Sticky(self, key, **data)
-                    else:
-                        title = self.menu_notes_title(data["title"])
-                        self.hidden_notes[note_id] = title
-                        self.menu_notes.add_command(label=title,
-                                                    command=lambda nb=note_id: self.show_note(nb))
-                        self.icon.menu.entryconfigure(4, state="normal")
-
-#                for key in self.note_data:
-#                    data = self.note_data[key]
-#                    if data["visible"]:
-#                        self.notes[key] = Sticky(self, key, **data)
-#                    else:
-#                        title = self.menu_notes_title(data["title"])
-#                        self.hidden_notes[key] = title
-#                        self.menu_notes.add_command(label=title,
-#                                                    command=lambda nb=key: self.show_note(nb))
-#                        self.icon.menu.entryconfigure(4, state="normal")
-                self.nb = len(self.note_data)
+                try:
+                    if not os.path.samefile(fichier, PATH_DATA):
+                        copy(fichier, PATH_DATA)
+                    self.show_all()
+                    keys = list(self.notes.keys())
+                    for key in keys:
+                        self.notes[key].delete(confirmation=False)
+                    with open(PATH_DATA, "rb") as fich:
+                        dp = pickle.Unpickler(fich)
+                        note_data = dp.load()
+                    for i, key in enumerate(note_data):
+                        data = note_data[key]
+                        note_id = "%i" % i
+                        self.note_data[note_id] = data
+                        cat = data["category"]
+                        if not CONFIG.has_option("Categories", cat):
+                            CONFIG.set("Categories", cat, data["color"])
+                        if data["visible"]:
+                            self.notes[note_id] = Sticky(self, key, **data)
+                        else:
+                            title = self.menu_notes_title(data["title"])
+                            self.hidden_notes[note_id] = title
+                            self.menu_notes.add_command(label=title,
+                                                        command=lambda nb=note_id: self.show_note(nb))
+                            self.icon.menu.entryconfigure(4, state="normal")
+                    self.nb = len(self.note_data)
+                    self.update_menu()
+                    self.update_notes()
+                except FileNotFoundError:
+                    showerror(_("Error"), _("The file {filename} does not exists.").format(filename=fichier))
 
     def show_all(self):
         """ Show all notes """
@@ -423,8 +430,11 @@ class App(Tk):
                                                     command=lambda nb=note_id: self.show_note(nb))
                         self.icon.menu.entryconfigure(4, state="normal")
                 self.nb = len(self.note_data)
-            except Exception:
-                showerror(_("Error"), _("The file {file} is not a valid .notes file.".format(file=fichier)))
+                self.update_menu()
+                self.update_notes()
+            except Exception as e:
+                message = _("The file {file} is not a valid .notes file.").format(file=fichier)
+                showerror(_("Error"), message + "\n" + str(e))
 
     def quit(self):
         self.destroy()

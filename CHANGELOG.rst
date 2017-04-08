@@ -5,6 +5,10 @@ Copyright 2016 Juliette Monsel <j_4321@protonmail.com>
 Changelog
 ---------
 
+- Version 2.0.2
+    * Corrected bug: import and restore did not update the categories, which lead
+      to incomplete menus and errors
+
 - Version 2.0.1
     * Corrected bug: fixed modes
 
