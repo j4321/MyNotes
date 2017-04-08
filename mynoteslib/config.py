@@ -22,7 +22,7 @@ Configuration Window
 """
 
 from tkinter import Toplevel, StringVar, Menu, TclError
-from tkinter.messagebox import showinfo
+from mynoteslib.messagebox import showinfo
 from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator
 from tkinter.ttk import Notebook, Combobox, Frame, Menubutton, Checkbutton
 from mynoteslib.constantes import CONFIG, save_config, COLORS
@@ -39,6 +39,8 @@ class Config(Toplevel):
         self.resizable(False, False)
         self.protocol("WM_DELETE_WINDOW", self.quit)
         self.changes = None
+
+        self.old_sync_on = CONFIG.getboolean("Sync", "on")
 
         ### style
         style = Style(self)
@@ -320,8 +322,20 @@ class Config(Toplevel):
 
     def ok(self):
         family = self.font_family.get()
+        if not family in self.fonts:
+            l = [i for i in self.fonts if i[:len(family)] == family]
+            if l:
+                family = l[0]
+            else:
+                family = 'TkDefaultFont'
         size = self.font_size.get()
         familytitle = self.fonttitle_family.get()
+        if not familytitle in self.fonts:
+            l = [i for i in self.fonts if i[:len(familytitle)] == familytitle]
+            if l:
+                familytitle = l[0]
+            else:
+                familytitle = 'TkDefaultFont'
         sizetitle = self.fonttitle_size.get()
         opacity = "%i" % float(self.opacity_scale.get())
         language = self.lang.get().lower()[:2]
@@ -346,7 +360,8 @@ class Config(Toplevel):
         CONFIG.set("Font", "title_family",familytitle)
         CONFIG.set("Font", "title_size", sizetitle)
         CONFIG.set("Font", "title_style", style)
-        self.master.set_password(self.sync_settings.save_sync_settings())
+        self.master.set_password(self.sync_settings.save_sync_settings(),
+                                 not self.old_sync_on)
 
         changes = {}
         for cat in self.category_settings.categories:

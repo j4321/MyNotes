@@ -6,7 +6,28 @@ Changelog
 ---------
 
 - Version 2.1.0
-    * Added synchronization with WebDav server
+    * Corrected bug: error when running as root
+    * Added synchronization with WebDav/FTP
+    * Added check for updates
+    * Added enumeration feature
+    * Changed mode to local insertion of bullets/checkboxes/numbering
+    * Reorganized right-click menu on note text (created 'Insert' sub-menu)
+
+- Version 2.0.3
+    * Corrected bug: wrong default category in default config file
+    * Corrected bug: selection of a font not on the system
+    * Corrected bug: bold and italic text was always in Liberation Sans
+    * Corrected bug: Alignement only set for fisrt selected line
+    * Corrected bug: ImportError: No module named 'tktray'
+    * Set colored text selected foreground to white
+    * Improved list/todo list modes: when a line is to long, the indentation stays
+
+- Version 2.0.2
+    * Corrected bug: import and restore did not update the categories, which lead
+      to incomplete menus and errors
+
+- Version 2.0.1
+    * Corrected bug: fixed modes
 
 - Version 2.0.0
     * Corrected bug: change from menu on note title not always saved

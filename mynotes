@@ -22,8 +22,7 @@ Main
 """
 
 
-import os
-import sys
+import os, sys, traceback
 from tkinter.messagebox import showerror
 from tkinter import Tk
 from mynoteslib.constantes import save_config, CONFIG
@@ -50,9 +49,13 @@ open(pidfile, 'w').write(pid)
 try:
     app = App()
     app.mainloop()
+except Exception:
+    root = Tk()
+    root.withdraw()
+    showerror(_("Error"), traceback.format_exc())
 finally:
     app.save()
     save_config()
     if CONFIG.getboolean("Sync", "on"):
-        upload_to_server(app.get_password())
+        upload_to_server(app.get_password(), app.get_time())
     os.unlink(pidfile)

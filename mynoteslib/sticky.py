@@ -22,15 +22,16 @@ Sticky note class
 """
 
 
-from tkinter import Text,  Toplevel, PhotoImage, StringVar, Menu
+from tkinter import Text,  Toplevel, PhotoImage, StringVar, Menu, TclError
 from tkinter.ttk import  Style, Sizegrip, Entry, Checkbutton, Label
-from tkinter.messagebox import askokcancel, showerror
 import os
+import re
 from time import strftime
 import ewmh
 from mynoteslib.constantes import CONFIG, COLORS, IM_LOCK, askopenfilename
 from mynoteslib.constantes import TEXT_COLORS, sorting, SYMBOLS
 from mynoteslib.symbols import pick_symbol
+from mynoteslib.messagebox import showerror, askokcancel
 
 class Sticky(Toplevel):
     """ Sticky note class """
@@ -100,20 +101,24 @@ class Sticky(Toplevel):
                         selectforeground='white',
                         inactiveselectbackground=selectbg,
                         selectbackground=selectbg,
-                        tabs=("10", 'center', '20', 'left'),
+                        tabs=("10", 'right', '20', 'left'),
                         relief="flat", borderwidth=0,
                         highlightthickness=0, font=font_text)
         # tags
-        self.txt.tag_configure("bold", font="Liberation\ Sans 10 bold")
-        self.txt.tag_configure("italic", font="Liberation\ Sans 10 italic")
-        self.txt.tag_configure("bold-italic", font="Liberation\ Sans 10 bold italic")
+        self.txt.tag_configure("bold", font="%s bold" % font_text)
+        self.txt.tag_configure("italic", font="%s italic" % font_text)
+        self.txt.tag_configure("bold-italic", font="%s bold italic" % font_text)
         self.txt.tag_configure("underline", underline=True)
         self.txt.tag_configure("overstrike", overstrike=True)
         self.txt.tag_configure("center", justify="center")
         self.txt.tag_configure("left", justify="left")
         self.txt.tag_configure("right", justify="right")
+        self.txt.tag_configure("list", lmargin1=0, lmargin2='20')
+        self.txt.tag_configure("todolist", lmargin1=0, lmargin2='20')
+        self.txt.tag_configure("enum", lmargin1=0, lmargin2='20')
+
         for coul in TEXT_COLORS.values():
-            self.txt.tag_configure(coul, foreground=coul)
+            self.txt.tag_configure(coul, foreground=coul, selectforeground="white")
         ### menus
         ### * menu on title
         self.menu = Menu(self, tearoff=False)
@@ -154,22 +159,25 @@ class Sticky(Toplevel):
                                       variable=self.position,
                                       command=self.set_position_normal)
         # mode: note, list, todo list
-        menu_mode = Menu(self.menu, tearoff=False)
-        self.mode = StringVar(self,
-                              kwargs.get("mode", "note"))
-        menu_mode.add_radiobutton(label=_("Note"), value="note",
-                                  variable=self.mode)
-        menu_mode.add_radiobutton(label=_("List"), value="list",
-                                  variable=self.mode)
-        menu_mode.add_radiobutton(label=_("ToDo List"), value="todolist",
-                                  variable=self.mode)
+#        menu_mode = Menu(self.menu, tearoff=False)
+#        self.mode = StringVar(self,
+#                              kwargs.get("mode", "note"))
+#        menu_mode.add_radiobutton(label=_("Note"), value="note",
+#                                  command=self.set_mode_note,
+#                                  variable=self.mode)
+#        menu_mode.add_radiobutton(label=_("List"), value="list",
+#                                  command=self.set_mode_list,
+#                                  variable=self.mode)
+#        menu_mode.add_radiobutton(label=_("ToDo List"), value="todolist",
+#                                  command=self.set_mode_todolist,
+#                                  variable=self.mode)
 
         self.menu.add_command(label=_("Delete"), command=self.delete)
         self.menu.add_cascade(label=_("Category"), menu=self.menu_categories)
         self.menu.add_cascade(label=_("Color"), menu=menu_note_color)
         self.menu.add_command(label=_("Lock"), command=self.lock)
         self.menu.add_cascade(label=_("Position"), menu=menu_position)
-        self.menu.add_cascade(label=_("Mode"), menu=menu_mode)
+#        self.menu.add_cascade(label=_("Mode"), menu=menu_mode)
 
         ### * menu on main text
         self.menu_txt = Menu(self.txt, tearoff=False)
@@ -191,14 +199,27 @@ class Sticky(Toplevel):
         for coul in colors:
             menu_colors.add_command(label=coul,
                                     command=lambda key=coul: self.change_sel_color(TEXT_COLORS[key]))
+        # insert
+        menu_insert = Menu(self.menu_txt, tearoff=False)
+        menu_insert.add_command(label=_("Symbols"), command=self.add_symbols)
+        menu_insert.add_command(label=_("Checkbox"), command=self.add_checkbox)
+        menu_insert.add_command(label=_("Image"), command=self.add_image)
+        menu_insert.add_command(label=_("Date"), command=self.add_date)
+
+        # lists
+        menu_lists = Menu(self.menu_txt, tearoff=False)
+        menu_lists.add_command(label=_("List"),
+                                  command=self.toggle_bullets)
+        menu_lists.add_command(label=_("ToDo List"),
+                                  command=self.toggle_checkboxes)
+        menu_lists.add_command(label=_("Enumeration"),
+                                  command=self.toggle_enum)
 
         self.menu_txt.add_cascade(label=_("Style"), menu=menu_style)
-        self.menu_txt.add_cascade(label=_("Alignment"), menu=menu_align)
+        self.menu_txt.add_cascade(label=_("Align"), menu=menu_align)
         self.menu_txt.add_cascade(label=_("Color"), menu=menu_colors)
-        self.menu_txt.add_command(label=_("Symbols"), command=self.add_symbols)
-        self.menu_txt.add_command(label=_("Checkbox"), command=self.add_checkbox)
-        self.menu_txt.add_command(label=_("Image"), command=self.add_image)
-        self.menu_txt.add_command(label=_("Date"), command=self.add_date)
+        self.menu_txt.add_cascade(label=_("Insert"), menu=menu_insert)
+        self.menu_txt.add_cascade(label=_("List"), menu=menu_lists)
         ### restore note content/appearence
         self.color = kwargs.get("color",
                                 CONFIG.get("Categories", self.category.get()))
@@ -257,7 +278,7 @@ class Sticky(Toplevel):
         self.corner.place(relx=1.0, rely=1.0, anchor="se")
 
         ### bindings
-        self.bind("<FocusOut>", self.focus_out)
+        self.bind("<FocusOut>", self.save_note)
         self.bind('<Configure>', self.bouge)
         self.bind('<Button-1>', self.change_focus, True)
         self.close.bind("<Button-1>", self.hide)
@@ -351,7 +372,7 @@ class Sticky(Toplevel):
             self.menu.entryconfigure(3, label=_("Unlock"))
             self.title_label.unbind("<Double-Button-1>")
             self.txt.unbind('<Button-3>')
-        self.focus_out()
+        self.save_note()
 
     def save_info(self):
         """ Return the dictionnary containing all the note data """
@@ -366,7 +387,7 @@ class Sticky(Toplevel):
         data["category"] = self.category.get()
         data["color"] = self.color
         data["locked"] = self.is_locked
-        data["mode"] = self.mode.get()
+#        data["mode"] = self.mode.get()
         data["inserted_objects"] = {}
         data["rolled"] = not self.txt.winfo_ismapped()
         data["position"] = self.position.get()
@@ -381,13 +402,39 @@ class Sticky(Toplevel):
 
     def change_color(self, key):
         self.color = COLORS[key]
-        self.focus_out()
+        self.save_note()
 
     def change_category(self, category=None):
         if category:
             self.category.set(category)
         self.color = CONFIG.get("Categories", self.category.get())
-        self.focus_out()
+        self.save_note()
+
+#    def set_mode_note(self):
+#        self.txt.tag_remove("list", "1.0", "end")
+#        self.txt.tag_remove("todolist", "1.0", "end")
+#        self.save_note()
+#
+#    def set_mode_list(self):
+#        index = self.txt.index("insert")
+#        if index.split(".")[-1] == "0":
+#            self.txt.insert("insert", "\t•\t")
+#        else:
+#            self.txt.insert("insert", "\n\t•\t")
+#        self.txt.tag_add("list", "1.0", "end")
+#        self.save_note()
+#
+#    def set_mode_todolist(self):
+#        index = self.txt.index("insert")
+#        if index.split(".")[-1] == "0":
+#            ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
+#            self.txt.window_create("insert", window=ch)
+#        else:
+#            self.txt.insert("insert", "\n")
+#            ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
+#            self.txt.window_create("insert", window=ch)
+#        self.txt.tag_add("todolist", "1.0", "end")
+#        self.save_note()
 
     def set_position_above(self):
         e = ewmh.EWMH()
@@ -396,7 +443,7 @@ class Sticky(Toplevel):
                 e.setWmState(w, 1, '_NET_WM_STATE_ABOVE')
                 e.setWmState(w, 0, '_NET_WM_STATE_BELOW')
         e.display.flush()
-        self.focus_out()
+        self.save_note()
 
     def set_position_below(self):
         e = ewmh.EWMH()
@@ -405,7 +452,7 @@ class Sticky(Toplevel):
                 e.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
                 e.setWmState(w, 1, '_NET_WM_STATE_BELOW')
         e.display.flush()
-        self.focus_out()
+        self.save_note()
 
     def set_position_normal(self):
         e = ewmh.EWMH()
@@ -414,7 +461,7 @@ class Sticky(Toplevel):
                 e.setWmState(w, 0, '_NET_WM_STATE_BELOW')
                 e.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
         e.display.flush()
-        self.focus_out()
+        self.save_note()
 
     ### bindings
     def enter_roll(self, event):
@@ -473,7 +520,7 @@ class Sticky(Toplevel):
             y = self.winfo_y() + deltay
             self.geometry("+%s+%s" % (x, y))
 
-    def focus_out(self, event=None):
+    def save_note(self, event=None):
         data = self.save_info()
         data["visible"] = True
         self.master.note_data[self.id] = data
@@ -489,6 +536,7 @@ class Sticky(Toplevel):
                           column=0, sticky="ewsn", pady=(1,4), padx=4)
             self.corner.place(relx=1.0, rely=1.0, anchor="se")
             self.geometry(self.save_geometry)
+        self.save_note()
 
     def hide(self, event=None):
         """ Hide note (can be displayed again via app menu) """
@@ -605,10 +653,127 @@ class Sticky(Toplevel):
         """ Align the text according to alignment (left, right, center) """
         if self.txt.tag_ranges("sel"):
             line = self.txt.index("sel.first").split(".")[0]
+            line2 = self.txt.index("sel.last").split(".")[0]
             # remove old alignment tag
-            self.txt.tag_remove("left", line + ".0", line + ".end")
-            self.txt.tag_remove("right", line + ".0", line + ".end")
-            self.txt.tag_remove("center", line + ".0", line + ".end")
+            self.txt.tag_remove("left", line + ".0", line2 + ".end")
+            self.txt.tag_remove("right", line + ".0", line2 + ".end")
+            self.txt.tag_remove("center", line + ".0", line2 + ".end")
             # set new alignment tag
-            self.txt.tag_add(alignment, line + ".0", line + ".end")
+            self.txt.tag_add(alignment, line + ".0", line2 + ".end")
+
+    def toggle_bullets(self):
+        if self.txt.tag_ranges("sel"):
+            line = self.txt.index("sel.first").split(".")[0]
+            line2 = self.txt.index("sel.last").split(".")[0]
+            i1 = line + ".0"
+            i2 = "%i.0" % (int(line2) + 1)
+            current_tags = self.txt.tag_names("sel.first")
+            if "list" in current_tags:
+                self.txt.tag_remove("list", i1, i2)
+                for i in range(int(line), int(line2)+1):
+                    if self.txt.get("%i.0"  % i, "%i.3"  % i) == "\t•\t":
+                        self.txt.delete("%i.0"  % i, "%i.3"  % i)
+            else:
+                lines  = self.txt.get(i1, line2 + ".end").splitlines()
+                for i, l in zip(range(int(line), int(line2)+1), lines):
+                    # remove checkboxes
+                    try:
+                        ch = self.txt.window_cget("%i.0"  % i, "window")
+                        self.txt.children[ch.split('.')[-1]].destroy()
+                        self.txt.delete("%i.0"  % i)
+                    except TclError:
+                        # there is no checkbox
+                        # remove enumeration
+                        res = re.match('^\t[0-9]+\.\t', l)
+                        if res:
+                            self.txt.delete("%i.0"  % i, "%i.%i"  % (i, res.end()))
+                    if self.txt.get("%i.0"  % i, "%i.3"  % i) != "\t•\t":
+                        self.txt.insert("%i.0" % i, "\t•\t")
+                self.txt.tag_add("list", i1, i2)
+                self.txt.tag_remove("todolist", i1, i2)
+                self.txt.tag_remove("enum", i1, i2)
+            self.update_enum()
+
+    def toggle_enum(self, remove_others=True):
+        if self.txt.tag_ranges("sel"):
+            line = self.txt.index("sel.first").split(".")[0]
+            line2 = self.txt.index("sel.last").split(".")[0]
+            i1 = line + ".0"
+            i2 = "%i.0" % (int(line2) + 1)
+            current_tags = self.txt.tag_names("sel.first")
+            if "enum" in current_tags:
+                self.txt.tag_remove("enum", i1, i2)
+                lines  = self.txt.get(i1, line2 + ".end").splitlines()
+                for i,l in zip(range(int(line), int(line2) + 1), lines):
+                    res = re.match('^\t[0-9]+\.\t', l)
+                    if res:
+                        self.txt.delete("%i.0"  % i, "%i.%i"  % (i, res.end()))
+            else:
+                for i in range(int(line), int(line2) + 1):
+                    # remove checkboxes
+                    try:
+                        ch = self.txt.window_cget("%i.0"  % i, "window")
+                        self.txt.children[ch.split('.')[-1]].destroy()
+                        self.txt.delete("%i.0"  % i)
+                    except TclError:
+                        # there is no checkbox
+                        # remove bullets
+                        if self.txt.get("%i.0"  % i, "%i.3"  % i) == "\t•\t":
+                            self.txt.delete("%i.0"  % i, "%i.3"  % i)
+                    self.txt.insert("%i.0" % i, "\t0.\t")
+                self.txt.tag_add("enum", i1, i2)
+                self.txt.tag_remove("todolist", i1, i2)
+                self.txt.tag_remove("list", i1, i2)
+            self.update_enum()
+
+    def toggle_checkboxes(self, remove_others=True):
+        if self.txt.tag_ranges("sel"):
+            line = self.txt.index("sel.first").split(".")[0]
+            line2 = self.txt.index("sel.last").split(".")[0]
+            i1 = line + ".0"
+            i2 = "%i.0" % (int(line2) + 1)
+            current_tags = self.txt.tag_names("sel.first")
+            if "todolist" in current_tags:
+                self.txt.tag_remove("todolist", i1, i2)
+                for i in range(int(line), int(line2)+1):
+                    try:
+                        ch = self.txt.window_cget("%i.0"  % i, "window")
+                        self.txt.children[ch.split('.')[-1]].destroy()
+                        self.txt.delete("%i.0"  % i)
+                    except TclError:
+                        # there is no checkbox
+                        pass
+            else:
+                lines  = self.txt.get(i1, line2 + ".end").splitlines()
+                for i,l in zip(range(int(line), int(line2) + 1), lines):
+                    res = re.match('^\t[0-9]+\.\t', l)
+                    if res:
+                        self.txt.delete("%i.0"  % i, "%i.%i"  % (i, res.end()))
+                    elif self.txt.get("%i.0"  % i, "%i.3"  % i) == "\t•\t":
+                        self.txt.delete("%i.0"  % i, "%i.3"  % i)
+                    try:
+                        ch = self.txt.window_cget("%i.0"  % i, "window")
+                    except TclError:
+                        ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
+                        self.txt.window_create("%i.0"  % i, window=ch)
+                self.txt.tag_add("todolist", i1, i2)
+                self.txt.tag_remove("list", i1, i2)
+                self.txt.tag_remove("enum", i1, i2)
+            self.update_enum()
+
+    def update_enum(self):
+        """ update enumeration numbers """
+        tag_ranges = self.txt.tag_ranges("enum")
+        for deb, fin in zip(tag_ranges[::2], tag_ranges[1::2]):
+            lines  = self.txt.get(deb, fin).splitlines()
+            indexes = []
+            for i,l in enumerate(lines):
+                res = re.match('^\t[0-9]+\.\t', l)
+                if res:
+                    indexes.append((i - 1 + int(deb.string.split(".")[0]), res.end()))
+            for j, (i, end) in enumerate(indexes):
+                self.txt.delete("%i.0" % (i + 1), "%i.%i" % (i + 1, end))
+                self.txt.insert("%i.0" % (i + 1), "\t%i.\t" % (j + 1))
+            self.txt.tag_add("enum", deb, fin)
+
 

@@ -1,8 +1,9 @@
-CHANGELOG.rst
-COPYING.txt
+COPYING
 MANIFEST.in
 README.rst
+changelog
 mynotes
+mynotes.1.gz
 mynotes.desktop
 mynotes.svg
 setup.py
@@ -17,10 +18,12 @@ mynoteslib/categories.py
 mynoteslib/config.py
 mynoteslib/constantes.py
 mynoteslib/export.py
+mynoteslib/messagebox.py
 mynoteslib/sticky.py
 mynoteslib/symbols.py
 mynoteslib/sync.py
 mynoteslib/tktray.py
+mynoteslib/version_check.py
 mynoteslib/images/close.png
 mynoteslib/images/close_active.png
 mynoteslib/images/moins.png

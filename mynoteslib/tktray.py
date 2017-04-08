@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 Copyright 2010 Michael Lange <klappnase@web.de>
-Copyright 2016 Juliette Monsel <j_4321@sfr.fr> (adaptation du code pour Python 3.5)
+Copyright 2016 Juliette Monsel <j_4321@protonmail.com> (adaptation du code pour Python 3.5)
 
 Python wrapper for Tktray.
 

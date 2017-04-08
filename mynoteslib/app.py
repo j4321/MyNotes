@@ -23,19 +23,20 @@ Main class
 
 from tkinter import Tk, PhotoImage, Menu, Toplevel
 from tkinter.ttk import Style, Label, Checkbutton, Button, Entry
-from tkinter.messagebox import askokcancel, showerror, showinfo
-import tktray
-import os
+import os, re, time
 from shutil import copy
 import pickle
+from mynoteslib import tktray
 from mynoteslib.constantes import CONFIG, PATH_DATA, PATH_DATA_BACKUP, LOCAL_PATH
-from mynoteslib.constantes import backup, asksaveasfilename, askopenfilename
+from mynoteslib.constantes import backup, asksaveasfilename, askopenfilename, save_modif_info
 import mynoteslib.constantes as cst
 from mynoteslib.config import Config
-from mynoteslib.sync import download_from_server, upload_to_server, check_login_info
+from mynoteslib.sync import download_from_server, check_login_info, warn_exist_remote
 from mynoteslib.export import Export
 from mynoteslib.sticky import Sticky
 from mynoteslib.about import About
+from mynoteslib.version_check import UpdateChecker
+from mynoteslib.messagebox import showerror, showinfo, askokcancel
 import ewmh
 
 
@@ -68,7 +69,6 @@ class App(Tk):
         self.hidden_notes = {}
         self.menu_show_cat = Menu(self.icon.menu, tearoff=False)
         self.menu_hide_cat = Menu(self.icon.menu, tearoff=False)
-        self.update_menu()
         self.icon.configure(image=self.img)
         self.icon.menu.add_command(label=_("New Note"), command=self.new)
         self.icon.menu.add_separator()
@@ -93,11 +93,12 @@ class App(Tk):
         self.icon.menu.add_command(label=_("Export"), command=self.export_notes)
         self.icon.menu.add_command(label=_("Import"), command=self.import_notes)
         self.icon.menu.add_separator()
+        self.icon.menu.add_command(label=_('Check for Updates'),
+                                   command=lambda: UpdateChecker(self))
         self.icon.menu.add_command(label=_('About'), command=lambda: About(self))
         self.icon.menu.add_command(label=_('Quit'), command=self.quit)
 
         ### Sync
-
         self.password = ""
 
         if CONFIG.getboolean("Sync", "on"):
@@ -106,6 +107,7 @@ class App(Tk):
                 while (not check_login_info(self.password)) and self.password:
                     self.get_server_login()
                 if self.password:
+                    self.configure(cursor="watch")
                     res = download_from_server(self.password)
                     if not res:
                         showinfo(_("Information"),
@@ -115,10 +117,9 @@ class App(Tk):
                 showinfo(_("Information"),
                          _("No password has been given so synchronization has been disabled."))
                 CONFIG.set("Sync", "on", "False")
-
+        self.time = time.time()
 
         ### Restore notes
-
         self.note_data = {}
         if os.path.exists(PATH_DATA):
             with open(PATH_DATA, "rb") as fich:
@@ -129,6 +130,9 @@ class App(Tk):
             backup()
             for key in self.note_data:
                 data = self.note_data[key]
+                cat = data["category"]
+                if not CONFIG.has_option("Categories", cat):
+                    CONFIG.set("Categories", cat, data["color"])
                 if data["visible"]:
                     self.notes[key] = Sticky(self, key, **data)
                 else:
@@ -138,15 +142,23 @@ class App(Tk):
                                                 command=lambda nb=key: self.show_note(nb))
                     self.icon.menu.entryconfigure(4, state="normal")
         self.nb = len(self.note_data)
+        self.update_menu()
+        self.update_notes()
         self.make_notes_sticky()
 
-        # newline depending on mode
+        # newline depending on list type
         self.bind_class("Text", "<Return>",  self.insert_newline)
+        # char deletion taking into account list type
+        self.bind_class("Text", "<BackSpace>",  self.delete_char)
         # change Ctrl+A to select all instead of go to the beginning of the line
         self.bind_class('Text', '<Control-a>', self.select_all_text)
         self.bind_class('TEntry', '<Control-a>', self.select_all_entry)
         # remove Ctrl+Y from shortcuts since it's pasting things like Ctrl+V
         self.unbind_class('Text', '<Control-y>')
+
+        # check for updates
+        if CONFIG.getboolean("General", "check_update"):
+            UpdateChecker(self)
 
     ### class bindings
     def select_all_entry(self, event):
@@ -155,16 +167,42 @@ class App(Tk):
     def select_all_text(self, event):
         event.widget.tag_add("sel","1.0","end")
 
+    def delete_char(self, event):
+        txt = event.widget
+        deb_line = txt.get("insert linestart", "insert")
+        tags = txt.tag_names("insert")
+        if txt.index("insert") != "1.0":
+            if txt.tag_ranges("sel"):
+                if txt.tag_nextrange("enum", "sel.first", "sel.last"):
+                    update = True
+                else:
+                    update = False
+                txt.delete("sel.first", "sel.last")
+                if update:
+                    txt.master.update_enum()
+            else:
+                if re.match('^\t[0-9]+\.\t$', deb_line) and 'enum' in tags:
+                    txt.delete("insert linestart", "insert")
+                    txt.master.update_enum()
+                elif deb_line == "\t•\t" and 'list' in tags:
+                    txt.delete("insert linestart", "insert")
+                else:
+                    txt.delete("insert-1c")
+
     def insert_newline(self, event):
-        mode = event.widget.master.mode.get()
-        if mode == "list":
-            event.widget.insert("insert", "\n\t•\t")
-        elif mode == "todolist":
-            event.widget.insert("insert", "\n")
-            ch = Checkbutton(event.widget, style=event.widget.master.id + ".TCheckbutton")
-            event.widget.window_create("insert", window=ch)
+        txt = event.widget
+        tags = txt.tag_names("insert")
+        if "list" in tags:
+            txt.insert("insert", "\n\t•\t", tags)
+        elif "enum" in tags:
+            txt.insert("insert", "\n\t0.\t", tags)
+            txt.master.update_enum()
+        elif  "todolist" in tags:
+            txt.insert("insert", "\n", tags)
+            ch = Checkbutton(txt, style=txt.master.id + ".TCheckbutton")
+            txt.window_create("insert", window=ch)
         else:
-            event.widget.insert("insert", "\n")
+            txt.insert("insert", "\n")
 
     def make_notes_sticky(self):
         for w in self.ewmh.getClientList():
@@ -204,53 +242,52 @@ class App(Tk):
                 dp = pickle.Pickler(fich)
                 dp.dump(self.note_data)
 
-    def restore(self):
+    def restore(self, fichier=None, confirmation=True):
         """ restore notes from backup """
-        rep = askokcancel(_("Warning"),
-                          _("Restoring a backup will erase the current notes."),
-                          icon="warning")
+        if confirmation:
+            rep = askokcancel(_("Warning"),
+                              _("Restoring a backup will erase the current notes."),
+                              icon="warning")
+        else:
+            rep = True
         if rep:
-            fichier = askopenfilename(defaultextension=".backup",
-                                      filetypes=[],
-                                      initialdir=LOCAL_PATH,
-                                      initialfile="",
-                                      title=_('Restore Backup'))
+            if fichier is None:
+                fichier = askopenfilename(defaultextension=".backup",
+                                          filetypes=[],
+                                          initialdir=LOCAL_PATH,
+                                          initialfile="",
+                                          title=_('Restore Backup'))
             if fichier:
-                self.show_all()
-                keys = list(self.notes.keys())
-                for key in keys:
-                    self.notes[key].delete(confirmation=False)
-                copy(fichier, PATH_DATA)
-                with open(PATH_DATA, "rb") as fich:
-                    dp = pickle.Unpickler(fich)
-                    note_data = dp.load()
-                for i, key in enumerate(note_data):
-                    data = note_data[key]
-                    note_id = "%i" % i
-                    self.note_data[note_id] = data
-                    cat = data["category"]
-                    if not CONFIG.has_option("Categories", cat):
-                        CONFIG.set("Categories", cat, data["color"])
-                    if data["visible"]:
-                        self.notes[note_id] = Sticky(self, key, **data)
-                    else:
-                        title = self.menu_notes_title(data["title"])
-                        self.hidden_notes[note_id] = title
-                        self.menu_notes.add_command(label=title,
-                                                    command=lambda nb=note_id: self.show_note(nb))
-                        self.icon.menu.entryconfigure(4, state="normal")
-
-#                for key in self.note_data:
-#                    data = self.note_data[key]
-#                    if data["visible"]:
-#                        self.notes[key] = Sticky(self, key, **data)
-#                    else:
-#                        title = self.menu_notes_title(data["title"])
-#                        self.hidden_notes[key] = title
-#                        self.menu_notes.add_command(label=title,
-#                                                    command=lambda nb=key: self.show_note(nb))
-#                        self.icon.menu.entryconfigure(4, state="normal")
-                self.nb = len(self.note_data)
+                try:
+                    if not os.path.samefile(fichier, PATH_DATA):
+                        copy(fichier, PATH_DATA)
+                    self.show_all()
+                    keys = list(self.notes.keys())
+                    for key in keys:
+                        self.notes[key].delete(confirmation=False)
+                    with open(PATH_DATA, "rb") as fich:
+                        dp = pickle.Unpickler(fich)
+                        note_data = dp.load()
+                    for i, key in enumerate(note_data):
+                        data = note_data[key]
+                        note_id = "%i" % i
+                        self.note_data[note_id] = data
+                        cat = data["category"]
+                        if not CONFIG.has_option("Categories", cat):
+                            CONFIG.set("Categories", cat, data["color"])
+                        if data["visible"]:
+                            self.notes[note_id] = Sticky(self, key, **data)
+                        else:
+                            title = self.menu_notes_title(data["title"])
+                            self.hidden_notes[note_id] = title
+                            self.menu_notes.add_command(label=title,
+                                                        command=lambda nb=note_id: self.show_note(nb))
+                            self.icon.menu.entryconfigure(4, state="normal")
+                    self.nb = len(self.note_data)
+                    self.update_menu()
+                    self.update_notes()
+                except FileNotFoundError:
+                    showerror(_("Error"), _("The file {filename} does not exists.").format(filename=fichier))
 
     def show_all(self):
         """ Show all notes """
@@ -359,6 +396,7 @@ class App(Tk):
         with open(PATH_DATA, "wb") as fich:
             dp = pickle.Pickler(fich)
             dp.dump(self.note_data)
+        save_modif_info()
 
     def new(self):
         """ Create a new note """
@@ -450,18 +488,20 @@ class App(Tk):
                                                     command=lambda nb=note_id: self.show_note(nb))
                         self.icon.menu.entryconfigure(4, state="normal")
                 self.nb = len(self.note_data)
-            except Exception:
-                showerror(_("Error"), _("The file {file} is not a valid .notes file.".format(file=fichier)))
+                self.update_menu()
+                self.update_notes()
+            except Exception as e:
+                message = _("The file {file} is not a valid .notes file.").format(file=fichier)
+                showerror(_("Error"), message + "\n" + str(e))
 
     def quit(self):
         self.destroy()
-#        if CONFIG.getboolean("Sync", "on"):
-#            upload_to_server(self.password)
 
     def get_server_pwd(self):
         def ok(event=None):
             self.password = pwd.get()
             top.destroy()
+            self.update_idletasks()
 
         top = Toplevel(self)
         top.title(_("Sync"))
@@ -507,8 +547,10 @@ class App(Tk):
         ch = Checkbutton(top, text=_("Synchronize notes with server"), command=toggle)
         ch.state(("selected",))
         ch.grid(row=0, columnspan=2, padx=4, pady=4, sticky="w")
-        Label(top, text=_("Username")).grid(row=1, column=0, padx=4, pady=4)
-        Label(top, text=_("Password")).grid(row=2, column=0, padx=4, pady=4)
+        Label(top, text=_("Username")).grid(row=1, column=0, padx=4, pady=4,
+                                            sticky='e')
+        Label(top, text=_("Password")).grid(row=2, column=0, padx=4, pady=4,
+                                            sticky='e')
         user.grid(row=1, column=1, padx=4, pady=4)
         pwd.grid(row=2, column=1, padx=4, pady=4)
         Button(top, text="Ok", command=ok).grid(row=3, columnspan=2)
@@ -516,7 +558,7 @@ class App(Tk):
         pwd.focus_set()
         self.wait_window(top)
 
-    def set_password(self, pwd):
+    def set_password(self, pwd, sync_activated):
         self.password = pwd
         if CONFIG.getboolean("Sync", "on"):
             if not self.password:
@@ -525,6 +567,13 @@ class App(Tk):
                          _("No password has been given so synchronization has been disabled."))
             while (not check_login_info(self.password)) and self.password:
                 self.get_server_login()
+            if self.password and sync_activated:
+                res = warn_exist_remote(self.password)
+                if res == "download":
+                    self.restore(PATH_DATA, False)
 
     def get_password(self):
         return self.password
+
+    def get_time(self):
+        return self.time

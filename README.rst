@@ -1,5 +1,5 @@
 MyNotes - Sticky notes/post-it
-=============================================
+==============================
 Copyright 2016-2017 Juliette Monsel <j_4321@protonmail.com>
 
 MyNotes is a sticky note application. An icon appears in the system tray
@@ -18,6 +18,7 @@ First, install the missing dependencies among:
     - Tkinter (Python wrapper for Tk)
     - Tktray https://code.google.com/archive/p/tktray/downloads
     - ewmh https://pypi.python.org/pypi/ewmh
+    
 For instance, in Ubuntu/Debian you will need to install the following packages:
 python3-tk, tk-tktray, python3-ewmh (available in zesty only)
 
@@ -34,6 +35,9 @@ Then install the application:
 
 You can now launch it from `Menu > Utility > MyNotes`. You can launch
 it from the command line with `mynotes`.
+
+Optionnal dependencies:
+To benefit from a nicer filebrowser, you can install either zenity or `tkFileBrowser <https://pypi.python.org/pypi/tkFileBrowser>`__ (`AUR <https://aur.archlinux.org/packages/python-tkfilebrowser/>`__).
 
 If you encounter bugs or if you have suggestions, please write me an email
 at <j_4321@protonmail.com>.
