@@ -33,7 +33,6 @@ Changelog
     * Corrected bug: change from menu on note title not always saved
     * Corrected bug: restoring backup containing notes from deleted
     * Corrected bug: font size / font family selection issue
-      category triggered an error
     * Added warning before restoring backup to tell the user that the
       current notes will be erased.
     * Preferences organized in tabs and category manager became a tab

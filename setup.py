@@ -1,10 +1,8 @@
 #! /usr/bin/python3
 # -*- coding:Utf-8 -*-
 
-try:
-    from setuptools import setup
-except:
-    from distutils.core import setup
+
+from setuptools import setup
 
 import os
 images = [os.path.join("mynoteslib/images/", img) for img in os.listdir("mynoteslib/images/")]

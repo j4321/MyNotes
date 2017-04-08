@@ -18,7 +18,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-Constants
+The icons are modified versions of icons from the elementary project
+(the xfce fork to be precise https://github.com/shimmerproject/elementary-xfce)
+Copyright 2007-2013 elementary LLC.
+
+Constants and functions
 """
 
 
