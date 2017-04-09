@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Main class
 """
 
-from tkinter import Tk, PhotoImage, Menu, Toplevel
+from tkinter import Tk, PhotoImage, Menu, Toplevel, TclError
 from tkinter.ttk import Style, Label, Checkbutton, Button, Entry
 import os, re, time
 from shutil import copy
@@ -153,14 +153,21 @@ class App(Tk):
         # change Ctrl+A to select all instead of go to the beginning of the line
         self.bind_class('Text', '<Control-a>', self.select_all_text)
         self.bind_class('TEntry', '<Control-a>', self.select_all_entry)
-        # remove Ctrl+Y from shortcuts since it's pasting things like Ctrl+V
-        self.unbind_class('Text', '<Control-y>')
+        # bind Ctrl+Y to redo
+        self.bind_class('Text', '<Control-y>', self.redo_event)
 
         # check for updates
         if CONFIG.getboolean("General", "check_update"):
             UpdateChecker(self)
 
     ### class bindings
+    def redo_event(self, event):
+        try:
+            event.widget.edit_redo()
+        except TclError:
+            # nothing to redo
+            pass
+
     def select_all_entry(self, event):
         event.widget.selection_range(0, "end")
 
@@ -171,23 +178,22 @@ class App(Tk):
         txt = event.widget
         deb_line = txt.get("insert linestart", "insert")
         tags = txt.tag_names("insert")
-        if txt.index("insert") != "1.0":
-            if txt.tag_ranges("sel"):
-                if txt.tag_nextrange("enum", "sel.first", "sel.last"):
-                    update = True
-                else:
-                    update = False
-                txt.delete("sel.first", "sel.last")
-                if update:
-                    txt.master.update_enum()
+        if txt.tag_ranges("sel"):
+            if txt.tag_nextrange("enum", "sel.first", "sel.last"):
+                update = True
             else:
-                if re.match('^\t[0-9]+\.\t$', deb_line) and 'enum' in tags:
-                    txt.delete("insert linestart", "insert")
-                    txt.master.update_enum()
-                elif deb_line == "\t•\t" and 'list' in tags:
-                    txt.delete("insert linestart", "insert")
-                else:
-                    txt.delete("insert-1c")
+                update = False
+            txt.delete("sel.first", "sel.last")
+            if update:
+                txt.master.update_enum()
+        elif txt.index("insert") != "1.0":
+            if re.match('^\t[0-9]+\.\t$', deb_line) and 'enum' in tags:
+                txt.delete("insert linestart", "insert")
+                txt.master.update_enum()
+            elif deb_line == "\t•\t" and 'list' in tags:
+                txt.delete("insert linestart", "insert")
+            else:
+                txt.delete("insert-1c")
 
     def insert_newline(self, event):
         txt = event.widget
@@ -195,8 +201,12 @@ class App(Tk):
         if "list" in tags:
             txt.insert("insert", "\n\t•\t", tags)
         elif "enum" in tags:
+            txt.configure(autoseparators=False)
+            txt.edit_separator()
             txt.insert("insert", "\n\t0.\t", tags)
             txt.master.update_enum()
+            txt.edit_separator()
+            txt.configure(autoseparators=True)
         elif  "todolist" in tags:
             txt.insert("insert", "\n", tags)
             ch = Checkbutton(txt, style=txt.master.id + ".TCheckbutton")

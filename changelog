@@ -11,7 +11,12 @@ Changelog
     * Added check for updates
     * Added enumeration feature
     * Changed mode to local insertion of bullets/checkboxes/numbering
-    * Reorganized right-click menu on note text (created 'Insert' sub-menu)
+    * Reorganized right-click menu on note text 
+      (created 'Insert' and 'List' sub-menu)
+    * Restructured distribution layout to have a neater install and make
+      the app more portable (when run locally, all config/backup files are
+      saved locally instead of in the home directory)
+    * Added manpage
 
 - Version 2.0.3
     * Corrected bug: wrong default category in default config file

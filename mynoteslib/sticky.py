@@ -701,6 +701,8 @@ class Sticky(Toplevel):
             i1 = line + ".0"
             i2 = "%i.0" % (int(line2) + 1)
             current_tags = self.txt.tag_names("sel.first")
+            self.txt.configure(autoseparators=False)
+            self.txt.edit_separator()
             if "enum" in current_tags:
                 self.txt.tag_remove("enum", i1, i2)
                 lines  = self.txt.get(i1, line2 + ".end").splitlines()
@@ -725,6 +727,8 @@ class Sticky(Toplevel):
                 self.txt.tag_remove("todolist", i1, i2)
                 self.txt.tag_remove("list", i1, i2)
             self.update_enum()
+            self.txt.configure(autoseparators=True)
+            self.txt.edit_separator()
 
     def toggle_checkboxes(self, remove_others=True):
         if self.txt.tag_ranges("sel"):
