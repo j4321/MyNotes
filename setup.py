@@ -1,10 +1,8 @@
 #! /usr/bin/python3
 # -*- coding:Utf-8 -*-
 
-try:
-    from setuptools import setup
-except:
-    from distutils.core import setup
+from setuptools import setup
+
 
 files = ["images/*"]
 data_files = [("share/pixmaps", ["mynotes.svg"]),
@@ -13,7 +11,7 @@ data_files = [("share/pixmaps", ["mynotes.svg"]),
               ("share/applications", ["mynotes.desktop"])]
 
 setup(name = "mynotes",
-      version = "2.0.3",
+      version = "2.0.4",
       description = "Post-it system tray app",
       author = "Juliette Monsel",
       author_email = "j_4321@protonmail.fr",

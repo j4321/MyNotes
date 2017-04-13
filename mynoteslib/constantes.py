@@ -27,8 +27,9 @@ import gettext
 from configparser import ConfigParser
 from locale import getdefaultlocale, setlocale, LC_ALL
 from subprocess import check_output, CalledProcessError
+import pkg_resources
 
-VERSION = "2.0.3"
+VERSION = pkg_resources.require("mynotes")[0].version
 SYMBOLS = 'ΓΔΘΛΞΠΣΦΨΩαβγδεζηθικλμνξοπρςστυφχψωϐϑϒϕϖæœ«»¡¿£¥$€§ø∞∀∃∄∈∉∫∧∨∩∪÷±√∝∼≃≅≡≤≥≪≫≲≳▪•✭✦➔➢✔▴▸✗✚✳☎✉✎♫⚠⇒⇔'
 
 #----paths----
@@ -279,3 +280,27 @@ def optionmenu_patch(om, var):
     for i in range(0, last+1):
         menu.entryconfig(i, variable=var)
     menu.bind("<FocusOut>", menu.unpost())
+
+def add_checkboxes(data):
+    t = data["txt"].splitlines()
+    obj = data["inserted_objects"]
+    print(obj)
+    indexes = list(obj.keys())
+    indexes.sort(reverse=True, key=sorting)
+    for i in indexes:
+        tp, val = obj[i]
+        line, col = i.split(".")
+        line = int(line) - 1
+        while line >= len(t):
+            t.append("")
+        col = int(col)
+        l = list(t[line])
+        if tp == "checkbox":
+            if val:
+                l.insert(col, "☒ ")
+            else:
+                l.insert(col, "☐ ")
+        elif tp == "image":
+            l.insert(col, "![%s](%s)" % (os.path.split(val)[-1], val))
+        t[line] = "".join(l)
+    return "\n".join(t)

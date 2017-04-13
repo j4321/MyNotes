@@ -107,8 +107,10 @@ class Sticky(Toplevel):
         self.txt.tag_configure("bold", font="%s bold" % font_text)
         self.txt.tag_configure("italic", font="%s italic" % font_text)
         self.txt.tag_configure("bold-italic", font="%s bold italic" % font_text)
-        self.txt.tag_configure("underline", underline=True)
-        self.txt.tag_configure("overstrike", overstrike=True)
+        self.txt.tag_configure("underline", underline=True,
+                               selectforeground="white")
+        self.txt.tag_configure("overstrike", overstrike=True,
+                               selectforeground="white")
         self.txt.tag_configure("center", justify="center")
         self.txt.tag_configure("left", justify="left")
         self.txt.tag_configure("right", justify="right")
@@ -116,7 +118,12 @@ class Sticky(Toplevel):
         self.txt.tag_configure("todolist", lmargin1=0, lmargin2='20')
 
         for coul in TEXT_COLORS.values():
-            self.txt.tag_configure(coul, foreground=coul, selectforeground="white")
+            self.txt.tag_configure(coul, foreground=coul,
+                                   selectforeground="white")
+            self.txt.tag_configure(coul + "-underline", foreground=coul,
+                                   selectforeground="white", underline=True)
+            self.txt.tag_configure(coul + "-overstrike", foreground=coul,
+                                   overstrike=True, selectforeground="white")
         ### menus
         ### * menu on title
         self.menu = Menu(self, tearoff=False)
@@ -182,8 +189,8 @@ class Sticky(Toplevel):
         menu_style = Menu(self.menu_txt, tearoff=False)
         menu_style.add_command(label=_("Bold"), command=lambda: self.toggle_text_style("bold"))
         menu_style.add_command(label=_("Italic"), command=lambda: self.toggle_text_style("italic"))
-        menu_style.add_command(label=_("Underline"), command=lambda: self.toggle_text_style("underline"))
-        menu_style.add_command(label=_("Overstrike"), command=lambda: self.toggle_text_style("overstrike"))
+        menu_style.add_command(label=_("Underline"), command=self.toggle_underline)
+        menu_style.add_command(label=_("Overstrike"), command=self.toggle_overstrike)
         # text alignment
         menu_align = Menu(self.menu_txt, tearoff=False)
         menu_align.add_command(label=_("Left"), command=lambda: self.set_align("left"))
@@ -470,10 +477,10 @@ class Sticky(Toplevel):
             event.widget.focus_force()
 
     def show_menu(self, event):
-        self.menu.tk_popup(event.x_root,event.y_root)
+        self.menu.tk_popup(event.x_root, event.y_root)
 
     def show_menu_txt(self, event):
-        self.menu_txt.tk_popup(event.x_root,event.y_root)
+        self.menu_txt.tk_popup(event.x_root, event.y_root)
 
     def resize(self, event):
         self.save_geometry = self.geometry()
@@ -629,13 +636,55 @@ class Sticky(Toplevel):
                 # first char is normal, so apply style to the whole selection
                 self.txt.tag_add(style, "sel.first", "sel.last")
 
+    def toggle_underline(self):
+        if self.txt.tag_ranges("sel"):
+            current_tags = self.txt.tag_names("sel.first")
+            if "underline" in current_tags:
+                # first char is in style so 'unstyle' the range
+                self.txt.tag_remove("underline", "sel.first", "sel.last")
+                for coul in TEXT_COLORS.values():
+                    self.txt.tag_remove(coul + "-underline", "sel.first", "sel.last")
+            else:
+                self.txt.tag_add("underline", "sel.first", "sel.last")
+                for coul in TEXT_COLORS.values():
+                    r = self.txt.tag_nextrange(coul, "sel.first", "sel.last")
+                    if r:
+                        for deb, fin in zip(r[::2], r[1::2]):
+                            self.txt.tag_add(coul + "-underline", "sel.first", "sel.last")
+
+    def toggle_overstrike(self):
+        if self.txt.tag_ranges("sel"):
+            current_tags = self.txt.tag_names("sel.first")
+            if "overstrike" in current_tags:
+                # first char is in style so 'unstyle' the range
+                self.txt.tag_remove("overstrike", "sel.first", "sel.last")
+                for coul in TEXT_COLORS.values():
+                    self.txt.tag_remove(coul + "-overstrike", "sel.first", "sel.last")
+            else:
+                self.txt.tag_add("overstrike", "sel.first", "sel.last")
+                for coul in TEXT_COLORS.values():
+                    r = self.txt.tag_nextrange(coul, "sel.first", "sel.last")
+                    if r:
+                        for deb, fin in zip(r[::2], r[1::2]):
+                            self.txt.tag_add(coul + "-overstrike", "sel.first", "sel.last")
+
     def change_sel_color(self, color):
         """ change the color of the selection """
         if self.txt.tag_ranges("sel"):
             for coul in TEXT_COLORS.values():
                 self.txt.tag_remove(coul, "sel.first", "sel.last")
+                self.txt.tag_remove(coul + "-overstrike", "sel.first", "sel.last")
+                self.txt.tag_remove(coul + "-underline", "sel.first", "sel.last")
             if not color == "black":
                 self.txt.tag_add(color, "sel.first", "sel.last")
+                underline = self.txt.tag_nextrange("underline", "sel.first", "sel.last")
+                overstrike = self.txt.tag_nextrange("overstrike", "sel.first", "sel.last")
+
+                for deb, fin in zip(underline[::2], underline[1::2]):
+                    self.txt.tag_add(color + "-underline", deb, fin)
+                for deb, fin in zip(overstrike[::2], overstrike[1::2]):
+                    self.txt.tag_add(color + "-overstrike", deb, fin)
+
 
     def set_align(self, alignment):
         """ Align the text according to alignment (left, right, center) """

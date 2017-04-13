@@ -1,7 +1,7 @@
-CHANGELOG.rst
-COPYING.txt
+COPYING
 MANIFEST.in
 README.rst
+changelog
 mynotes
 mynotes.desktop
 mynotes.svg

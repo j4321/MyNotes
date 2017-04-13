@@ -5,6 +5,11 @@ Copyright 2016 Juliette Monsel <j_4321@protonmail.com>
 Changelog
 ---------
 
+- Version 2.0.4
+    * automatically fetch right version (with pkg_resources)
+    * Corrected bug: overstrike and underline always black 
+    * Improved text export: include checkboxes
+    
 - Version 2.0.3
     * Corrected bug: wrong default category in default config file
     * Corrected bug: selection of a font not on the system

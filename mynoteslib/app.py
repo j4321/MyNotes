@@ -371,7 +371,7 @@ class App(Tk):
                         cat = self.note_data[key]["category"]
                         if cat in cats:
                             cats[cat].append((self.note_data[key]["title"],
-                                              self.note_data[key]["txt"]))
+                                              cst.add_checkboxes(self.note_data[key])))
                     text = ""
                     for cat in cats:
                         cat_txt = _("Category: {category}\n").format(category=cat)
