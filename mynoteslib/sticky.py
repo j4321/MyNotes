@@ -22,15 +22,16 @@ Sticky note class
 """
 
 
-from tkinter import Text,  Toplevel, PhotoImage, StringVar, Menu
+from tkinter import Text,  Toplevel, PhotoImage, StringVar, Menu, TclError
 from tkinter.ttk import  Style, Sizegrip, Entry, Checkbutton, Label
-from tkinter.messagebox import askokcancel, showerror
 import os
+import re
 from time import strftime
 import ewmh
-from mynoteslib.constantes import CONFIG, COLORS, IM_LOCK, askopenfilename
-from mynoteslib.constantes import TEXT_COLORS, sorting, SYMBOLS
+from mynoteslib.constantes import CONFIG, COLORS, IM_LOCK, askopenfilename, text_ranges
+from mynoteslib.constantes import TEXT_COLORS, sorting, SYMBOLS, BALISES_OPEN, BALISES_CLOSE
 from mynoteslib.symbols import pick_symbol
+from mynoteslib.messagebox import showerror, askokcancel
 
 class Sticky(Toplevel):
     """ Sticky note class """
@@ -114,8 +115,9 @@ class Sticky(Toplevel):
         self.txt.tag_configure("center", justify="center")
         self.txt.tag_configure("left", justify="left")
         self.txt.tag_configure("right", justify="right")
-        self.txt.tag_configure("list", lmargin1=0, lmargin2='20')
-        self.txt.tag_configure("todolist", lmargin1=0, lmargin2='20')
+        self.txt.tag_configure("list", lmargin1=0, lmargin2=20)
+        self.txt.tag_configure("todolist", lmargin1=0, lmargin2=20)
+        self.txt.tag_configure("enum", lmargin1=0, lmargin2=20)
 
         for coul in TEXT_COLORS.values():
             self.txt.tag_configure(coul, foreground=coul,
@@ -175,6 +177,9 @@ class Sticky(Toplevel):
         menu_mode.add_radiobutton(label=_("ToDo List"), value="todolist",
                                   variable=self.mode,
                                   command=self.set_mode_todolist)
+        menu_mode.add_radiobutton(label=_("Enumeration"), value="enum",
+                                  variable=self.mode,
+                                  command=self.set_mode_enum)
 
         self.menu.add_command(label=_("Delete"), command=self.delete)
         self.menu.add_cascade(label=_("Category"), menu=self.menu_categories)
@@ -237,6 +242,9 @@ class Sticky(Toplevel):
             indices = kwargs["tags"][tag]
             if indices:
                 self.txt.tag_add(tag, *indices)
+        mode = self.mode.get()
+        if mode != "note":
+            self.txt.tag_add(mode, "1.0", "end")
         self.txt.focus_set()
         self.lock()
         if kwargs.get("rolled", False):
@@ -270,6 +278,7 @@ class Sticky(Toplevel):
 
         ### bindings
         self.bind("<FocusOut>", self.save_note)
+        self.txt.bind("<FocusOut>", self.save_note)
         self.bind('<Configure>', self.bouge)
         self.bind('<Button-1>', self.change_focus, True)
         self.close.bind("<Button-1>", self.hide)
@@ -391,6 +400,49 @@ class Sticky(Toplevel):
             data["inserted_objects"][self.txt.index(checkbox)] = ("checkbox", "selected" in ch.state())
         return data
 
+#    def export_to_html(self, event=None):
+#        balises = {}
+#        tags = list(self.txt.tag_names())
+#        if "todolist" in tags:
+#            tags.remove("todolist")
+#        if "list" in tags:
+#            tags.remove("list")
+#        if "enum" in tags:
+#            tags.remove("enum")
+#        for tag in tags:
+#            r = [str(i) for i in self.txt.tag_ranges(tag)]
+#            for o,c in zip(r[::2], r[1::2]):
+#                if not o in balises:
+#                    balises[o] = []
+#                balises[o].append(BALISES_OPEN[tag])
+#                if not c in balises:
+#                    balises[c] = []
+#                balises[c].append(BALISES_CLOSE[tag])
+#        indexes = list(balises.keys())
+#        indexes.sort(key=sorting, reverse=True)
+#        txt = self.txt.get("1.0", "end").splitlines()
+#        title = "<h2>%s</h2>" % self.title_var.get()
+#        for index in indexes:
+#            line, col =  index.split(".")
+#            line = int(line) - 1
+#            col = int(col)
+#            l = list(txt[line])
+#            l.insert(col, "".join(balises[index]))
+#            txt[line] = "".join(l)
+#
+#        if self.mode.get() == "list":
+#            for i,line in enumerate(txt):
+#                if "\t•\t" in line:
+#                    txt[i] = line.replace("\t•\t", "<li>") + "</li>"
+#            txt = "<br>".join(txt)
+#            txt = "<ul>%s</ul>" % txt
+#            print(title + txt)
+#            return title + txt
+#        else:
+#            txt = "<br>".join(txt)
+#            print(title + txt)
+#            return title + txt
+
     def change_color(self, key):
         self.color = COLORS[key]
         self.save_note()
@@ -430,6 +482,8 @@ class Sticky(Toplevel):
 
     def set_mode_note(self):
         self.txt.tag_remove("list", "1.0", "end")
+        self.txt.tag_remove("todolist", "1.0", "end")
+        self.txt.tag_remove("enum", "1.0", "end")
         self.save_note()
 
     def set_mode_list(self):
@@ -440,6 +494,18 @@ class Sticky(Toplevel):
             self.txt.insert("insert", "\n\t•\t")
         self.txt.tag_add("list", "1.0", "end")
         self.txt.tag_remove("todolist", "1.0", "end")
+        self.txt.tag_remove("enum", "1.0", "end")
+        self.save_note()
+
+    def set_mode_enum(self):
+        index = self.txt.index("insert")
+        if index.split(".")[-1] == "0":
+            self.txt.insert("insert", "\t•\t")
+        else:
+            self.txt.insert("insert", "\n\t•\t")
+        self.txt.tag_add("enum", "1.0", "end")
+        self.txt.tag_remove("todolist", "1.0", "end")
+        self.txt.tag_remove("list", "1.0", "end")
         self.save_note()
 
     def set_mode_todolist(self):
@@ -451,6 +517,7 @@ class Sticky(Toplevel):
             self.txt.insert("insert", "\n")
             ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
             self.txt.window_create("insert", window=ch)
+        self.txt.tag_remove("enum", "1.0", "end")
         self.txt.tag_remove("list", "1.0", "end")
         self.txt.tag_add("todolist", "1.0", "end")
         self.save_note()
@@ -629,8 +696,10 @@ class Sticky(Toplevel):
                 self.txt.tag_remove("bold-italic", "sel.first", "sel.last")
                 self.txt.tag_add("bold", "sel.first", "sel.last")
             elif style == "bold" and "italic" in current_tags:
+                self.txt.tag_remove("italic", "sel.first", "sel.last")
                 self.txt.tag_add("bold-italic", "sel.first", "sel.last")
             elif style == "italic" and "bold" in current_tags:
+                self.txt.tag_remove("bold", "sel.first", "sel.last")
                 self.txt.tag_add("bold-italic", "sel.first", "sel.last")
             else:
                 # first char is normal, so apply style to the whole selection
@@ -647,7 +716,7 @@ class Sticky(Toplevel):
             else:
                 self.txt.tag_add("underline", "sel.first", "sel.last")
                 for coul in TEXT_COLORS.values():
-                    r = self.txt.tag_nextrange(coul, "sel.first", "sel.last")
+                    r = text_ranges( self.txt, coul, "sel.first", "sel.last")
                     if r:
                         for deb, fin in zip(r[::2], r[1::2]):
                             self.txt.tag_add(coul + "-underline", "sel.first", "sel.last")
@@ -663,7 +732,7 @@ class Sticky(Toplevel):
             else:
                 self.txt.tag_add("overstrike", "sel.first", "sel.last")
                 for coul in TEXT_COLORS.values():
-                    r = self.txt.tag_nextrange(coul, "sel.first", "sel.last")
+                    r = text_ranges( self.txt, coul, "sel.first", "sel.last")
                     if r:
                         for deb, fin in zip(r[::2], r[1::2]):
                             self.txt.tag_add(coul + "-overstrike", "sel.first", "sel.last")
@@ -677,8 +746,8 @@ class Sticky(Toplevel):
                 self.txt.tag_remove(coul + "-underline", "sel.first", "sel.last")
             if not color == "black":
                 self.txt.tag_add(color, "sel.first", "sel.last")
-                underline = self.txt.tag_nextrange("underline", "sel.first", "sel.last")
-                overstrike = self.txt.tag_nextrange("overstrike", "sel.first", "sel.last")
+                underline = text_ranges( self.txt, "underline", "sel.first", "sel.last")
+                overstrike = text_ranges( self.txt, "overstrike", "sel.first", "sel.last")
 
                 for deb, fin in zip(underline[::2], underline[1::2]):
                     self.txt.tag_add(color + "-underline", deb, fin)
@@ -691,9 +760,25 @@ class Sticky(Toplevel):
         if self.txt.tag_ranges("sel"):
             line = self.txt.index("sel.first").split(".")[0]
             line2 = self.txt.index("sel.last").split(".")[0]
-            # remove old alignment tag
-            self.txt.tag_remove("left", line + ".0", line2 + ".end")
-            self.txt.tag_remove("right", line + ".0", line2 + ".end")
-            self.txt.tag_remove("center", line + ".0", line2 + ".end")
-            # set new alignment tag
-            self.txt.tag_add(alignment, line + ".0", line2 + ".end")
+            deb, fin = line + ".0", line2 + ".end"
+            if not "\t" in self.txt.get(deb, fin):
+                # tabulations don't support right/center alignment
+                # remove old alignment tag
+                self.txt.tag_remove("left", deb, fin)
+                self.txt.tag_remove("right", deb, fin)
+                self.txt.tag_remove("center", deb, fin)
+                # set new alignment tag
+                self.txt.tag_add(alignment, deb, fin)
+
+    def update_enum(self):
+        """ update enumeration numbers """
+        lines  = self.txt.get("1.0", "end").splitlines()
+        indexes = []
+        for i,l in enumerate(lines):
+            res = re.match('^\t[0-9]+\.\t', l)
+            if res:
+                indexes.append((i, res.end()))
+        for j, (i, end) in enumerate(indexes):
+            self.txt.delete("%i.0" % (i + 1), "%i.%i" % (i + 1, end))
+            self.txt.insert("%i.0" % (i + 1), "\t%i.\t" % (j + 1))
+        self.txt.tag_add("enum", "1.0", "end")

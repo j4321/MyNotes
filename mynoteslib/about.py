@@ -23,7 +23,7 @@ About dialog
 from webbrowser import open as webOpen
 from tkinter import Text, Toplevel, PhotoImage
 from tkinter.ttk import Button, Label
-from mynoteslib.constantes import LANG, IM_ICON_48, VERSION
+from mynoteslib.constantes import IM_ICON_48, VERSION
 
 class About(Toplevel):
     """ Toplevel de l'application principale donnant les informations à

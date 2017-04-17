@@ -24,10 +24,11 @@ Main
 
 import os
 import sys
-from tkinter.messagebox import showerror
 from tkinter import Tk
+from tkinter.ttk import Style
 from mynoteslib.constantes import save_config
 from mynoteslib.app import App
+from mynoteslib.messagebox import showerror
 
 # vérifie si mynotes est déjà lancé
 pid = str(os.getpid())
@@ -40,6 +41,8 @@ if os.path.isfile(pidfile):
         # MyNotes is already runnning
         root = Tk()
         root.withdraw()
+        s = Style(root)
+        s.theme_use("clam")
         showerror(_("Error"), _("MyNotes is already running. If not deletes /tmp/mynotes.pid"))
         sys.exit()
     else:

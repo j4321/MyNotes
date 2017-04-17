@@ -18,7 +18,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-Constants
+The icons are modified versions of icons from the elementary project
+(the xfce fork to be precise https://github.com/shimmerproject/elementary-xfce)
+Copyright 2007-2013 elementary LLC.
+
+Constants and functions
 """
 
 
@@ -28,19 +32,24 @@ from configparser import ConfigParser
 from locale import getdefaultlocale, setlocale, LC_ALL
 from subprocess import check_output, CalledProcessError
 import pkg_resources
+from tkinter import Text, PhotoImage
+from tkinter.ttk import Checkbutton
 
 VERSION = pkg_resources.require("mynotes")[0].version
+
 SYMBOLS = 'ΓΔΘΛΞΠΣΦΨΩαβγδεζηθικλμνξοπρςστυφχψωϐϑϒϕϖæœ«»¡¿£¥$€§ø∞∀∃∄∈∉∫∧∨∩∪÷±√∝∼≃≅≡≤≥≪≫≲≳▪•✭✦➔➢✔▴▸✗✚✳☎✉✎♫⚠⇒⇔'
 
-#----paths----
+### paths
 PATH = os.path.dirname(__file__)
 
-if os.access(PATH, os.W_OK):
-    # the path is writable, the app is not installed
+if os.access(PATH, os.W_OK) and os.path.exists(os.path.join(PATH, "images")):
+    # the app is not installed
     # local directory containing config files and sticky notes data
     LOCAL_PATH = PATH
     PATH_LOCALE = os.path.join(PATH, "locale")
+    PATH_IMAGES = os.path.join(PATH, "images")
     PATH_DATA_BACKUP = os.path.join(LOCAL_PATH, "backup", "notes.backup%i")
+    PATH_DATA = os.path.join(LOCAL_PATH, "backup", "notes")
     if not os.path.exists(os.path.join(LOCAL_PATH, "backup")):
         os.mkdir(os.path.join(LOCAL_PATH, "backup"))
 
@@ -50,13 +59,13 @@ else:
     if not os.path.isdir(LOCAL_PATH):
         os.mkdir(LOCAL_PATH)
     PATH_LOCALE = "/usr/share/locale"
+    PATH_IMAGES = "/usr/share/mynotes/images"
     PATH_DATA_BACKUP = os.path.join(LOCAL_PATH, "notes.backup%i")
+    PATH_DATA = os.path.join(LOCAL_PATH, "notes")
 
 PATH_CONFIG = os.path.join(LOCAL_PATH, "mynotes.ini")
-PATH_DATA = os.path.join(LOCAL_PATH, "notes")
-PATH_IMAGES = os.path.join(PATH, "images")
 
-#----images files----
+### images files
 IM_ICON = os.path.join(PATH_IMAGES, "mynotes.png")
 IM_ICON_24 = os.path.join(PATH_IMAGES, "mynotes24.png")
 IM_ICON_48 = os.path.join(PATH_IMAGES, "mynotes48.png")
@@ -68,13 +77,15 @@ IM_LOCK = os.path.join(PATH_IMAGES, "verr.png")
 IM_PLUS = os.path.join(PATH_IMAGES, "plus.png")
 IM_MOINS = os.path.join(PATH_IMAGES, "moins.png")
 
-#----config file----
+### config file
 CONFIG = ConfigParser()
 if os.path.exists(PATH_CONFIG):
     CONFIG.read(PATH_CONFIG)
     LANGUE = CONFIG.get("General","language")
     if not CONFIG.has_option("General", "position"):
         CONFIG.set("General", "position", "normal")
+    if not CONFIG.has_option("General", "check_update"):
+        CONFIG.set("General", "check_update", "True")
     if not CONFIG.has_option("General", "buttons_position"):
         CONFIG.set("General", "buttons_position", "right")
 else:
@@ -84,6 +95,7 @@ else:
     CONFIG.set("General", "opacity", "82")
     CONFIG.set("General", "position", "normal")
     CONFIG.set("General", "buttons_position", "right")
+    CONFIG.set("General", "check_update", "True")
     CONFIG.add_section("Font")
     CONFIG.set("Font", "text_family", "TkDefaultFont")
     CONFIG.set("Font", "text_size", "12")
@@ -92,7 +104,7 @@ else:
     CONFIG.set("Font", "title_style", "bold")
     CONFIG.add_section("Categories")
 
-#----language----
+### language
 setlocale(LC_ALL, '')
 
 APP_NAME = "MyNotes"
@@ -115,13 +127,13 @@ LANG = gettext.translation(APP_NAME, PATH_LOCALE,
                            languages=[LANGUE], fallback=True)
 LANG.install()
 
-#----default categories----
+### default categories
 if not CONFIG.has_option("General", "default_category"):
     CONFIG.set("General", "default_category", _("home"))
     CONFIG.set("Categories", _("home"), '#F9F3A9')
     CONFIG.set("Categories", _("office"), '#A7B6D6')
 
-#----colors----
+### colors
 COLORS = {_("Blue"): '#A7B6D6', _("Turquoise"): "#9FC9E2",
           _("Orange"): "#E1C59A",  _("Red"): "#CD9293",
           _("Grey"): "#CECECE",  _("White"): "#FFFFFF",
@@ -138,8 +150,7 @@ TEXT_COLORS = {_("Black"): "black", _("White"): "white",
                _("Grey"): "grey", _("Orange"):"orange",
                }
 
-
-#----filebrowser----
+### filebrowser
 ZENITY = False
 
 paths = os.environ['PATH'].split(":")
@@ -243,7 +254,7 @@ def asksaveasfilename(defaultextension, filetypes, initialdir=".", initialfile="
                                             initialfile=initialfile,
                                             **options)
 
-#----miscellaneous functions----
+### miscellaneous functions
 def fill(image, color):
      """Fill image with a color=#hex."""
      width = image.width()
@@ -281,10 +292,176 @@ def optionmenu_patch(om, var):
         menu.entryconfig(i, variable=var)
     menu.bind("<FocusOut>", menu.unpost())
 
-def add_checkboxes(data):
+def text_ranges(widget, tag, index1="1.0", index2="end"):
+    r = [i.string for i in widget.tag_ranges(tag)]
+    i1 = widget.index(index1)
+    i2 = widget.index(index2)
+    deb = r[::2]
+    fin = r[1::2]
+    i = 0
+    while i < len(deb) and sorting(deb[i]) < sorting(i1):
+        i += 1
+    j = len(fin) - 1
+    while j >= 0 and sorting(fin[j]) > sorting(i2):
+        j -= 1
+    tag_ranges = r[2*i:2*j+2]
+    if i > 0 and sorting(fin[i-1]) > sorting(i1):
+        tag_ranges.insert(0, fin[i-1])
+        tag_ranges.insert(0, i1)
+    if j < len(fin) - 1 and sorting(deb[j+1]) < sorting(i2):
+        tag_ranges.append(deb[j+1])
+        tag_ranges.append(i2)
+
+    return tag_ranges
+
+### export
+
+BALISES_OPEN = {"bold": "<b>",
+                "italic": "<i>",
+                "underline": "<u>",
+                "overstrike": "<s>",
+                "list": "",
+                "enum": "",
+                "todolist": "",
+                'center': '<div style="text-align:center">',
+                'left': '',
+                'right': '<div style="text-align:right">'}
+BALISES_CLOSE = {"bold": "</b>",
+                 "italic": "</i>",
+                 "underline": "</u>",
+                 "overstrike": "</s>",
+                  "list": "",
+                  "enum": "",
+                  "todolist": "",
+                 'center': '</div>',
+                 'left': '',
+                 'right': '</div>'}
+for color in TEXT_COLORS.values():
+    BALISES_OPEN[color] = '<span style="color:%s">' % color
+    BALISES_CLOSE[color] = '</span>'
+
+def note_to_html(data, master):
+    txt = Text(master)
+    tags = data["tags"]
+    obj = data["inserted_objects"]
+    indexes = list(obj.keys())
+    indexes.sort(reverse=True, key=sorting)
+    txt.insert('1.0', data["txt"])
+
+    for index in indexes:
+        txt.insert(index, " ")
+    # restore tags
+    for tag in tags:
+        indices = tags[tag]
+        if indices:
+            txt.tag_add(tag, *indices)
+    end = int(txt.index("end").split(".")[0])
+    for line in range(1, end):
+        l_end = int(txt.index("%i.end" % line).split(".")[1])
+        for col in range(l_end):
+            index = "%i.%i" % (line, col)
+            tags = set()
+            for tag in txt.tag_names(index):
+                if not tag in ["center", "left", "right"]:
+                    txt.tag_remove(tag, index)
+                    if "-" in tag:
+                       t1, t2 = tag.split("-")
+                       tags.add(t1)
+                       tags.add(t2)
+                    else:
+                        tags.add(tag)
+            tags = list(tags)
+            tags.sort()
+            txt.tag_add("-".join(tags), index)
+    right = [i.string for i in txt.tag_ranges("right")]
+    center = [i.string for i in txt.tag_ranges("center")]
+    left = []
+    for deb, fin in zip(right[::2], right[1::2]):
+        left.append(txt.index("%s-1c" % deb))
+        left.append(txt.index("%s+1c" % fin))
+    for deb, fin in zip(center[::2], center[1::2]):
+        left.append(txt.index("%s-1c" % deb))
+        left.append(txt.index("%s+1c" % fin))
+    left.sort(key=sorting)
+    doubles = []
+    for i in left[::2]:
+        if i in left[1::2]:
+            doubles.append(i)
+    for i in doubles:
+        left.remove(i)
+        left.remove(i)
+    if "1.0" in left:
+        left.remove("1.0")
+    else:
+        left.insert(0, "1.0")
+    if txt.index("end") in left:
+        left.remove(txt.index("end"))
+    else:
+        left.append(txt.index("end"))
+    # html balises
+    t = txt.get("1.0", "end").splitlines()
+    alignments = {"left": left, "right": right, "center": center}
+    # alignment
+    print(alignments)
+    for a, align in alignments.items():
+        for deb, fin in zip(align[::2], align[1::2]):
+            balises = {deb: [BALISES_OPEN[a]], fin: [BALISES_CLOSE[a]]}
+            tags = {t: text_ranges(txt, t, deb, fin) for t in txt.tag_names()}
+            for tag in tags:
+                for o,c in zip(tags[tag][::2], tags[tag][1::2]):
+                    if not o in balises:
+                        balises[o] = []
+                    if not c in balises:
+                        balises[c] = []
+                    l = tag.split("-")
+                    while "" in l:
+                        l.remove("")
+                    ob = "".join([BALISES_OPEN[t] for t in l])
+                    cb = "".join([BALISES_CLOSE[t] for t in l[::-1]])
+                    balises[o].append(ob)
+                    balises[c].insert(0, cb)
+            ### checkboxes and images
+            for i in indexes:
+                if sorting(i) >= sorting(deb) and sorting(i) <= sorting(fin):
+                    if not i in balises:
+                        balises[i] = []
+                    tp, val = obj[i]
+                    if tp == "checkbox":
+                        if val:
+                            balises[i].append('<input type="checkbox" checked />')
+                        else:
+                            balises[i].append('<input type="checkbox" />')
+                    elif tp == "image":
+                       balises[i].append('<img src="%s" alt="%s" /> ' % (val, os.path.split(val)[-1]))
+            indices = list(balises.keys())
+            indices.sort(key=sorting, reverse=True)
+            for index in indices:
+                line, col =  index.split(".")
+                line = int(line) - 1
+                col = int(col)
+                while line >= len(t):
+                    t.append("")
+                l = list(t[line])
+                l.insert(col, "".join(balises[index]))
+                t[line] = "".join(l)
+            print(balises)
+    txt.destroy()
+
+    ### list
+    if data["mode"] == "list":
+        for i,line in enumerate(t):
+            if "\t•\t" in line:
+                t[i] = line.replace("\t•\t", "<li>") + "</li>"
+        t = "<br>\n".join(t)
+        t = "<ul>%s</ul>" % t
+    else:
+        t = "<br>\n".join(t)
+    return t.encode('ascii', 'xmlcharrefreplace').decode("utf-8")
+
+def note_to_txt(data):
+    """ .txt export"""
     t = data["txt"].splitlines()
     obj = data["inserted_objects"]
-    print(obj)
     indexes = list(obj.keys())
     indexes.sort(reverse=True, key=sorting)
     for i in indexes:
@@ -304,3 +481,4 @@ def add_checkboxes(data):
             l.insert(col, "![%s](%s)" % (os.path.split(val)[-1], val))
         t[line] = "".join(l)
     return "\n".join(t)
+

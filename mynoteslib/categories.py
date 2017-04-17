@@ -25,7 +25,7 @@ from tkinter import StringVar, PhotoImage, Toplevel
 from mynoteslib.constantes import CONFIG, LANG, COLORS, INV_COLORS, IM_PLUS, IM_MOINS
 from mynoteslib.constantes import save_config, fill, optionmenu_patch
 from tkinter.ttk import Label, Button, OptionMenu, Style, Separator, Entry, Frame
-from tkinter.messagebox import askyesnocancel
+from mynoteslib.messagebox import askyesnocancel
 
 class CategoryManager(Frame):
     """ Category manager for the sticky notes """
