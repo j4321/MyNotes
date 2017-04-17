@@ -183,7 +183,8 @@ class App(Tk):
             event.widget.tag_add("list", "1.0", "end")
         elif mode == "todolist":
             event.widget.insert("insert", "\n")
-            ch = Checkbutton(event.widget, style=event.widget.master.id + ".TCheckbutton")
+            ch = Checkbutton(event.widget, takefocus=False,
+                             style=event.widget.master.id + ".TCheckbutton")
             event.widget.window_create("insert", window=ch)
             event.widget.tag_add("todolist", "1.0", "end")
         elif mode == "enum":
@@ -467,7 +468,7 @@ class App(Tk):
                         text += "<br>\n"
                     with open(fichier, "w") as fich:
                         fich.write('<body style="max-width:30em">\n')
-                        fich.write(text)
+                        fich.write(text.encode('ascii', 'xmlcharrefreplace').decode("utf-8"))
                         fich.write("\n</body>")
 
                 else:

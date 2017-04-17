@@ -22,14 +22,15 @@ Sticky note class
 """
 
 
-from tkinter import Text,  Toplevel, PhotoImage, StringVar, Menu, TclError
-from tkinter.ttk import  Style, Sizegrip, Entry, Checkbutton, Label
+from tkinter import Text, Toplevel, PhotoImage, StringVar, Menu, TclError
+from tkinter.ttk import  Style, Sizegrip, Entry, Checkbutton, Label, Button
+from tkinter.font import Font
 import os
 import re
 from time import strftime
 import ewmh
-from mynoteslib.constantes import CONFIG, COLORS, IM_LOCK, askopenfilename, text_ranges
-from mynoteslib.constantes import TEXT_COLORS, sorting, SYMBOLS, BALISES_OPEN, BALISES_CLOSE
+from mynoteslib.constantes import CONFIG, COLORS, IM_LOCK, askopenfilename, open_url
+from mynoteslib.constantes import TEXT_COLORS, sorting, SYMBOLS, text_ranges
 from mynoteslib.symbols import pick_symbol
 from mynoteslib.messagebox import showerror, askokcancel
 
@@ -49,6 +50,8 @@ class Sticky(Toplevel):
         self.id = key
         self.is_locked = not (kwargs.get("locked", False))
         self.images = []
+        self.links = {}
+        self.nb_links = 0
         self.title('mynotes%s' % key)
         self.attributes("-type", "splash")
         self.attributes("-alpha", CONFIG.getint("General", "opacity")/100)
@@ -66,6 +69,9 @@ class Sticky(Toplevel):
         self.style = Style(self)
         self.style.configure(self.id + ".TCheckbutton", selectbackground="red")
         self.style.map('TEntry', selectbackground=[('!focus', '#c3c3c3')])
+        selectbg = self.style.lookup('TEntry', 'selectbackground', ('focus',))
+        self.style.configure("sel.TCheckbutton", background=selectbg)
+        self.style.map("sel.TCheckbutton", background=[("active", selectbg)])
 
         ### note elements
         # title
@@ -96,12 +102,11 @@ class Sticky(Toplevel):
         # texte
         font_text = "%s %s" %(CONFIG.get("Font", "text_family").replace(" ", "\ "),
                               CONFIG.get("Font", "text_size"))
-        selectbg = self.style.lookup('TEntry', 'selectbackground', ('focus',))
         self.txt = Text(self, wrap='word', undo=True,
                         selectforeground='white',
                         inactiveselectbackground=selectbg,
                         selectbackground=selectbg,
-                        tabs=("10", 'right', '20', 'left'),
+                        tabs=(10, 'right', 20, 'left'),
                         relief="flat", borderwidth=0,
                         highlightthickness=0, font=font_text)
         # tags
@@ -115,9 +120,15 @@ class Sticky(Toplevel):
         self.txt.tag_configure("center", justify="center")
         self.txt.tag_configure("left", justify="left")
         self.txt.tag_configure("right", justify="right")
-        self.txt.tag_configure("list", lmargin1=0, lmargin2=20)
-        self.txt.tag_configure("todolist", lmargin1=0, lmargin2=20)
-        self.txt.tag_configure("enum", lmargin1=0, lmargin2=20)
+        self.txt.tag_configure("link", foreground="blue", underline=True,
+                               selectforeground="white")
+        self.txt.tag_configure("list", lmargin1=0, lmargin2=20,
+                               tabs=(10, 'right', 20, 'left'))
+        self.txt.tag_configure("todolist", lmargin1=0, lmargin2=20,
+                               tabs=(10, 'right', 20, 'left'))
+        margin = 2*Font(self, font=font_text).measure("m")
+        self.txt.tag_configure("enum", lmargin1=0, lmargin2=margin + 5,
+                               tabs=(margin, 'right', margin + 5, 'left'))
 
         for coul in TEXT_COLORS.values():
             self.txt.tag_configure(coul, foreground=coul,
@@ -209,13 +220,19 @@ class Sticky(Toplevel):
             menu_colors.add_command(label=coul,
                                     command=lambda key=coul: self.change_sel_color(TEXT_COLORS[key]))
 
+        # insert
+        menu_insert = Menu(self.menu_txt, tearoff=False)
+        menu_insert.add_command(label=_("Symbols"), command=self.add_symbols)
+        menu_insert.add_command(label=_("Checkbox"), command=self.add_checkbox)
+        menu_insert.add_command(label=_("Image"), command=self.add_image)
+        menu_insert.add_command(label=_("Date"), command=self.add_date)
+        menu_insert.add_command(label=_("Link"), command=self.add_link)
+
         self.menu_txt.add_cascade(label=_("Style"), menu=menu_style)
         self.menu_txt.add_cascade(label=_("Alignment"), menu=menu_align)
         self.menu_txt.add_cascade(label=_("Color"), menu=menu_colors)
-        self.menu_txt.add_command(label=_("Symbols"), command=self.add_symbols)
-        self.menu_txt.add_command(label=_("Checkbox"), command=self.add_checkbox)
-        self.menu_txt.add_command(label=_("Image"), command=self.add_image)
-        self.menu_txt.add_command(label=_("Date"), command=self.add_date)
+        self.menu_txt.add_cascade(label=_("Insert"), menu=menu_insert)
+
         ### restore note content/appearence
         self.color = kwargs.get("color",
                                 CONFIG.get("Categories", self.category.get()))
@@ -228,7 +245,8 @@ class Sticky(Toplevel):
         for index in indexes:
             kind, val = kwargs["inserted_objects"][index]
             if kind == "checkbox":
-                ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
+                ch = Checkbutton(self.txt, takefocus=False,
+                                 style=self.id + ".TCheckbutton")
                 if val:
                     ch.state(("selected",))
                 self.txt.window_create(index, window=ch)
@@ -238,10 +256,18 @@ class Sticky(Toplevel):
                     self.images.append(PhotoImage(master=self.txt, file=val))
                     self.txt.image_create(index, image=self.images[-1], name=val)
         # restore tags
-        for tag in kwargs.get("tags", []):
-            indices = kwargs["tags"][tag]
+        for tag, indices in kwargs.get("tags", {}).items():
             if indices:
                 self.txt.tag_add(tag, *indices)
+
+        for link in kwargs.get("links", {}).values():
+            self.nb_links += 1
+            self.links[self.nb_links] = link
+            self.txt.tag_bind("link#%i" % self.nb_links,
+                              "<Button-1>",
+                              lambda e: open_url(link))
+        print(self.links, self.nb_links)
+
         mode = self.mode.get()
         if mode != "note":
             self.txt.tag_add(mode, "1.0", "end")
@@ -278,7 +304,6 @@ class Sticky(Toplevel):
 
         ### bindings
         self.bind("<FocusOut>", self.save_note)
-        self.txt.bind("<FocusOut>", self.save_note)
         self.bind('<Configure>', self.bouge)
         self.bind('<Button-1>', self.change_focus, True)
         self.close.bind("<Button-1>", self.hide)
@@ -295,7 +320,18 @@ class Sticky(Toplevel):
         self.title_entry.bind("<Return>", lambda e: self.title_entry.place_forget())
         self.title_entry.bind("<FocusOut>", lambda e: self.title_entry.place_forget())
         self.title_entry.bind("<Escape>", lambda e: self.title_entry.place_forget())
+        self.txt.tag_bind("link", "<Enter>",
+                          lambda event: self.txt.configure(cursor="hand1"))
+        self.txt.tag_bind("link", "<Leave>",
+                          lambda event: self.txt.configure(cursor=""))
+        self.txt.bind("<FocusOut>", self.save_note)
         self.txt.bind('<Button-3>', self.show_menu_txt)
+        self.txt.bind("<ButtonRelease-1>", self.highlight_checkboxes, True)
+        self.txt.bind("<B1-Motion>", self.highlight_checkboxes, True)
+        self.txt.bind("<<SelectNextChar>>", self.highlight_checkboxes, True)
+        self.txt.bind("<<SelectPrevChar>>", self.highlight_checkboxes, True)
+        self.txt.bind("<<SelectNextLine>>", self.highlight_checkboxes, True)
+        self.txt.bind("<<SelectPrevLine>>", self.highlight_checkboxes, True)
         # add binding to the existing class binding so that the selected text
         # is erased on pasting
         self.txt.bind("<Control-v>", self.paste)
@@ -351,6 +387,8 @@ class Sticky(Toplevel):
                                selectforeground='white',
                                selectbackground=selectbg,
                                inactiveselectbackground=selectbg)
+            self.style.configure("sel.TCheckbutton", background=selectbg)
+            self.style.map("sel.TCheckbutton", background=[("active", selectbg)])
             self.is_locked = False
             for checkbox in self.txt.window_names():
                 ch = self.txt.children[checkbox.split(".")[-1]]
@@ -364,6 +402,8 @@ class Sticky(Toplevel):
                                selectforeground='black',
                                inactiveselectbackground='#c3c3c3',
                                selectbackground='#c3c3c3')
+            self.style.configure("sel.TCheckbutton", background='#c3c3c3')
+            self.style.map("sel.TCheckbutton", background=[("active", '#c3c3c3')])
             self.cadenas.configure(image=self.im_lock)
             for checkbox in self.txt.window_names():
                 ch = self.txt.children[checkbox.split(".")[-1]]
@@ -380,7 +420,7 @@ class Sticky(Toplevel):
         data["txt"] = self.txt.get("1.0","end")[:-1]
         data["tags"] = {}
         for tag in self.txt.tag_names():
-            if tag != "sel":
+            if tag not in ["sel", "todolist", "list", "enum"]:
                 data["tags"][tag] = [index.string for index in self.txt.tag_ranges(tag)]
         data["title"] = self.title_var.get()
         data["geometry"] = self.save_geometry
@@ -391,7 +431,10 @@ class Sticky(Toplevel):
         data["inserted_objects"] = {}
         data["rolled"] = not self.txt.winfo_ismapped()
         data["position"] = self.position.get()
-
+        data["links"] = {}
+        for i, link in self.links.items():
+            if self.txt.tag_ranges("link#%i" % i):
+                data["links"][i] = link
         for image in self.txt.image_names():
             data["inserted_objects"][self.txt.index(image)] = ("image",
                                                                image.split('#')[0])
@@ -399,49 +442,6 @@ class Sticky(Toplevel):
             ch = self.txt.children[checkbox.split(".")[-1]]
             data["inserted_objects"][self.txt.index(checkbox)] = ("checkbox", "selected" in ch.state())
         return data
-
-#    def export_to_html(self, event=None):
-#        balises = {}
-#        tags = list(self.txt.tag_names())
-#        if "todolist" in tags:
-#            tags.remove("todolist")
-#        if "list" in tags:
-#            tags.remove("list")
-#        if "enum" in tags:
-#            tags.remove("enum")
-#        for tag in tags:
-#            r = [str(i) for i in self.txt.tag_ranges(tag)]
-#            for o,c in zip(r[::2], r[1::2]):
-#                if not o in balises:
-#                    balises[o] = []
-#                balises[o].append(BALISES_OPEN[tag])
-#                if not c in balises:
-#                    balises[c] = []
-#                balises[c].append(BALISES_CLOSE[tag])
-#        indexes = list(balises.keys())
-#        indexes.sort(key=sorting, reverse=True)
-#        txt = self.txt.get("1.0", "end").splitlines()
-#        title = "<h2>%s</h2>" % self.title_var.get()
-#        for index in indexes:
-#            line, col =  index.split(".")
-#            line = int(line) - 1
-#            col = int(col)
-#            l = list(txt[line])
-#            l.insert(col, "".join(balises[index]))
-#            txt[line] = "".join(l)
-#
-#        if self.mode.get() == "list":
-#            for i,line in enumerate(txt):
-#                if "\t•\t" in line:
-#                    txt[i] = line.replace("\t•\t", "<li>") + "</li>"
-#            txt = "<br>".join(txt)
-#            txt = "<ul>%s</ul>" % txt
-#            print(title + txt)
-#            return title + txt
-#        else:
-#            txt = "<br>".join(txt)
-#            print(title + txt)
-#            return title + txt
 
     def change_color(self, key):
         self.color = COLORS[key]
@@ -487,42 +487,99 @@ class Sticky(Toplevel):
         self.save_note()
 
     def set_mode_list(self):
-        index = self.txt.index("insert")
-        if index.split(".")[-1] == "0":
-            self.txt.insert("insert", "\t•\t")
-        else:
-            self.txt.insert("insert", "\n\t•\t")
+        end = int(self.txt.index("end").split(".")[0])
+        lines  = self.txt.get("1.0", "end").splitlines()
+        for i, l in zip(range(1, end), lines):
+            # remove checkboxes
+            try:
+                ch = self.txt.window_cget("%i.0"  % i, "window")
+                self.txt.children[ch.split('.')[-1]].destroy()
+                self.txt.delete("%i.0"  % i)
+            except TclError:
+                # there is no checkbox
+                # remove enumeration
+                res = re.match('^\t[0-9]+\.\t', l)
+                if res:
+                    self.txt.delete("%i.0"  % i, "%i.%i"  % (i, res.end()))
+            if self.txt.get("%i.0"  % i, "%i.3"  % i) != "\t•\t":
+                self.txt.insert("%i.0" % i, "\t•\t")
         self.txt.tag_add("list", "1.0", "end")
         self.txt.tag_remove("todolist", "1.0", "end")
         self.txt.tag_remove("enum", "1.0", "end")
         self.save_note()
 
     def set_mode_enum(self):
-        index = self.txt.index("insert")
-        if index.split(".")[-1] == "0":
-            self.txt.insert("insert", "\t•\t")
-        else:
-            self.txt.insert("insert", "\n\t•\t")
+        self.txt.configure(autoseparators=False)
+        self.txt.edit_separator()
+        end = int(self.txt.index("end").split(".")[0])
+        lines  = self.txt.get("1.0", "end").splitlines()
+        for i, l in zip(range(1, end), lines):
+            # remove checkboxes
+            try:
+                ch = self.txt.window_cget("%i.0"  % i, "window")
+                self.txt.children[ch.split('.')[-1]].destroy()
+                self.txt.delete("%i.0"  % i)
+            except TclError:
+                # there is no checkbox
+                # remove bullets
+                if self.txt.get("%i.0"  % i, "%i.3"  % i) == "\t•\t":
+                    self.txt.delete("%i.0"  % i, "%i.3"  % i)
+            if not re.match('^\t[0-9]+\.', l):
+                self.txt.insert("%i.0" % i, "\t0.\t")
         self.txt.tag_add("enum", "1.0", "end")
         self.txt.tag_remove("todolist", "1.0", "end")
         self.txt.tag_remove("list", "1.0", "end")
+        self.update_enum()
+        self.txt.configure(autoseparators=True)
+        self.txt.edit_separator()
         self.save_note()
 
     def set_mode_todolist(self):
-        index = self.txt.index("insert")
-        if index.split(".")[-1] == "0":
-            ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
-            self.txt.window_create("insert", window=ch)
-        else:
-            self.txt.insert("insert", "\n")
-            ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
-            self.txt.window_create("insert", window=ch)
+        end = int(self.txt.index("end").split(".")[0])
+        lines  = self.txt.get("1.0", "end").splitlines()
+        for i,l in zip(range(1, end), lines):
+            res = re.match('^\t[0-9]+\.\t', l)
+            if res:
+                self.txt.delete("%i.0"  % i, "%i.%i"  % (i, res.end()))
+            elif self.txt.get("%i.0"  % i, "%i.3"  % i) == "\t•\t":
+                self.txt.delete("%i.0"  % i, "%i.3"  % i)
+            try:
+                ch = self.txt.window_cget("%i.0"  % i, "window")
+            except TclError:
+                ch = Checkbutton(self.txt, takefocus=False,
+                                 style=self.id + ".TCheckbutton")
+                self.txt.window_create("%i.0"  % i, window=ch)
         self.txt.tag_remove("enum", "1.0", "end")
         self.txt.tag_remove("list", "1.0", "end")
         self.txt.tag_add("todolist", "1.0", "end")
         self.save_note()
 
     ### bindings
+    def highlight_checkboxes(self, event):
+        try:
+            deb = sorting(self.txt.index("sel.first"))
+            fin = sorting(self.txt.index("sel.last"))
+#            for w in self.txt.window_names():
+#                ch = self.txt.children[w.split(".")[-1]]
+            for ch in self.txt.children.values():
+                try:
+                    i = sorting(self.txt.index(ch))
+                    if i >= deb and i <= fin:
+                        ch.configure(style="sel.TCheckbutton")
+                    else:
+                        ch.configure(style=self.id + ".TCheckbutton")
+                except TclError:
+                    pass
+        except TclError:
+#            for w in self.txt.window_names():
+#                ch = self.txt.children[w.split(".")[-1]]
+            for ch in self.txt.children.values():
+                try:
+                    i = sorting(self.txt.index(ch))
+                    ch.configure(style=self.id + ".TCheckbutton")
+                except TclError:
+                    pass
+
     def enter_roll(self, event):
         """ mouse is over the roll icon """
         self.roll.configure(image="img_rollactive")
@@ -628,6 +685,9 @@ class Sticky(Toplevel):
         self.txt.tag_configure("bold", font="%s bold" % font)
         self.txt.tag_configure("italic", font="%s italic" % font)
         self.txt.tag_configure("bold-italic", font="%s bold italic" % font)
+        margin = 2*Font(self, font=font).measure("m")
+        self.txt.tag_configure("enum", lmargin1=0, lmargin2=margin + 5,
+                               tabs=(margin, 'right', margin + 5, 'left'))
 
     def update_menu_cat(self, categories):
         """ Update the category submenu """
@@ -655,8 +715,43 @@ class Sticky(Toplevel):
             self.title_label.grid_configure(row=0, column=2, sticky="ew", pady=(1,0))
 
     ### Text edition
+    def add_link(self):
+        def ok(eveny=None):
+            lien = link.get()
+            txt = text.get()
+            if lien:
+                if not txt:
+                    txt = lien
+                self.nb_links += 1
+                tags = self.txt.tag_names("current") + ("link", "link#%i" % self.nb_links)
+                self.txt.insert("current", txt, tags)
+                if not lien[:4] == "http":
+                    lien = "http://" + lien
+                self.links[self.nb_links] = lien
+                self.txt.tag_bind("link#%i" % self.nb_links,
+                                  "<Button-1>",
+                                  lambda e: open_url(lien))
+            top.destroy()
+
+        top = Toplevel(self)
+        top.transient(self)
+        top.grab_set()
+        top.title(_("Link"))
+        text = Entry(top)
+        link = Entry(top)
+        Label(top, text=_("Text")).grid(row=0, column=0, sticky="e", padx=4, pady=4)
+        Label(top, text=_("Link")).grid(row=1, column=0, sticky="e", padx=4, pady=4)
+        text.grid(row=0, column=1, sticky="ew", padx=4, pady=4)
+        link.grid(row=1, column=1, sticky="ew", padx=4, pady=4)
+        Button(top, text="Ok", command=ok).grid(row=2, columnspan=2, padx=4, pady=4)
+
+        text.focus_set()
+        text.bind("<Return>", ok)
+        link.bind("<Return>", ok)
+
     def add_checkbox(self):
-        ch = Checkbutton(self.txt, style=self.id + ".TCheckbutton")
+        ch = Checkbutton(self.txt, takefocus=False,
+                         style=self.id + ".TCheckbutton")
         self.txt.window_create("current", window=ch)
 
     def add_date(self):
@@ -776,8 +871,11 @@ class Sticky(Toplevel):
         indexes = []
         for i,l in enumerate(lines):
             res = re.match('^\t[0-9]+\.\t', l)
+            res2 = re.match('^\t[0-9]+\.', l)
             if res:
                 indexes.append((i, res.end()))
+            elif res2:
+                indexes.append((i, res2.end()))
         for j, (i, end) in enumerate(indexes):
             self.txt.delete("%i.0" % (i + 1), "%i.%i" % (i + 1, end))
             self.txt.insert("%i.0" % (i + 1), "\t%i.\t" % (j + 1))

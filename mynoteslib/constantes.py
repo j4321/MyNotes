@@ -34,6 +34,7 @@ from subprocess import check_output, CalledProcessError
 import pkg_resources
 from tkinter import Text, PhotoImage
 from tkinter.ttk import Checkbutton
+from webbrowser import open as open_url
 
 VERSION = pkg_resources.require("mynotes")[0].version
 
@@ -322,6 +323,7 @@ BALISES_OPEN = {"bold": "<b>",
                 "overstrike": "<s>",
                 "list": "",
                 "enum": "",
+                "link": "",
                 "todolist": "",
                 'center': '<div style="text-align:center">',
                 'left': '',
@@ -330,9 +332,10 @@ BALISES_CLOSE = {"bold": "</b>",
                  "italic": "</i>",
                  "underline": "</u>",
                  "overstrike": "</s>",
-                  "list": "",
-                  "enum": "",
-                  "todolist": "",
+                 "list": "",
+                 "enum": "",
+                 "todolist": "",
+                 "link": "",
                  'center': '</div>',
                  'left': '',
                  'right': '</div>'}
@@ -347,6 +350,14 @@ def note_to_html(data, master):
     indexes = list(obj.keys())
     indexes.sort(reverse=True, key=sorting)
     txt.insert('1.0', data["txt"])
+
+    b_open = BALISES_OPEN.copy()
+    b_close = BALISES_CLOSE.copy()
+
+    for key, link in data["links"].items():
+        b_open["link#%i" % key] = "<a href='%s'>" % link
+        b_close["link#%i" % key] = "</a>"
+    print(data["links"], b_open)
 
     for index in indexes:
         txt.insert(index, " ")
@@ -365,9 +376,9 @@ def note_to_html(data, master):
                 if not tag in ["center", "left", "right"]:
                     txt.tag_remove(tag, index)
                     if "-" in tag:
-                       t1, t2 = tag.split("-")
-                       tags.add(t1)
-                       tags.add(t2)
+                        t1, t2 = tag.split("-")
+                        tags.add(t1)
+                        tags.add(t2)
                     else:
                         tags.add(tag)
             tags = list(tags)
@@ -405,7 +416,7 @@ def note_to_html(data, master):
     print(alignments)
     for a, align in alignments.items():
         for deb, fin in zip(align[::2], align[1::2]):
-            balises = {deb: [BALISES_OPEN[a]], fin: [BALISES_CLOSE[a]]}
+            balises = {deb: [b_open[a]], fin: [b_close[a]]}
             tags = {t: text_ranges(txt, t, deb, fin) for t in txt.tag_names()}
             for tag in tags:
                 for o,c in zip(tags[tag][::2], tags[tag][1::2]):
@@ -416,8 +427,8 @@ def note_to_html(data, master):
                     l = tag.split("-")
                     while "" in l:
                         l.remove("")
-                    ob = "".join([BALISES_OPEN[t] for t in l])
-                    cb = "".join([BALISES_CLOSE[t] for t in l[::-1]])
+                    ob = "".join([b_open[t] for t in l])
+                    cb = "".join([b_close[t] for t in l[::-1]])
                     balises[o].append(ob)
                     balises[c].insert(0, cb)
             ### checkboxes and images
@@ -456,7 +467,7 @@ def note_to_html(data, master):
         t = "<ul>%s</ul>" % t
     else:
         t = "<br>\n".join(t)
-    return t.encode('ascii', 'xmlcharrefreplace').decode("utf-8")
+    return t
 
 def note_to_txt(data):
     """ .txt export"""
