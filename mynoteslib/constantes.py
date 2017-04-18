@@ -357,7 +357,6 @@ def note_to_html(data, master):
     for key, link in data["links"].items():
         b_open["link#%i" % key] = "<a href='%s'>" % link
         b_close["link#%i" % key] = "</a>"
-    print(data["links"], b_open)
 
     for index in indexes:
         txt.insert(index, " ")
@@ -413,7 +412,6 @@ def note_to_html(data, master):
     t = txt.get("1.0", "end").splitlines()
     alignments = {"left": left, "right": right, "center": center}
     # alignment
-    print(alignments)
     for a, align in alignments.items():
         for deb, fin in zip(align[::2], align[1::2]):
             balises = {deb: [b_open[a]], fin: [b_close[a]]}
@@ -455,7 +453,6 @@ def note_to_html(data, master):
                 l = list(t[line])
                 l.insert(col, "".join(balises[index]))
                 t[line] = "".join(l)
-            print(balises)
     txt.destroy()
 
     ### list
