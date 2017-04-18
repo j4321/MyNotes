@@ -237,9 +237,14 @@ class App(Tk):
                                     initialfile="notes.backup0",
                                     title=_('Backup Notes'))
         if fichier:
-            with open(fichier, "wb") as fich:
-                dp = pickle.Pickler(fich)
-                dp.dump(self.note_data)
+            try:
+                with open(fichier, "wb") as fich:
+                    dp = pickle.Pickler(fich)
+                    dp.dump(self.note_data)
+            except Exception as e:
+                report_msg = e.strerror != 'Permission denied'
+                showerror(_("Error"), _("Backup failed."),
+                          traceback.format_exc(), report_msg)
 
     def restore(self, fichier=None, confirmation=True):
         """ restore notes from backup """
@@ -281,6 +286,8 @@ class App(Tk):
                     self.update_notes()
                 except FileNotFoundError:
                     showerror(_("Error"), _("The file {filename} does not exists.").format(filename=fichier))
+                except Exception as e:
+                    showerror(_("Error"), str(e), traceback.format_exc(), True)
 
     def show_all(self):
         """ Show all notes """
@@ -432,72 +439,77 @@ class App(Tk):
                                         initialfile="",
                                         title=_('Export Notes As'))
             if fichier:
-                if os.path.splitext(fichier)[-1] == ".txt":
-    ### txt export
-                    # export notes to .txt: all formatting is lost
-                    cats = {cat: [] for cat in categories_to_export}
-                    for key in self.note_data:
-                        cat = self.note_data[key]["category"]
-                        if cat in cats and ((not only_visible) or self.note_data[key]["visible"]):
-                            cats[cat].append((self.note_data[key]["title"],
-                                              cst.note_to_txt(self.note_data[key])))
-                    text = ""
-                    for cat in cats:
-                        cat_txt = _("Category: {category}").format(category=cat) + "\n"
-                        text += cat_txt
-                        text += "="*len(cat_txt)
-                        text += "\n\n"
-                        for title, txt in cats[cat]:
-                            text += title
-                            text += "\n"
-                            text += "-"*len(title)
+                try:
+                    if os.path.splitext(fichier)[-1] == ".txt":
+        ### txt export
+                        # export notes to .txt: all formatting is lost
+                        cats = {cat: [] for cat in categories_to_export}
+                        for key in self.note_data:
+                            cat = self.note_data[key]["category"]
+                            if cat in cats and ((not only_visible) or self.note_data[key]["visible"]):
+                                cats[cat].append((self.note_data[key]["title"],
+                                                  cst.note_to_txt(self.note_data[key])))
+                        text = ""
+                        for cat in cats:
+                            cat_txt = _("Category: {category}").format(category=cat) + "\n"
+                            text += cat_txt
+                            text += "="*len(cat_txt)
                             text += "\n\n"
-                            text += txt
+                            for title, txt in cats[cat]:
+                                text += title
+                                text += "\n"
+                                text += "-"*len(title)
+                                text += "\n\n"
+                                text += txt
+                                text += "\n\n"
+                                text += "-"*30
+                                text += "\n\n"
+                            text += "#"*30
                             text += "\n\n"
-                            text += "-"*30
-                            text += "\n\n"
-                        text += "#"*30
-                        text += "\n\n"
-                    with open(fichier, "w") as fich:
-                        fich.write(text)
+                        with open(fichier, "w") as fich:
+                            fich.write(text)
 
-                elif os.path.splitext(fichier)[-1] == ".html":
-    ### html export
-                    cats = {cat: [] for cat in categories_to_export}
-                    for key in self.note_data:
-                        cat = self.note_data[key]["category"]
-                        if cat in cats and ((not only_visible) or self.note_data[key]["visible"]):
-                            cats[cat].append((self.note_data[key]["title"],
-                                              cst.note_to_html(self.note_data[key], self)))
-                    text = ""
-                    for cat in cats:
-                        cat_txt = "<h1 style='text-align:center'>" + _("Category: {category}").format(category=cat) + "<h1/>\n"
-                        text += cat_txt
-                        text += "<br>"
-                        for title, txt in cats[cat]:
-                            text += "<h2 style='text-align:center'>%s</h2>\n" % title
-                            text += txt
+                    elif os.path.splitext(fichier)[-1] == ".html":
+        ### html export
+                        cats = {cat: [] for cat in categories_to_export}
+                        for key in self.note_data:
+                            cat = self.note_data[key]["category"]
+                            if cat in cats and ((not only_visible) or self.note_data[key]["visible"]):
+                                cats[cat].append((self.note_data[key]["title"],
+                                                  cst.note_to_html(self.note_data[key], self)))
+                        text = ""
+                        for cat in cats:
+                            cat_txt = "<h1 style='text-align:center'>" + _("Category: {category}").format(category=cat) + "<h1/>\n"
+                            text += cat_txt
+                            text += "<br>"
+                            for title, txt in cats[cat]:
+                                text += "<h2 style='text-align:center'>%s</h2>\n" % title
+                                text += txt
+                                text += "<br>\n"
+                                text += "<hr />"
+                                text += "<br>\n"
+                            text += '<hr style="height: 8px;background-color:grey" />'
                             text += "<br>\n"
-                            text += "<hr />"
-                            text += "<br>\n"
-                        text += '<hr style="height: 8px;background-color:grey" />'
-                        text += "<br>\n"
-                    with open(fichier, "w") as fich:
-                        fich.write('<body style="max-width:30em">\n')
-                        fich.write(text.encode('ascii', 'xmlcharrefreplace').decode("utf-8"))
-                        fich.write("\n</body>")
+                        with open(fichier, "w") as fich:
+                            fich.write('<body style="max-width:30em">\n')
+                            fich.write(text.encode('ascii', 'xmlcharrefreplace').decode("utf-8"))
+                            fich.write("\n</body>")
 
-                else:
-    ### pickle export
-                    note_data = {}
-                    for key in self.note_data:
-                        if self.note_data[key]["category"] in categories_to_export:
-                            if (not only_visible) or self.note_data[key]["visible"]:
-                                note_data[key] = self.note_data[key]
+                    else:
+        ### pickle export
+                        note_data = {}
+                        for key in self.note_data:
+                            if self.note_data[key]["category"] in categories_to_export:
+                                if (not only_visible) or self.note_data[key]["visible"]:
+                                    note_data[key] = self.note_data[key]
 
-                    with open(fichier, "wb") as fich:
-                        dp = pickle.Pickler(fich)
-                        dp.dump(note_data)
+                        with open(fichier, "wb") as fich:
+                            dp = pickle.Pickler(fich)
+                            dp.dump(note_data)
+                except Exception as e:
+                    report_msg = e.strerror != 'Permission denied'
+                    showerror(_("Error"), str(e), traceback.format_exc(),
+                              report_msg)
 
     def import_notes(self):
         fichier = askopenfilename(defaultextension=".backup",
@@ -526,7 +538,7 @@ class App(Tk):
                 self.update_notes()
             except Exception:
                 message = _("The file {file} is not a valid .notes file.").format(file=fichier)
-                showerror(_("Error"), message + "\n", traceback.format_exc())
+                showerror(_("Error"), message, traceback.format_exc())
 
     def quit(self):
         self.destroy()

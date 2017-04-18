@@ -13,7 +13,7 @@ data_files = [("share/pixmaps", ["mynotes.svg"]),
               ("share/applications", ["mynotes.desktop"])]
 
 setup(name="mynotes",
-      version="2.0.4",
+      version="2.1.0",
       description="Post-it system tray app",
       keywords=["post-it", "sticky", "notes", "tkinter"],
       author="Juliette Monsel",
@@ -45,8 +45,8 @@ category has a color. Images, checkboxes and a few predefined symbols
 can be inserted in the notes. The style of the text can be changed
 (alignment, style).
 """,
-      requires=["tkinter", "sys", "os", "locale", "gettext", 're',
+      requires=["tkinter", "sys", "os", "locale", "gettext", 're', 
                 'configparser', 'subprocess', 'time', 'shutil','html',
-                'pickle', 'ewmh']
+                'pickle', 'setuptools', 'ewmh']
 )
 

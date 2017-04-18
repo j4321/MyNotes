@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Configuration Window
 """
 
-from tkinter import Toplevel, StringVar, Menu, TclError
+from tkinter import Toplevel, StringVar, Menu, TclError, Text, PhotoImage
 from mynoteslib.messagebox import showinfo
 from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator
 from tkinter.ttk import Notebook, Combobox, Frame, Menubutton, Checkbutton
@@ -53,6 +53,7 @@ class Config(Toplevel):
                            CONFIG.get("General", "default_category"))
         style.configure("titlebar.TFrame", background=color)
         style.configure("titlebar.TLabel", background=color)
+        style.configure("text.TFrame", background="white")
 
         ### body
         self.notebook = Notebook(self)
@@ -257,6 +258,19 @@ class Config(Toplevel):
         self.category_settings = CategoryManager(self.notebook, master)
         self.notebook.add(self.category_settings, text=_("Categories"),
                           sticky="ewsn", padding=4)
+        ### * Symbols
+        symbols_settings = Frame(self.notebook)
+        self.notebook.add(symbols_settings, text=_("Symbols"),
+                          sticky="ewsn", padding=4)
+        txt_frame = Frame(symbols_settings, relief="sunken", borderwidth=1,
+                          style="text.TFrame")
+        self.symbols = Text(txt_frame, width=1, height=1, highlightthickness=0,
+                            spacing2=5, spacing1=5, relief="flat", padx=4, pady=4,
+                            font="%s %s" % (family.replace(" ", "\ "), size))
+        self.symbols.insert("1.0", CONFIG.get("General", "symbols"))
+        Label(symbols_settings, text=_("Available symbols")).pack(padx=4, pady=4)
+        txt_frame.pack(fill="both", expand=True, padx=4, pady=4)
+        self.symbols.pack(fill="both", expand=True)
 
         ### Ok/Cancel buttons
         Button(okcancel_frame, text="Ok",
@@ -342,12 +356,15 @@ class Config(Toplevel):
         if style:
             style = style[:-1]
 
+        symbols = [l.strip() for l in self.symbols.get("1.0", "end").splitlines()]
+
         CONFIG.set("General", "default_category",
                    self.category_settings.default_category.get().lower())
         CONFIG.set("General", "language", language)
         CONFIG.set("General", "opacity", opacity)
         CONFIG.set("General", "position", self.position.get())
         CONFIG.set("General", "buttons_position", self.titlebar_disposition.get())
+        CONFIG.set("General", "symbols", "".join(symbols))
         CONFIG.set("Font", "text_size", size)
         CONFIG.set("Font", "text_family", family)
         CONFIG.set("Font", "title_family",familytitle)

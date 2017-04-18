@@ -30,7 +30,7 @@ import re
 from time import strftime
 import ewmh
 from mynoteslib.constantes import CONFIG, COLORS, IM_LOCK, askopenfilename, open_url
-from mynoteslib.constantes import TEXT_COLORS, sorting, SYMBOLS, text_ranges
+from mynoteslib.constantes import TEXT_COLORS, sorting, text_ranges
 from mynoteslib.symbols import pick_symbol
 from mynoteslib.messagebox import showerror, askokcancel
 
@@ -266,7 +266,6 @@ class Sticky(Toplevel):
             self.txt.tag_bind("link#%i" % self.nb_links,
                               "<Button-1>",
                               lambda e: open_url(link))
-
         mode = self.mode.get()
         if mode != "note":
             self.txt.tag_add(mode, "1.0", "end")
@@ -770,7 +769,7 @@ class Sticky(Toplevel):
     def add_symbols(self):
         symbols = pick_symbol(self,
                               CONFIG.get("Font", "text_family").replace(" ", "\ "),
-                              SYMBOLS)
+                              CONFIG.get("General", "symbols"))
         self.txt.insert("current", symbols)
 
     def toggle_text_style(self, style):

@@ -33,8 +33,10 @@ The images were taken from "icons.tcl":
 Custom tkinter messageboxes
 """
 
+
+from webbrowser import open as url_open
 from tkinter import Toplevel, PhotoImage, Text
-from tkinter.ttk import Label, Button, Frame, Scrollbar
+from tkinter.ttk import Label, Button, Frame, Scrollbar, Style
 
 
 IM_ERROR_DATA = """
@@ -271,7 +273,7 @@ class OneButtonBox(Toplevel):
 
 class ShowError(Toplevel):
     def __init__(self, parent=None, title="", message="", traceback="",
-                 button="Ok", image="error"):
+                 report_msg=False, button="Ok", image="error"):
         """
             Create a message box with one button:
                 parent: parent of the toplevel window
@@ -286,6 +288,10 @@ class ShowError(Toplevel):
         self.title(title)
         self.result = ""
         self.button = button
+
+        style = Style(self)
+        style.configure("url.TLabel", foreground="blue")
+
         if isinstance(image, str):
             data = ICONS.get(image)
             if data:
@@ -319,6 +325,7 @@ class ShowError(Toplevel):
 #        display.pack(side='left', pady=(10, 4), padx=4)
 
         frame2 = Frame(self)
+        report_frame = Frame(self)
         if traceback:
             error_msg = Text(frame2, width=w, wrap='word', font="TkDefaultFont 10",
                              bg='white', height=5, highlightthickness=0)
@@ -330,9 +337,17 @@ class ShowError(Toplevel):
                 scroll.pack(side='right', fill='y')
                 error_msg.configure(yscrollcommand=scroll.set)
             error_msg.pack(side='left', fill='both', expand=True)
+        if report_msg:
+            Label(report_frame, text=_("Please report this bug on ")).pack(side="left")
+            url = Label(report_frame, style="url.TLabel", cursor="hand1",
+                        font="TkDefaultFont 10 underline",
+                        text="https://github.com/j4321/MyNotes/issues")
+            url.pack(side="left")
+            url.bind("<Button-1>", lambda e: url_open("https://github.com/j4321/MyNotes/issues"))
         b = Button(self, text=button, command=self.validate)
         frame.pack(fill='x')
-        frame2.pack(fill='both', padx=4, pady=(4,0))
+        frame2.pack(fill='both', padx=4, pady=(4,4))
+        report_frame = Frame(self).pack(fill="x", padx=4, pady=(4,0))
         b.pack(padx=10, pady=10)
         self.grab_set()
         b.focus_set()
@@ -468,8 +483,8 @@ def showmessage(title="", message="", parent=None, button="Ok", image=None):
     box.wait_window(box)
     return box.get_result()
 
-def showerror(title="", message="", traceback="", parent=None):
-    box = ShowError(parent, title, message, traceback)
+def showerror(title="", message="", traceback="", report_msg=False, parent=None):
+    box = ShowError(parent, title, message, traceback, report_msg)
     box.wait_window(box)
     return box.get_result()
 

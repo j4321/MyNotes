@@ -21,8 +21,7 @@ First, install the missing dependencies among:
 For instance, in Ubuntu/Debian you will need to install the following packages:
 python3-tk, tk-tktray, python3-ewmh (available in zesty only)
 
-In Archlinux, you will need to install the following packages:
-tk, tktray (`AUR <https://aur.archlinux.org/packages/tktray>`__), python-ewmh (`AUR <https://aur.archlinux.org/packages/python-ewmh>`__)
+For Archlinux users, MyNotes is available in `AUR <https://aur.archlinux.org/packages/mynotes>`__
 
 ewmh can be installed with pip:
 ::

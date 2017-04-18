@@ -7,17 +7,29 @@ Changelog
 
 - Version 2.1.0
     * Automatically fetch right version (with pkg_resources)
-    * Corrected bug: overstrike and underline always black 
+    * Corrected bug: overstrike and underline always black
+    * Corrected bug: indentation of multiline list entries sometimes diseapeared
+    * Corrected bug: restore not working if there exist notes (only delete notes)
     * Export:
-        + Improved text export: include checkboxes
-        + Corrected bug: select all not unchecked after deselection
+        + Improved export to .txt: include checkboxes
+        + Corrected bug: "Select All" not unchecked after deselection
+        + "Select All" initially selected
         + Added option: export only visible notes
         + Added html export
     * Tabulations don't support right/center alignment so it is no longer
       possible to change alignment of a line containing a tab
-    * Corrected bug: indentation of multiline list entries sometimes diseapeared
     * Added mode: enumeration
-    
+    * Mode selection puts bullets/checkboxes/numbers in front of each line
+    * Added symbol list edition in Preferences
+    * Highlight checkboxes when they are inside text selection
+    * Added link (url) insertion
+    * Reorganized rigt-click menu on note txt: created "Insert" sub-menu
+    * Reorganized "Show notes" in main menu: sorted notes by category in sub-menus
+    * Improved error handling
+    * Improved error messagebox: display full traceback + report message
+    * Added links to project pages in About dialog
+
+
 - Version 2.0.3
     * Corrected bug: wrong default category in default config file
     * Corrected bug: selection of a font not on the system
@@ -25,7 +37,7 @@ Changelog
     * Corrected bug: Alignement only set for fisrt selected line
     * Corrected bug: ImportError: No module named 'tktray'
     * Set colored text selected foreground to white
-    
+
 - Version 2.0.2
     * Corrected bug: import and restore did not update the categories, which lead
       to incomplete menus and errors

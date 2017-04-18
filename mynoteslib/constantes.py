@@ -89,6 +89,8 @@ if os.path.exists(PATH_CONFIG):
         CONFIG.set("General", "check_update", "True")
     if not CONFIG.has_option("General", "buttons_position"):
         CONFIG.set("General", "buttons_position", "right")
+    if not CONFIG.has_option("General", "symbols"):
+        CONFIG.set("General", "symbols", SYMBOLS)
 else:
     LANGUE = ""
     CONFIG.add_section("General")
@@ -97,6 +99,7 @@ else:
     CONFIG.set("General", "position", "normal")
     CONFIG.set("General", "buttons_position", "right")
     CONFIG.set("General", "check_update", "True")
+    CONFIG.set("General", "symbols", SYMBOLS)
     CONFIG.add_section("Font")
     CONFIG.set("Font", "text_family", "TkDefaultFont")
     CONFIG.set("Font", "text_size", "12")

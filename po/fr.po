@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: 2.0.4\n"
+"Project-Id-Version: 2.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-04-18 10:13+0200\n"
+"POT-Creation-Date: 2017-04-18 23:33+0200\n"
 "PO-Revision-Date: 2017-03-29 20:27+0200\n"
 "Last-Translator:  <j_4321@protonmail.com>\n"
 "Language-Team: French\n"
@@ -17,142 +17,116 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: mynoteslib/constantes.py:133 mynoteslib/constantes.py:134
-msgid "home"
-msgstr "perso"
+#: mynoteslib/config.py:36 mynoteslib/app.py:86
+msgid "Preferences"
+msgstr "Préférences"
 
-#: mynoteslib/constantes.py:135
-msgid "office"
-msgstr "travail"
+#: mynoteslib/config.py:69
+msgid "General"
+msgstr "Général"
 
-#: mynoteslib/constantes.py:138 mynoteslib/constantes.py:148
-msgid "Blue"
-msgstr "Bleu"
+#: mynoteslib/config.py:76
+msgid "Language"
+msgstr "Langue"
 
-#: mynoteslib/constantes.py:138
-msgid "Turquoise"
-msgstr "Turquoise"
+#: mynoteslib/config.py:96
+msgid "Default position of the notes"
+msgstr "Position par défaut des notes"
 
-#: mynoteslib/constantes.py:139 mynoteslib/constantes.py:151
-msgid "Orange"
-msgstr "Orange"
+#: mynoteslib/config.py:100 mynoteslib/sticky.py:167
+msgid "Always above"
+msgstr "Toujours au-dessus"
 
-#: mynoteslib/constantes.py:139 mynoteslib/constantes.py:149
-msgid "Red"
-msgstr "Rouge"
+#: mynoteslib/config.py:102 mynoteslib/sticky.py:171
+msgid "Always below"
+msgstr "Toujours en-dessous"
 
-#: mynoteslib/constantes.py:140 mynoteslib/constantes.py:151
-msgid "Grey"
-msgstr "Gris"
+#: mynoteslib/config.py:104 mynoteslib/sticky.py:175
+msgid "Normal"
+msgstr "Normal"
 
-#: mynoteslib/constantes.py:140 mynoteslib/constantes.py:147
-msgid "White"
-msgstr "Blanc"
+#: mynoteslib/config.py:120
+msgid "Title bar disposition"
+msgstr "Disposition de la barre de titre"
 
-#: mynoteslib/constantes.py:141 mynoteslib/constantes.py:148
-msgid "Green"
-msgstr "Vert"
+#: mynoteslib/config.py:128 mynoteslib/config.py:142 mynoteslib/config.py:250
+#: mynoteslib/sticky.py:86
+msgid "Title"
+msgstr "Titre"
 
-#: mynoteslib/constantes.py:141 mynoteslib/constantes.py:147
-msgid "Black"
-msgstr "Noir"
+#: mynoteslib/config.py:151
+msgid "Opacity"
+msgstr "Opacité"
 
-#: mynoteslib/constantes.py:142
-msgid "Purple"
-msgstr "Violet"
+#: mynoteslib/config.py:165
+msgid "Font"
+msgstr "Police"
 
-#: mynoteslib/constantes.py:142 mynoteslib/constantes.py:149
-#: mynoteslib/categories.py:156 mynoteslib/categories.py:158
-#: mynoteslib/categories.py:161
-msgid "Yellow"
-msgstr "Jaune"
+#: mynoteslib/config.py:174 mynoteslib/config.py:226
+msgid "Sample text"
+msgstr "Exemple de texte"
 
-#: mynoteslib/constantes.py:143
-msgid "Dark Blue"
-msgstr "Bleu foncé"
+#: mynoteslib/config.py:203 mynoteslib/sticky.py:206
+msgid "Bold"
+msgstr "Gras"
 
-#: mynoteslib/constantes.py:150
-msgid "Cyan"
-msgstr "Cyan"
+#: mynoteslib/config.py:205 mynoteslib/sticky.py:207
+msgid "Italic"
+msgstr "Italique"
 
-#: mynoteslib/constantes.py:150
-msgid "Magenta"
-msgstr "Magenta"
+#: mynoteslib/config.py:207 mynoteslib/sticky.py:208
+msgid "Underline"
+msgstr "Souligné"
 
-#: mynoteslib/constantes.py:169
-msgid "Open"
-msgstr "Ouvrir"
+#: mynoteslib/config.py:254 mynoteslib/sticky.py:737
+msgid "Text"
+msgstr "Texte"
 
-#: mynoteslib/constantes.py:212
-msgid "Save As"
-msgstr "Enregistrer sous"
+#: mynoteslib/config.py:259
+msgid "Categories"
+msgstr "Catégories"
 
-#: mynoteslib/messagebox.py:185
-msgid "There is a synchronization conflict. What do you want to do?"
-msgstr "Il y a un conflit de synchronisation. Que voulez-vous faire ?"
+#: mynoteslib/config.py:263 mynoteslib/sticky.py:225
+msgid "Symbols"
+msgstr "Symboles"
 
-#: mynoteslib/messagebox.py:188
-msgid "Sync Conflict"
-msgstr "Conflit de sync"
+#: mynoteslib/config.py:271
+msgid "Available symbols"
+msgstr "Liste des symboles"
 
-#: mynoteslib/messagebox.py:201
-msgid "Download notes from server"
-msgstr "Télécharger les notes depuis le serveur"
-
-#: mynoteslib/messagebox.py:203
-msgid "Upload local notes on server"
-msgstr "Téléverser les notes sur le serveur"
-
-#: mynoteslib/messagebox.py:277 mynoteslib/messagebox.py:336
-#: mynoteslib/version_check.py:80
-msgid "Yes"
-msgstr "Oui"
-
-#: mynoteslib/messagebox.py:278 mynoteslib/messagebox.py:336
-#: mynoteslib/version_check.py:82
-msgid "No"
-msgstr "Non"
-
-#: mynoteslib/messagebox.py:336 mynoteslib/messagebox.py:404
-#: mynoteslib/export.py:59 mynoteslib/categories.py:183
-#: mynoteslib/config.py:264
+#: mynoteslib/config.py:278 mynoteslib/export.py:59
+#: mynoteslib/messagebox.py:425 mynoteslib/messagebox.py:497
+#: mynoteslib/categories.py:183
 msgid "Cancel"
 msgstr "Annuler"
 
-#: mynoteslib/export.py:33 mynoteslib/app.py:92
-msgid "Export"
-msgstr "Exporter"
-
-#: mynoteslib/export.py:42
-msgid "Select all"
-msgstr "Tout sélectionner"
-
-#: mynoteslib/export.py:44
-msgid "Only visible notes"
-msgstr "Seulement les notes visibles"
+#: mynoteslib/config.py:394
+msgid "The language setting will take effect after restarting the application"
+msgstr ""
+"Le changement de langue prendra effet au prochain démarrage de l'application"
 
 #: mynoteslib/about.py:35
 msgid "About MyNotes"
 msgstr "À propos de MyNotes"
 
-#: mynoteslib/about.py:40
+#: mynoteslib/about.py:43
 #, python-format
 msgid "MyNotes %(version)s"
 msgstr "MyNotes %(version)s"
 
-#: mynoteslib/about.py:42
+#: mynoteslib/about.py:45
 msgid "Sticky notes/post-it system tray app"
 msgstr "Post-it gérés depuis la zone de notification"
 
-#: mynoteslib/about.py:45 mynoteslib/about.py:69
+#: mynoteslib/about.py:59 mynoteslib/about.py:85
 msgid "License"
 msgstr "Licence"
 
-#: mynoteslib/about.py:46 mynoteslib/about.py:95
+#: mynoteslib/about.py:61 mynoteslib/about.py:111
 msgid "Close"
 msgstr "Fermer"
 
-#: mynoteslib/about.py:78
+#: mynoteslib/about.py:94
 msgid ""
 "MyNotes is free software: you can redistribute it and/or modify it under the "
 "terms of the GNU General Public License as published by the Free Software "
@@ -166,7 +140,7 @@ msgstr ""
 "votre convenance) une version ultérieure.\n"
 "\n"
 
-#: mynoteslib/about.py:80
+#: mynoteslib/about.py:96
 msgid ""
 "MyNotes is distributed in the hope that it will be useful, but WITHOUT ANY "
 "WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
@@ -180,13 +154,145 @@ msgstr ""
 "pour plus de détails.\n"
 "\n"
 
-#: mynoteslib/about.py:82
+#: mynoteslib/about.py:98
 msgid ""
 "You should have received a copy of the GNU General Public License along with "
 "this program. If not, see http://www.gnu.org/licenses/."
 msgstr ""
 "Vous devriez avoir reçu une copie de la Licence Publique Générale GNU avec "
 "ce programme. Sinon, consultez http://www.gnu.org/licenses/."
+
+#: mynoteslib/symbols.py:69 mynoteslib/sticky.py:234
+msgid "Insert"
+msgstr "Insérer"
+
+#: mynoteslib/constantes.py:136 mynoteslib/constantes.py:137
+msgid "home"
+msgstr "perso"
+
+#: mynoteslib/constantes.py:138
+msgid "office"
+msgstr "travail"
+
+#: mynoteslib/constantes.py:141 mynoteslib/constantes.py:151
+msgid "Blue"
+msgstr "Bleu"
+
+#: mynoteslib/constantes.py:141
+msgid "Turquoise"
+msgstr "Turquoise"
+
+#: mynoteslib/constantes.py:142 mynoteslib/constantes.py:154
+msgid "Orange"
+msgstr "Orange"
+
+#: mynoteslib/constantes.py:142 mynoteslib/constantes.py:152
+msgid "Red"
+msgstr "Rouge"
+
+#: mynoteslib/constantes.py:143 mynoteslib/constantes.py:154
+msgid "Grey"
+msgstr "Gris"
+
+#: mynoteslib/constantes.py:143 mynoteslib/constantes.py:150
+msgid "White"
+msgstr "Blanc"
+
+#: mynoteslib/constantes.py:144 mynoteslib/constantes.py:151
+msgid "Green"
+msgstr "Vert"
+
+#: mynoteslib/constantes.py:144 mynoteslib/constantes.py:150
+msgid "Black"
+msgstr "Noir"
+
+#: mynoteslib/constantes.py:145
+msgid "Purple"
+msgstr "Violet"
+
+#: mynoteslib/constantes.py:145 mynoteslib/constantes.py:152
+#: mynoteslib/categories.py:156 mynoteslib/categories.py:158
+#: mynoteslib/categories.py:161
+msgid "Yellow"
+msgstr "Jaune"
+
+#: mynoteslib/constantes.py:146
+msgid "Dark Blue"
+msgstr "Bleu foncé"
+
+#: mynoteslib/constantes.py:153
+msgid "Cyan"
+msgstr "Cyan"
+
+#: mynoteslib/constantes.py:153
+msgid "Magenta"
+msgstr "Magenta"
+
+#: mynoteslib/constantes.py:172
+msgid "Open"
+msgstr "Ouvrir"
+
+#: mynoteslib/constantes.py:215
+msgid "Save As"
+msgstr "Enregistrer sous"
+
+#: mynoteslib/version_check.py:62
+msgid "Update"
+msgstr "Mise à jour"
+
+#: mynoteslib/version_check.py:75
+msgid ""
+"A new version of MyNotes is available.\n"
+"Do you want to download it?"
+msgstr ""
+"Une nouvelle version de MyNotes est disponible.\n"
+"Voulez-vous la télécharger ?"
+
+#: mynoteslib/version_check.py:80 mynoteslib/messagebox.py:366
+#: mynoteslib/messagebox.py:425
+msgid "Yes"
+msgstr "Oui"
+
+#: mynoteslib/version_check.py:82 mynoteslib/messagebox.py:367
+#: mynoteslib/messagebox.py:425
+msgid "No"
+msgstr "Non"
+
+#: mynoteslib/version_check.py:85
+msgid "Check for updates on startup."
+msgstr "Vérifier les mises à jour au démarrage."
+
+#: mynoteslib/export.py:33 mynoteslib/app.py:92
+msgid "Export"
+msgstr "Exporter"
+
+#: mynoteslib/export.py:42
+msgid "Select all"
+msgstr "Tout sélectionner"
+
+#: mynoteslib/export.py:44
+msgid "Only visible notes"
+msgstr "Seulement les notes visibles"
+
+#: mynoteslib/messagebox.py:187
+msgid "There is a synchronization conflict. What do you want to do?"
+msgstr "Il y a un conflit de synchronisation. Que voulez-vous faire ?"
+
+#: mynoteslib/messagebox.py:190
+msgid "Sync Conflict"
+msgstr "Conflit de sync"
+
+#: mynoteslib/messagebox.py:203
+msgid "Download notes from server"
+msgstr "Télécharger les notes depuis le serveur"
+
+#: mynoteslib/messagebox.py:205
+msgid "Upload local notes on server"
+msgstr "Téléverser les notes sur le serveur"
+
+#: mynoteslib/messagebox.py:341
+msgid "Please report this bug on "
+msgstr "Merci de signaler ce bug sur "
 
 #: mynoteslib/categories.py:50
 msgid "Default category "
@@ -212,191 +318,6 @@ msgstr ""
 #: mynoteslib/categories.py:146
 msgid "New Category"
 msgstr "Nouvelle catégorie"
-
-#: mynoteslib/config.py:36 mynoteslib/app.py:86
-msgid "Preferences"
-msgstr "Préférences"
-
-#: mynoteslib/config.py:68
-msgid "General"
-msgstr "Général"
-
-#: mynoteslib/config.py:75
-msgid "Language"
-msgstr "Langue"
-
-#: mynoteslib/config.py:95
-msgid "Default position of the notes"
-msgstr "Position par défaut des notes"
-
-#: mynoteslib/config.py:99 mynoteslib/sticky.py:167
-msgid "Always above"
-msgstr "Toujours au-dessus"
-
-#: mynoteslib/config.py:101 mynoteslib/sticky.py:171
-msgid "Always below"
-msgstr "Toujours en-dessous"
-
-#: mynoteslib/config.py:103 mynoteslib/sticky.py:175
-msgid "Normal"
-msgstr "Normal"
-
-#: mynoteslib/config.py:119
-msgid "Title bar disposition"
-msgstr "Disposition de la barre de titre"
-
-#: mynoteslib/config.py:127 mynoteslib/config.py:141 mynoteslib/config.py:249
-#: mynoteslib/sticky.py:86
-msgid "Title"
-msgstr "Titre"
-
-#: mynoteslib/config.py:150
-msgid "Opacity"
-msgstr "Opacité"
-
-#: mynoteslib/config.py:164
-msgid "Font"
-msgstr "Police"
-
-#: mynoteslib/config.py:173 mynoteslib/config.py:225
-msgid "Sample text"
-msgstr "Exemple de texte"
-
-#: mynoteslib/config.py:202 mynoteslib/sticky.py:206
-msgid "Bold"
-msgstr "Gras"
-
-#: mynoteslib/config.py:204 mynoteslib/sticky.py:207
-msgid "Italic"
-msgstr "Italique"
-
-#: mynoteslib/config.py:206 mynoteslib/sticky.py:208
-msgid "Underline"
-msgstr "Souligné"
-
-#: mynoteslib/config.py:253 mynoteslib/sticky.py:741
-msgid "Text"
-msgstr "Texte"
-
-#: mynoteslib/config.py:258
-msgid "Categories"
-msgstr "Catégories"
-
-#: mynoteslib/config.py:377
-msgid "The language setting will take effect after restarting the application"
-msgstr ""
-"Le changement de langue prendra effet au prochain démarrage de l'application"
-
-#: mynoteslib/app.py:72
-msgid "New Note"
-msgstr "Nouvelle note"
-
-#: mynoteslib/app.py:74
-msgid "Show All"
-msgstr "Afficher tout"
-
-#: mynoteslib/app.py:76
-msgid "Show Category"
-msgstr "Afficher une catégorie"
-
-#: mynoteslib/app.py:78
-msgid "Show Note"
-msgstr "Afficher une note"
-
-#: mynoteslib/app.py:81
-msgid "Hide All"
-msgstr "Cacher tout"
-
-#: mynoteslib/app.py:83
-msgid "Hide Category"
-msgstr "Cacher une catégorie"
-
-#: mynoteslib/app.py:89 mynoteslib/app.py:233
-msgid "Backup Notes"
-msgstr "Sauvegarder"
-
-#: mynoteslib/app.py:90 mynoteslib/app.py:253
-msgid "Restore Backup"
-msgstr "Restaurer"
-
-#: mynoteslib/app.py:93 mynoteslib/app.py:492
-msgid "Import"
-msgstr "Importer"
-
-#: mynoteslib/app.py:95
-msgid "Check for Updates"
-msgstr "Vérifier les mises à jour"
-
-#: mynoteslib/app.py:97
-msgid "About"
-msgstr "À propos"
-
-#: mynoteslib/app.py:98
-msgid "Quit"
-msgstr "Quitter"
-
-#: mynoteslib/app.py:242
-msgid "Warning"
-msgstr "Attention"
-
-#: mynoteslib/app.py:243
-msgid "Restoring a backup will erase the current notes."
-msgstr "La restauration d'une sauvegarde supprimera toute les notes actuelles."
-
-#: mynoteslib/app.py:284 mynoteslib/app.py:518 mynotes.py:46
-msgid "Error"
-msgstr "Erreur"
-
-#: mynoteslib/app.py:284
-#, python-brace-format
-msgid "The file {filename} does not exists."
-msgstr "Le fichier {filename} n'existe pas."
-
-#: mynoteslib/app.py:411 mynoteslib/app.py:488
-msgid "Notes (.notes)"
-msgstr "Notes (.notes)"
-
-#: mynoteslib/app.py:412
-msgid "HTML file (.html)"
-msgstr "Fichier HTML (.html)"
-
-#: mynoteslib/app.py:413
-msgid "Text file (.txt)"
-msgstr "Fichier texte (.txt)"
-
-#: mynoteslib/app.py:414 mynoteslib/app.py:489
-msgid "All files"
-msgstr "Tous les fichiers"
-
-#: mynoteslib/app.py:417
-msgid "Export Notes As"
-msgstr "Exporter les notes sous"
-
-#: mynoteslib/app.py:430 mynoteslib/app.py:458
-#, python-brace-format
-msgid "Category: {category}"
-msgstr "Catégorie : {category}"
-
-#: mynoteslib/app.py:517
-#, python-brace-format
-msgid "The file {file} is not a valid .notes file."
-msgstr "Le fichier {file} n'est pas un fichier .notes valide."
-
-#: mynoteslib/version_check.py:62
-msgid "Update"
-msgstr "Mise à jour"
-
-#: mynoteslib/version_check.py:75
-msgid ""
-"A new version of MyNotes is available.\n"
-"Do you want to download it?"
-msgstr ""
-"Une nouvelle version de MyNotes est disponible.\n"
-"Voulez-vous la télécharger ?"
-
-#: mynoteslib/version_check.py:85
-msgid "Check for updates on startup."
-msgstr "Vérifier les mises à jour au démarrage."
 
 #: mynoteslib/sticky.py:182
 msgid "Note"
@@ -426,7 +347,7 @@ msgstr "Catégorie"
 msgid "Color"
 msgstr "Couleur"
 
-#: mynoteslib/sticky.py:198 mynoteslib/sticky.py:396
+#: mynoteslib/sticky.py:198 mynoteslib/sticky.py:395
 msgid "Lock"
 msgstr "Vérouiller"
 
@@ -454,10 +375,6 @@ msgstr "Aligné à droite"
 msgid "Center"
 msgstr "Centré"
 
-#: mynoteslib/sticky.py:225
-msgid "Symbols"
-msgstr "Symboles"
-
 #: mynoteslib/sticky.py:226
 msgid "Checkbox"
 msgstr "Case à cocher"
@@ -470,7 +387,7 @@ msgstr "Image"
 msgid "Date"
 msgstr "Date"
 
-#: mynoteslib/sticky.py:229 mynoteslib/sticky.py:738 mynoteslib/sticky.py:742
+#: mynoteslib/sticky.py:229 mynoteslib/sticky.py:734 mynoteslib/sticky.py:738
 msgid "Link"
 msgstr "Lien"
 
@@ -482,27 +399,123 @@ msgstr "Style"
 msgid "Alignment"
 msgstr "Alignement"
 
-#: mynoteslib/sticky.py:234 mynoteslib/symbols.py:69
-msgid "Insert"
-msgstr "Insérer"
-
-#: mynoteslib/sticky.py:372
+#: mynoteslib/sticky.py:371
 msgid "Confirmation"
 msgstr "Confirmation"
 
-#: mynoteslib/sticky.py:372
+#: mynoteslib/sticky.py:371
 msgid "Delete the note?"
 msgstr "Voulez-vous supprimer cette note ?"
 
-#: mynoteslib/sticky.py:411
+#: mynoteslib/sticky.py:410
 msgid "Unlock"
 msgstr "Dévérouiller"
 
-#: mynoteslib/sticky.py:764
+#: mynoteslib/sticky.py:760
 msgid "Select PNG image"
 msgstr "Sélectionner une image PNG"
 
-#: mynotes.py:46
+#: mynoteslib/app.py:72
+msgid "New Note"
+msgstr "Nouvelle note"
+
+#: mynoteslib/app.py:74
+msgid "Show All"
+msgstr "Afficher tout"
+
+#: mynoteslib/app.py:76
+msgid "Show Category"
+msgstr "Afficher une catégorie"
+
+#: mynoteslib/app.py:78
+msgid "Show Note"
+msgstr "Afficher une note"
+
+#: mynoteslib/app.py:81
+msgid "Hide All"
+msgstr "Cacher tout"
+
+#: mynoteslib/app.py:83
+msgid "Hide Category"
+msgstr "Cacher une catégorie"
+
+#: mynoteslib/app.py:89 mynoteslib/app.py:238
+msgid "Backup Notes"
+msgstr "Sauvegarder"
+
+#: mynoteslib/app.py:90 mynoteslib/app.py:263
+msgid "Restore Backup"
+msgstr "Restaurer"
+
+#: mynoteslib/app.py:93 mynoteslib/app.py:520
+msgid "Import"
+msgstr "Importer"
+
+#: mynoteslib/app.py:95
+msgid "Check for Updates"
+msgstr "Vérifier les mises à jour"
+
+#: mynoteslib/app.py:97
+msgid "About"
+msgstr "À propos"
+
+#: mynoteslib/app.py:98
+msgid "Quit"
+msgstr "Quitter"
+
+#: mynoteslib/app.py:246 mynoteslib/app.py:288 mynoteslib/app.py:290
+#: mynoteslib/app.py:511 mynoteslib/app.py:541 mynotes.py:45 mynotes.py:55
+msgid "Error"
+msgstr "Erreur"
+
+#: mynoteslib/app.py:246
+msgid "Backup failed."
+msgstr "La sauvegarde a échoué."
+
+#: mynoteslib/app.py:252
+msgid "Warning"
+msgstr "Attention"
+
+#: mynoteslib/app.py:253
+msgid "Restoring a backup will erase the current notes."
+msgstr "La restauration d'une sauvegarde supprimera toute les notes actuelles."
+
+#: mynoteslib/app.py:288
+#, python-brace-format
+msgid "The file {filename} does not exists."
+msgstr "Le fichier {filename} n'existe pas."
+
+#: mynoteslib/app.py:434 mynoteslib/app.py:516
+msgid "Notes (.notes)"
+msgstr "Notes (.notes)"
+
+#: mynoteslib/app.py:435
+msgid "HTML file (.html)"
+msgstr "Fichier HTML (.html)"
+
+#: mynoteslib/app.py:436
+msgid "Text file (.txt)"
+msgstr "Fichier texte (.txt)"
+
+#: mynoteslib/app.py:437 mynoteslib/app.py:517
+msgid "All files"
+msgstr "Tous les fichiers"
+
+#: mynoteslib/app.py:440
+msgid "Export Notes As"
+msgstr "Exporter les notes sous"
+
+#: mynoteslib/app.py:454 mynoteslib/app.py:482
+#, python-brace-format
+msgid "Category: {category}"
+msgstr "Catégorie : {category}"
+
+#: mynoteslib/app.py:540
+#, python-brace-format
+msgid "The file {file} is not a valid .notes file."
+msgstr "Le fichier {file} n'est pas un fichier .notes valide."
+
+#: mynotes.py:45
 msgid "MyNotes is already running. If not deletes /tmp/mynotes.pid"
 msgstr ""
 "MyNotes est déjà lancé. Si ce n'est pas le cas, supprimez /tmp/mynotes.pid"
