@@ -1,11 +1,11 @@
 Metadata-Version: 1.1
 Name: mynotes
-Version: 2.0.4
+Version: 2.1.0
 Summary: Post-it system tray app
-Home-page: UNKNOWN
+Home-page: https://sourceforge.net/projects/my-notes
 Author: Juliette Monsel
-Author-email: j_4321@protonmail.fr
-License: GNU General Public License v3
+Author-email: j_4321@protonmail.com
+License: GPLv3
 Description: 
         MyNotes is a sticky notes/post-it application. Notes are created using
         the system tray icon. They can be organized in categories and each
@@ -13,15 +13,31 @@ Description:
         can be inserted in the notes. The style of the text can be changed
         (alignment, style).
         
+Keywords: post-it,sticky,notes,tkinter
 Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: X11 Applications
+Classifier: Intended Audience :: End Users/Desktop
+Classifier: Topic :: Text Editors
+Classifier: Topic :: Office/Business
+Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Natural Language :: English
+Classifier: Natural Language :: French
+Classifier: Operating System :: POSIX :: Linux
 Requires: tkinter
 Requires: sys
 Requires: os
 Requires: locale
 Requires: gettext
+Requires: re
 Requires: configparser
 Requires: subprocess
 Requires: time
 Requires: shutil
+Requires: html
 Requires: pickle
+Requires: setuptools
 Requires: ewmh
