@@ -655,11 +655,8 @@ class Sticky(Toplevel):
 
     def hide(self, event=None):
         """ Hide note (can be displayed again via app menu) """
-        title = self.master.menu_notes_title(self.title_var.get().strip())
-        self.master.hidden_notes[self.id] = title
-        self.master.menu_notes.add_command(label=title,
-                                           command=lambda: self.master.show_note(self.id))
-        self.master.icon.menu.entryconfigure(4, state="normal")
+        cat = self.category.get()
+        self.master.add_note_to_menu(self.id, self.title_var.get().strip(), cat)
         data = self.save_info()
         data["visible"] = False
         self.master.note_data[self.id] = data

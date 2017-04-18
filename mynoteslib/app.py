@@ -65,7 +65,7 @@ class App(Tk):
 
         ### Menu
         self.menu_notes = Menu(self.icon.menu, tearoff=False)
-        self.hidden_notes = {}
+        self.hidden_notes = {cat: {} for cat in CONFIG.options("Categories")}
         self.menu_show_cat = Menu(self.icon.menu, tearoff=False)
         self.menu_hide_cat = Menu(self.icon.menu, tearoff=False)
         self.icon.configure(image=self.img)
@@ -114,11 +114,7 @@ class App(Tk):
                 if data["visible"]:
                     self.notes[key] = Sticky(self, key, **data)
                 else:
-                    title = self.menu_notes_title(data["title"])
-                    self.hidden_notes[key] = title
-                    self.menu_notes.add_command(label=title,
-                                                command=lambda nb=key: self.show_note(nb))
-                    self.icon.menu.entryconfigure(4, state="normal")
+                    self.add_note_to_menu(key, data["title"], cat)
         self.nb = len(self.note_data)
         self.update_menu()
         self.update_notes()
@@ -204,24 +200,33 @@ class App(Tk):
                 self.ewmh.setWmState(w, 1, '_NET_WM_STATE_STICKY')
         self.ewmh.display.flush()
 
-    def menu_notes_title(self, note_title):
-        """
-            Return the title to display in the Show note submenu for the note
-            whose title is note_title. The title returned will be 'note_title'
-            if only this note has this title in the menu. Otherwise, it will
-            be 'note_title ~#n', if it is the n-th note with this title.
-        """
-        end = self.menu_notes.index("end")
-        if end is not None:
-            # le menu n'est pas vide
-            titles = self.hidden_notes.values()
-            titles = [t for t in titles if t.split(" ~#")[0] == note_title]
-            if titles:
-                return "%s ~#%i" % (note_title, len(titles) + 1)
+    def add_note_to_menu(self, nb, note_title, category):
+        """ add note to 'show notes' menu. """
+
+        try:
+            name = self.menu_notes.entrycget(category.capitalize(), 'menu')
+            if not isinstance(name, str):
+                name = str(name)
+            menu = self.menu_notes.children[name.split('.')[-1]]
+            end = menu.index("end")
+            if end is not None:
+                # le menu n'est pas vide
+                titles = self.hidden_notes[category].values()
+                titles = [t for t in titles if t.split(" ~#")[0] == note_title]
+                if titles:
+                    title = "%s ~#%i" % (note_title, len(titles) + 1)
+                else:
+                    title = note_title
             else:
-                return note_title
-        else:
-            return note_title
+                title = note_title
+        except TclError:
+            # cat is not in the menu
+            menu = Menu(self.menu_notes, tearoff=False)
+            self.menu_notes.add_cascade(label=category.capitalize(), menu=menu)
+            title = note_title
+        menu.add_command(label=title, command=lambda: self.show_note(nb))
+        self.icon.menu.entryconfigure(4, state="normal")
+        self.hidden_notes[category][nb] = title
 
     def backup(self):
         """ create a backup at the location indicated by user """
@@ -272,11 +277,7 @@ class App(Tk):
                         if data["visible"]:
                             self.notes[note_id] = Sticky(self, key, **data)
                         else:
-                            title = self.menu_notes_title(data["title"])
-                            self.hidden_notes[note_id] = title
-                            self.menu_notes.add_command(label=title,
-                                                        command=lambda nb=note_id: self.show_note(nb))
-                            self.icon.menu.entryconfigure(4, state="normal")
+                            self.add_note_to_menu(note_id, data["title"], cat)
                     self.nb = len(self.note_data)
                     self.update_menu()
                     self.update_notes()
@@ -285,16 +286,16 @@ class App(Tk):
 
     def show_all(self):
         """ Show all notes """
-        keys = list(self.hidden_notes.keys())
-        for key in keys:
-            self.show_note(key)
+        for cat in self.hidden_notes.keys():
+            keys = list(self.hidden_notes[cat].keys())
+            for key in keys:
+                self.show_note(key)
 
     def show_cat(self, category):
         """ Show all notes belonging to category """
-        keys = list(self.hidden_notes.keys())
+        keys = list(self.hidden_notes[category].keys())
         for key in keys:
-            if self.note_data[key]["category"] == category:
-                self.show_note(key)
+            self.show_note(key)
 
     def hide_all(self):
         """ Hide all notes """
@@ -335,19 +336,28 @@ class App(Tk):
     def show_note(self, nb):
         """ Display the note corresponding to the 'nb' key in self.note_data """
         self.note_data[nb]["visible"] = True
-        index = self.menu_notes.index(self.hidden_notes[nb])
-        del(self.hidden_notes[nb])
+        cat = self.note_data[nb]["category"]
+        name = self.menu_notes.entrycget(cat.capitalize(), 'menu')
+        if not isinstance(name, str):
+            name = str(name)
+        menu = self.menu_notes.children[name.split('.')[-1]]
+        index = menu.index(self.hidden_notes[cat][nb])
+        del(self.hidden_notes[cat][nb])
         self.notes[nb] = Sticky(self, nb, **self.note_data[nb])
-        self.menu_notes.delete(index)
-        if self.menu_notes.index("end") is None:
+        menu.delete(index)
+        if menu.index("end") is None:
             # the menu is empty
-            self.icon.menu.entryconfigure(4, state="disabled")
+            self.menu_notes.delete(cat.capitalize())
+            if self.menu_notes.index('end') is None:
+               self.icon.menu.entryconfigure(4, state="disabled")
         self.make_notes_sticky()
 
     def update_notes(self):
         """ Update the notes after changes in the categories """
         categories = CONFIG.options("Categories")
         categories.sort()
+        self.menu_notes.delete(0, "end")
+        self.hidden_notes = {cat: {} for cat in categories}
         for key in self.note_data:
             if not self.note_data[key]["category"] in categories:
                 default = CONFIG.get("General", "default_category")
@@ -356,9 +366,16 @@ class App(Tk):
                     self.notes[key].change_category(default)
                 self.note_data[key]["category"] = default
                 self.note_data[key]["color"] = default_color
-        for note in self.notes.values():
+        for key, note in self.notes.items():
             note.update_menu_cat(categories)
+            if not self.note_data[key]['visible']:
+                self.add_note_to_menu(key, self.note_data[key]["title"],
+                                      self.note_data[key]['category'])
         self.save()
+        if self.menu_notes.index("end")is not None:
+            self.icon.menu.entryconfigure(4, state="normal")
+        else:
+            self.icon.menu.entryconfigure(4, state="disabled")
 
     def update_cat_colors(self, changes):
         """ Default color of the categories was changed, so change the color of the
@@ -505,12 +522,8 @@ class App(Tk):
                     if data["visible"]:
                         self.notes[note_id] = Sticky(self, note_id, **data)
                     else:
-                        title = self.menu_notes_title(data["title"])
-                        self.hidden_notes[note_id] = title
-                        self.menu_notes.add_command(label=title,
-                                                    command=lambda nb=note_id: self.show_note(nb))
-                        self.icon.menu.entryconfigure(4, state="normal")
-                self.nb = len(self.note_data)
+                        self.add_note_to_menu(note_id, data["title"], cat)
+                self.nb = max(self.note_data.keys(), lambda x: int(x)) + 1
                 self.update_menu()
                 self.update_notes()
             except Exception as e:
