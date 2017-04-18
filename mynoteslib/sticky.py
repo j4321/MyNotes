@@ -266,7 +266,6 @@ class Sticky(Toplevel):
             self.txt.tag_bind("link#%i" % self.nb_links,
                               "<Button-1>",
                               lambda e: open_url(link))
-        print(self.links, self.nb_links)
 
         mode = self.mode.get()
         if mode != "note":
