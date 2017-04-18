@@ -6,7 +6,7 @@ from setuptools import setup
 import os
 images = [os.path.join("mynoteslib/images/", img) for img in os.listdir("mynoteslib/images/")]
 data_files = [("share/pixmaps", ["mynotes.svg"]),
-              ("share/doc/mynotes", ["README.rst", "CHANGELOG.rst", "COPYING"]),
+              ("share/doc/mynotes", ["README.rst", "changelog", "COPYING"]),
               ("share/mynotes/images", images),
               ("share/locale/en_US/LC_MESSAGES/", ["mynoteslib/locale/en_US/LC_MESSAGES/MyNotes.mo"]),
               ("share/locale/fr_FR/LC_MESSAGES/", ["mynoteslib/locale/fr_FR/LC_MESSAGES/MyNotes.mo"]),
