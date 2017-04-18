@@ -23,7 +23,7 @@ Main class
 
 from tkinter import Tk, PhotoImage, Menu, Toplevel, TclError
 from tkinter.ttk import Style, Label, Checkbutton, Button, Entry
-import os, re, time
+import os, re, time, traceback
 from shutil import copy
 import pickle
 from mynoteslib import tktray
@@ -66,7 +66,7 @@ class App(Tk):
 
         ### Menu
         self.menu_notes = Menu(self.icon.menu, tearoff=False)
-        self.hidden_notes = {}
+        self.hidden_notes = {cat: {} for cat in CONFIG.options("Categories")}
         self.menu_show_cat = Menu(self.icon.menu, tearoff=False)
         self.menu_hide_cat = Menu(self.icon.menu, tearoff=False)
         self.icon.configure(image=self.img)
@@ -136,17 +136,13 @@ class App(Tk):
                 if data["visible"]:
                     self.notes[key] = Sticky(self, key, **data)
                 else:
-                    title = self.menu_notes_title(data["title"])
-                    self.hidden_notes[key] = title
-                    self.menu_notes.add_command(label=title,
-                                                command=lambda nb=key: self.show_note(nb))
-                    self.icon.menu.entryconfigure(4, state="normal")
+                    self.add_note_to_menu(key, data["title"], cat)
         self.nb = len(self.note_data)
         self.update_menu()
         self.update_notes()
         self.make_notes_sticky()
 
-        # newline depending on list type
+        # newline depending on mode
         self.bind_class("Text", "<Return>",  self.insert_newline)
         # char deletion taking into account list type
         self.bind_class("Text", "<BackSpace>",  self.delete_char)
@@ -192,27 +188,33 @@ class App(Tk):
                 txt.master.update_enum()
             elif deb_line == "\t•\t" and 'list' in tags:
                 txt.delete("insert linestart", "insert")
+                txt.insert("insert", "\t\t")
+            elif deb_line == "\t\t":
+                txt.delete("insert linestart", "insert")
             else:
                 txt.delete("insert-1c")
 
     def insert_newline(self, event):
-        txt = event.widget
-        tags = txt.tag_names("insert")
-        if "list" in tags:
-            txt.insert("insert", "\n\t•\t", tags)
-        elif "enum" in tags:
-            txt.configure(autoseparators=False)
-            txt.edit_separator()
-            txt.insert("insert", "\n\t0.\t", tags)
-            txt.master.update_enum()
-            txt.edit_separator()
-            txt.configure(autoseparators=True)
-        elif  "todolist" in tags:
-            txt.insert("insert", "\n", tags)
-            ch = Checkbutton(txt, style=txt.master.id + ".TCheckbutton")
-            txt.window_create("insert", window=ch)
+        mode = event.widget.master.mode.get()
+        if mode == "list":
+            event.widget.insert("insert", "\n\t•\t")
+            event.widget.tag_add("list", "1.0", "end")
+        elif mode == "todolist":
+            event.widget.insert("insert", "\n")
+            ch = Checkbutton(event.widget, takefocus=False,
+                             style=event.widget.master.id + ".TCheckbutton")
+            event.widget.window_create("insert", window=ch)
+            event.widget.tag_add("todolist", "1.0", "end")
+        elif mode == "enum":
+            event.widget.configure(autoseparators=False)
+            event.widget.edit_separator()
+            event.widget.insert("insert", "\n\t0.\t")
+#            event.widget.tag_add("enum", "1.0", "end")
+            event.widget.master.update_enum()
+            event.widget.edit_separator()
+            event.widget.configure(autoseparators=True)
         else:
-            txt.insert("insert", "\n")
+            event.widget.insert("insert", "\n")
 
     def make_notes_sticky(self):
         for w in self.ewmh.getClientList():
@@ -220,24 +222,33 @@ class App(Tk):
                 self.ewmh.setWmState(w, 1, '_NET_WM_STATE_STICKY')
         self.ewmh.display.flush()
 
-    def menu_notes_title(self, note_title):
-        """
-            Return the title to display in the Show note submenu for the note
-            whose title is note_title. The title returned will be 'note_title'
-            if only this note has this title in the menu. Otherwise, it will
-            be 'note_title ~#n', if it is the n-th note with this title.
-        """
-        end = self.menu_notes.index("end")
-        if end is not None:
-            # le menu n'est pas vide
-            titles = self.hidden_notes.values()
-            titles = [t for t in titles if t.split(" ~#")[0] == note_title]
-            if titles:
-                return "%s ~#%i" % (note_title, len(titles) + 1)
+    def add_note_to_menu(self, nb, note_title, category):
+        """ add note to 'show notes' menu. """
+
+        try:
+            name = self.menu_notes.entrycget(category.capitalize(), 'menu')
+            if not isinstance(name, str):
+                name = str(name)
+            menu = self.menu_notes.children[name.split('.')[-1]]
+            end = menu.index("end")
+            if end is not None:
+                # le menu n'est pas vide
+                titles = self.hidden_notes[category].values()
+                titles = [t for t in titles if t.split(" ~#")[0] == note_title]
+                if titles:
+                    title = "%s ~#%i" % (note_title, len(titles) + 1)
+                else:
+                    title = note_title
             else:
-                return note_title
-        else:
-            return note_title
+                title = note_title
+        except TclError:
+            # cat is not in the menu
+            menu = Menu(self.menu_notes, tearoff=False)
+            self.menu_notes.add_cascade(label=category.capitalize(), menu=menu)
+            title = note_title
+        menu.add_command(label=title, command=lambda: self.show_note(nb))
+        self.icon.menu.entryconfigure(4, state="normal")
+        self.hidden_notes[category][nb] = title
 
     def backup(self):
         """ create a backup at the location indicated by user """
@@ -248,9 +259,14 @@ class App(Tk):
                                     initialfile="notes.backup0",
                                     title=_('Backup Notes'))
         if fichier:
-            with open(fichier, "wb") as fich:
-                dp = pickle.Pickler(fich)
-                dp.dump(self.note_data)
+            try:
+                with open(fichier, "wb") as fich:
+                    dp = pickle.Pickler(fich)
+                    dp.dump(self.note_data)
+            except Exception as e:
+                report_msg = e.strerror != 'Permission denied'
+                showerror(_("Error"), _("Backup failed."),
+                          traceback.format_exc(), report_msg)
 
     def restore(self, fichier=None, confirmation=True):
         """ restore notes from backup """
@@ -269,14 +285,14 @@ class App(Tk):
                                           title=_('Restore Backup'))
             if fichier:
                 try:
-                    if not os.path.samefile(fichier, PATH_DATA):
-                        copy(fichier, PATH_DATA)
                     self.show_all()
                     keys = list(self.notes.keys())
                     for key in keys:
                         self.notes[key].delete(confirmation=False)
-                    with open(PATH_DATA, "rb") as fich:
-                        dp = pickle.Unpickler(fich)
+                    if not os.path.samefile(fichier, PATH_DATA):
+                        copy(fichier, PATH_DATA)
+                    with open(PATH_DATA, "rb") as myfich:
+                        dp = pickle.Unpickler(myfich)
                         note_data = dp.load()
                     for i, key in enumerate(note_data):
                         data = note_data[key]
@@ -287,30 +303,26 @@ class App(Tk):
                             CONFIG.set("Categories", cat, data["color"])
                         if data["visible"]:
                             self.notes[note_id] = Sticky(self, key, **data)
-                        else:
-                            title = self.menu_notes_title(data["title"])
-                            self.hidden_notes[note_id] = title
-                            self.menu_notes.add_command(label=title,
-                                                        command=lambda nb=note_id: self.show_note(nb))
-                            self.icon.menu.entryconfigure(4, state="normal")
                     self.nb = len(self.note_data)
                     self.update_menu()
                     self.update_notes()
                 except FileNotFoundError:
                     showerror(_("Error"), _("The file {filename} does not exists.").format(filename=fichier))
+                except Exception as e:
+                    showerror(_("Error"), str(e), traceback.format_exc(), True)
 
     def show_all(self):
         """ Show all notes """
-        keys = list(self.hidden_notes.keys())
-        for key in keys:
-            self.show_note(key)
+        for cat in self.hidden_notes.keys():
+            keys = list(self.hidden_notes[cat].keys())
+            for key in keys:
+                self.show_note(key)
 
     def show_cat(self, category):
         """ Show all notes belonging to category """
-        keys = list(self.hidden_notes.keys())
+        keys = list(self.hidden_notes[category].keys())
         for key in keys:
-            if self.note_data[key]["category"] == category:
-                self.show_note(key)
+            self.show_note(key)
 
     def hide_all(self):
         """ Hide all notes """
@@ -351,19 +363,28 @@ class App(Tk):
     def show_note(self, nb):
         """ Display the note corresponding to the 'nb' key in self.note_data """
         self.note_data[nb]["visible"] = True
-        index = self.menu_notes.index(self.hidden_notes[nb])
-        del(self.hidden_notes[nb])
+        cat = self.note_data[nb]["category"]
+        name = self.menu_notes.entrycget(cat.capitalize(), 'menu')
+        if not isinstance(name, str):
+            name = str(name)
+        menu = self.menu_notes.children[name.split('.')[-1]]
+        index = menu.index(self.hidden_notes[cat][nb])
+        del(self.hidden_notes[cat][nb])
         self.notes[nb] = Sticky(self, nb, **self.note_data[nb])
-        self.menu_notes.delete(index)
-        if self.menu_notes.index("end") is None:
+        menu.delete(index)
+        if menu.index("end") is None:
             # the menu is empty
-            self.icon.menu.entryconfigure(4, state="disabled")
+            self.menu_notes.delete(cat.capitalize())
+            if self.menu_notes.index('end') is None:
+               self.icon.menu.entryconfigure(4, state="disabled")
         self.make_notes_sticky()
 
     def update_notes(self):
         """ Update the notes after changes in the categories """
         categories = CONFIG.options("Categories")
         categories.sort()
+        self.menu_notes.delete(0, "end")
+        self.hidden_notes = {cat: {} for cat in categories}
         for key in self.note_data:
             if not self.note_data[key]["category"] in categories:
                 default = CONFIG.get("General", "default_category")
@@ -372,9 +393,16 @@ class App(Tk):
                     self.notes[key].change_category(default)
                 self.note_data[key]["category"] = default
                 self.note_data[key]["color"] = default_color
-        for note in self.notes.values():
+            if not self.note_data[key]['visible']:
+                self.add_note_to_menu(key, self.note_data[key]["title"],
+                                      self.note_data[key]['category'])
+        for key, note in self.notes.items():
             note.update_menu_cat(categories)
         self.save()
+        if self.menu_notes.index("end")is not None:
+            self.icon.menu.entryconfigure(4, state="normal")
+        else:
+            self.icon.menu.entryconfigure(4, state="disabled")
 
     def update_cat_colors(self, changes):
         """ Default color of the categories was changed, so change the color of the
@@ -421,54 +449,89 @@ class App(Tk):
     def export_notes(self):
         export = Export(self)
         self.wait_window(export)
-        categories_to_export = export.get_export()
+        categories_to_export, only_visible = export.get_export()
         if categories_to_export:
             initialdir, initialfile = os.path.split(PATH_DATA_BACKUP % 0)
             fichier = asksaveasfilename(defaultextension=".notes",
                                         filetypes=[(_("Notes (.notes)"), "*.notes"),
+                                                   (_("HTML file (.html)"), "*.html"),
                                                    (_("Text file (.txt)"), "*.txt"),
                                                    (_("All files"), "*")],
                                         initialdir=initialdir,
                                         initialfile="",
                                         title=_('Export Notes As'))
             if fichier:
-                if os.path.splitext(fichier)[-1] == ".txt":
-                    # export notes to .txt: all formatting is lost
-                    cats = {cat: [] for cat in categories_to_export}
-                    for key in self.note_data:
-                        cat = self.note_data[key]["category"]
-                        if cat in cats:
-                            cats[cat].append((self.note_data[key]["title"],
-                                              self.note_data[key]["txt"]))
-                    text = ""
-                    for cat in cats:
-                        cat_txt = _("Category: {category}\n").format(category=cat)
-                        text += cat_txt
-                        text += "="*len(cat_txt)
-                        text += "\n\n"
-                        for title, txt in cats[cat]:
-                            text += title
-                            text += "\n"
-                            text += "-"*len(title)
+                try:
+                    if os.path.splitext(fichier)[-1] == ".txt":
+        ### txt export
+                        # export notes to .txt: all formatting is lost
+                        cats = {cat: [] for cat in categories_to_export}
+                        for key in self.note_data:
+                            cat = self.note_data[key]["category"]
+                            if cat in cats and ((not only_visible) or self.note_data[key]["visible"]):
+                                cats[cat].append((self.note_data[key]["title"],
+                                                  cst.note_to_txt(self.note_data[key])))
+                        text = ""
+                        for cat in cats:
+                            cat_txt = _("Category: {category}").format(category=cat) + "\n"
+                            text += cat_txt
+                            text += "="*len(cat_txt)
                             text += "\n\n"
-                            text += txt
+                            for title, txt in cats[cat]:
+                                text += title
+                                text += "\n"
+                                text += "-"*len(title)
+                                text += "\n\n"
+                                text += txt
+                                text += "\n\n"
+                                text += "-"*30
+                                text += "\n\n"
+                            text += "#"*30
                             text += "\n\n"
-                            text += "-"*30
-                            text += "\n\n"
-                        text += "#"*30
-                        text += "\n\n"
-                    with open(fichier, "w") as fich:
-                        fich.write(text)
+                        with open(fichier, "w") as fich:
+                            fich.write(text)
 
-                else:
-                    note_data = {}
-                    for key in self.note_data:
-                        if self.note_data[key]["category"] in categories_to_export:
-                            note_data[key] = self.note_data[key]
+                    elif os.path.splitext(fichier)[-1] == ".html":
+        ### html export
+                        cats = {cat: [] for cat in categories_to_export}
+                        for key in self.note_data:
+                            cat = self.note_data[key]["category"]
+                            if cat in cats and ((not only_visible) or self.note_data[key]["visible"]):
+                                cats[cat].append((self.note_data[key]["title"],
+                                                  cst.note_to_html(self.note_data[key], self)))
+                        text = ""
+                        for cat in cats:
+                            cat_txt = "<h1 style='text-align:center'>" + _("Category: {category}").format(category=cat) + "<h1/>\n"
+                            text += cat_txt
+                            text += "<br>"
+                            for title, txt in cats[cat]:
+                                text += "<h2 style='text-align:center'>%s</h2>\n" % title
+                                text += txt
+                                text += "<br>\n"
+                                text += "<hr />"
+                                text += "<br>\n"
+                            text += '<hr style="height: 8px;background-color:grey" />'
+                            text += "<br>\n"
+                        with open(fichier, "w") as fich:
+                            fich.write('<body style="max-width:30em">\n')
+                            fich.write(text.encode('ascii', 'xmlcharrefreplace').decode("utf-8"))
+                            fich.write("\n</body>")
 
-                    with open(fichier, "wb") as fich:
-                        dp = pickle.Pickler(fich)
-                        dp.dump(note_data)
+                    else:
+        ### pickle export
+                        note_data = {}
+                        for key in self.note_data:
+                            if self.note_data[key]["category"] in categories_to_export:
+                                if (not only_visible) or self.note_data[key]["visible"]:
+                                    note_data[key] = self.note_data[key]
+
+                        with open(fichier, "wb") as fich:
+                            dp = pickle.Pickler(fich)
+                            dp.dump(note_data)
+                except Exception as e:
+                    report_msg = e.strerror != 'Permission denied'
+                    showerror(_("Error"), str(e), traceback.format_exc(),
+                              report_msg)
 
     def import_notes(self):
         fichier = askopenfilename(defaultextension=".backup",
@@ -489,20 +552,15 @@ class App(Tk):
                     cat = data["category"]
                     if not CONFIG.has_option("Categories", cat):
                         CONFIG.set("Categories", cat, data["color"])
+                        self.hidden_notes[cat] = {}
                     if data["visible"]:
                         self.notes[note_id] = Sticky(self, note_id, **data)
-                    else:
-                        title = self.menu_notes_title(data["title"])
-                        self.hidden_notes[note_id] = title
-                        self.menu_notes.add_command(label=title,
-                                                    command=lambda nb=note_id: self.show_note(nb))
-                        self.icon.menu.entryconfigure(4, state="normal")
-                self.nb = len(self.note_data)
+                self.nb = int(max(self.note_data.keys(), key=lambda x: int(x))) + 1
                 self.update_menu()
                 self.update_notes()
-            except Exception as e:
+            except Exception:
                 message = _("The file {file} is not a valid .notes file.").format(file=fichier)
-                showerror(_("Error"), message + "\n" + str(e))
+                showerror(_("Error"), message, traceback.format_exc())
 
     def quit(self):
         self.destroy()

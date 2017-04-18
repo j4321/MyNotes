@@ -23,10 +23,11 @@ Main
 
 
 import os, sys, traceback
-from tkinter.messagebox import showerror
 from tkinter import Tk
+from tkinter.ttk import Style
 from mynoteslib.constantes import save_config, CONFIG
 from mynoteslib.app import App
+from mynoteslib.messagebox import showerror
 from mynoteslib.sync import upload_to_server
 
 # vérifie si mynotes est déjà lancé
@@ -40,6 +41,8 @@ if os.path.isfile(pidfile):
         # MyNotes is already runnning
         root = Tk()
         root.withdraw()
+        s = Style(root)
+        s.theme_use("clam")
         showerror(_("Error"), _("MyNotes is already running. If not deletes /tmp/mynotes.pid"))
         sys.exit()
     else:
@@ -49,13 +52,17 @@ open(pidfile, 'w').write(pid)
 try:
     app = App()
     app.mainloop()
-except Exception:
-    root = Tk()
+except Exception as e:
+	root = Tk()
     root.withdraw()
-    showerror(_("Error"), traceback.format_exc())
+    showerror(_("Error"), str(e), traceback.format_exc(), True)
 finally:
-    app.save()
-    save_config()
-    if CONFIG.getboolean("Sync", "on"):
-        upload_to_server(app.get_password(), app.get_time())
-    os.unlink(pidfile)
+    try:
+        app.save()
+        save_config()
+        if CONFIG.getboolean("Sync", "on"):
+            upload_to_server(app.get_password(), app.get_time())
+        os.unlink(pidfile)
+    except Exception:
+        pass
+

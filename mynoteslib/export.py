@@ -37,14 +37,18 @@ class Export(Toplevel):
         self.categories = CONFIG.options("Categories")
         self.categories.sort()
         self.categories_to_export = []
+        self.only_visible = False
 
         self.ch_all = Checkbutton(self, text=_("Select all"),
                                   command=self.select_all)
+        self.ch_only_visible = Checkbutton(self, text=_("Only visible notes"))
         self.ch_all.grid(sticky="w", padx=4, pady=4)
+        self.ch_only_visible.grid(sticky="w", padx=4, pady=4)
         Separator(self).grid(sticky="ew", padx=4, pady=4)
         self.checkbuttons = []
         for cat in self.categories:
-            self.checkbuttons.append(Checkbutton(self, text=cat.capitalize()))
+            self.checkbuttons.append(Checkbutton(self, text=cat.capitalize(),
+                                                 command=self.toggle_select_all))
             self.checkbuttons[-1].grid(sticky="w", padx=4, pady=4)
 
         frame = Frame(self)
@@ -54,11 +58,14 @@ class Export(Toplevel):
                command=self.ok).grid(row=0, column=0, sticky="w", padx=4, pady=4)
         Button(frame, text=_("Cancel"),
                command=self.destroy).grid(row=0, column=1, sticky="e", padx=4, pady=4)
+        self.ch_all.state(("selected",))
+        self.select_all()
 
     def ok(self):
         for ch, cat in zip(self.checkbuttons, self.categories):
             if "selected" in ch.state():
                 self.categories_to_export.append(cat)
+        self.only_visible = "selected" in self.ch_only_visible.state()
         self.destroy()
 
     def select_all(self):
@@ -69,5 +76,15 @@ class Export(Toplevel):
         for ch in self.checkbuttons:
             ch.state((state,))
 
+    def toggle_select_all(self):
+        b = 0
+        for ch in self.checkbuttons:
+            if "selected" in ch.state():
+                b += 1
+        if b == len(self.checkbuttons):
+            self.ch_all.state(("selected",))
+        else:
+            self.ch_all.state(("!selected",))
+
     def get_export(self):
-        return self.categories_to_export
+        return self.categories_to_export, self.only_visible

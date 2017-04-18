@@ -27,8 +27,6 @@ Constants and functions
 
 
 
-VERSION = "2.1.0"
-
 import time
 import platform
 import os
@@ -36,6 +34,12 @@ import gettext
 from configparser import ConfigParser
 from locale import getdefaultlocale, setlocale, LC_ALL
 from subprocess import check_output, CalledProcessError
+import pkg_resources
+from tkinter import Text, PhotoImage
+from tkinter.ttk import Checkbutton
+from webbrowser import open as open_url
+
+VERSION = pkg_resources.require("mynotes")[0].version
 
 SYMBOLS = 'ΓΔΘΛΞΠΣΦΨΩαβγδεζηθικλμνξοπρςστυφχψωϐϑϒϕϖæœ«»¡¿£¥$€§ø∞∀∃∄∈∉∫∧∨∩∪÷±√∝∼≃≅≡≤≥≪≫≲≳▪•✭✦➔➢✔▴▸✗✚✳☎✉✎♫⚠⇒⇔'
 
@@ -90,6 +94,8 @@ if os.path.exists(PATH_CONFIG):
         CONFIG.set("General", "check_update", "True")
     if not CONFIG.has_option("General", "buttons_position"):
         CONFIG.set("General", "buttons_position", "right")
+    if not CONFIG.has_option("General", "symbols"):
+        CONFIG.set("General", "symbols", SYMBOLS)
     if not CONFIG.has_section("Sync"):
         CONFIG.add_section("Sync")
         CONFIG.set("Sync", "on", "False")
@@ -107,6 +113,7 @@ else:
     CONFIG.set("General", "position", "normal")
     CONFIG.set("General", "buttons_position", "right")
     CONFIG.set("General", "check_update", "True")
+    CONFIG.set("General", "symbols", SYMBOLS)
     CONFIG.add_section("Font")
     CONFIG.set("Font", "text_family", "TkDefaultFont")
     CONFIG.set("Font", "text_size", "12")
@@ -311,6 +318,28 @@ def optionmenu_patch(om, var):
         menu.entryconfig(i, variable=var)
     menu.bind("<FocusOut>", menu.unpost())
 
+def text_ranges(widget, tag, index1="1.0", index2="end"):
+    r = [i.string for i in widget.tag_ranges(tag)]
+    i1 = widget.index(index1)
+    i2 = widget.index(index2)
+    deb = r[::2]
+    fin = r[1::2]
+    i = 0
+    while i < len(deb) and sorting(deb[i]) < sorting(i1):
+        i += 1
+    j = len(fin) - 1
+    while j >= 0 and sorting(fin[j]) > sorting(i2):
+        j -= 1
+    tag_ranges = r[2*i:2*j+2]
+    if i > 0 and sorting(fin[i-1]) > sorting(i1):
+        tag_ranges.insert(0, fin[i-1])
+        tag_ranges.insert(0, i1)
+    if j < len(fin) - 1 and sorting(deb[j+1]) < sorting(i2):
+        tag_ranges.append(deb[j+1])
+        tag_ranges.append(i2)
+
+    return tag_ranges
+
 def save_modif_info(tps=None):
     """ save info about last modifications (machine and time) """
     if tps is None:
@@ -321,3 +350,179 @@ def save_modif_info(tps=None):
     lines = [info, str(tps)]
     with open(PATH_DATA_INFO, 'w') as fich:
         fich.writelines(lines)
+
+### export
+
+BALISES_OPEN = {"bold": "<b>",
+                "italic": "<i>",
+                "underline": "<u>",
+                "overstrike": "<s>",
+                "list": "",
+                "enum": "",
+                "link": "",
+                "todolist": "",
+                'center': '<div style="text-align:center">',
+                'left': '',
+                'right': '<div style="text-align:right">'}
+BALISES_CLOSE = {"bold": "</b>",
+                 "italic": "</i>",
+                 "underline": "</u>",
+                 "overstrike": "</s>",
+                 "list": "",
+                 "enum": "",
+                 "todolist": "",
+                 "link": "",
+                 'center': '</div>',
+                 'left': '',
+                 'right': '</div>'}
+for color in TEXT_COLORS.values():
+    BALISES_OPEN[color] = '<span style="color:%s">' % color
+    BALISES_CLOSE[color] = '</span>'
+
+def note_to_html(data, master):
+    txt = Text(master)
+    tags = data["tags"]
+    obj = data["inserted_objects"]
+    indexes = list(obj.keys())
+    indexes.sort(reverse=True, key=sorting)
+    txt.insert('1.0', data["txt"])
+
+    b_open = BALISES_OPEN.copy()
+    b_close = BALISES_CLOSE.copy()
+
+    for key, link in data["links"].items():
+        b_open["link#%i" % key] = "<a href='%s'>" % link
+        b_close["link#%i" % key] = "</a>"
+
+    for index in indexes:
+        txt.insert(index, " ")
+    # restore tags
+    for tag in tags:
+        indices = tags[tag]
+        if indices:
+            txt.tag_add(tag, *indices)
+    end = int(txt.index("end").split(".")[0])
+    for line in range(1, end):
+        l_end = int(txt.index("%i.end" % line).split(".")[1])
+        for col in range(l_end):
+            index = "%i.%i" % (line, col)
+            tags = set()
+            for tag in txt.tag_names(index):
+                if not tag in ["center", "left", "right"]:
+                    txt.tag_remove(tag, index)
+                    if "-" in tag:
+                        t1, t2 = tag.split("-")
+                        tags.add(t1)
+                        tags.add(t2)
+                    else:
+                        tags.add(tag)
+            tags = list(tags)
+            tags.sort()
+            txt.tag_add("-".join(tags), index)
+    right = [i.string for i in txt.tag_ranges("right")]
+    center = [i.string for i in txt.tag_ranges("center")]
+    left = []
+    for deb, fin in zip(right[::2], right[1::2]):
+        left.append(txt.index("%s-1c" % deb))
+        left.append(txt.index("%s+1c" % fin))
+    for deb, fin in zip(center[::2], center[1::2]):
+        left.append(txt.index("%s-1c" % deb))
+        left.append(txt.index("%s+1c" % fin))
+    left.sort(key=sorting)
+    doubles = []
+    for i in left[::2]:
+        if i in left[1::2]:
+            doubles.append(i)
+    for i in doubles:
+        left.remove(i)
+        left.remove(i)
+    if "1.0" in left:
+        left.remove("1.0")
+    else:
+        left.insert(0, "1.0")
+    if txt.index("end") in left:
+        left.remove(txt.index("end"))
+    else:
+        left.append(txt.index("end"))
+    # html balises
+    t = txt.get("1.0", "end").splitlines()
+    alignments = {"left": left, "right": right, "center": center}
+    # alignment
+    for a, align in alignments.items():
+        for deb, fin in zip(align[::2], align[1::2]):
+            balises = {deb: [b_open[a]], fin: [b_close[a]]}
+            tags = {t: text_ranges(txt, t, deb, fin) for t in txt.tag_names()}
+            for tag in tags:
+                for o,c in zip(tags[tag][::2], tags[tag][1::2]):
+                    if not o in balises:
+                        balises[o] = []
+                    if not c in balises:
+                        balises[c] = []
+                    l = tag.split("-")
+                    while "" in l:
+                        l.remove("")
+                    ob = "".join([b_open[t] for t in l])
+                    cb = "".join([b_close[t] for t in l[::-1]])
+                    balises[o].append(ob)
+                    balises[c].insert(0, cb)
+            ### checkboxes and images
+            for i in indexes:
+                if sorting(i) >= sorting(deb) and sorting(i) <= sorting(fin):
+                    if not i in balises:
+                        balises[i] = []
+                    tp, val = obj[i]
+                    if tp == "checkbox":
+                        if val:
+                            balises[i].append('<input type="checkbox" checked />')
+                        else:
+                            balises[i].append('<input type="checkbox" />')
+                    elif tp == "image":
+                       balises[i].append('<img src="%s" alt="%s" /> ' % (val, os.path.split(val)[-1]))
+            indices = list(balises.keys())
+            indices.sort(key=sorting, reverse=True)
+            for index in indices:
+                line, col =  index.split(".")
+                line = int(line) - 1
+                col = int(col)
+                while line >= len(t):
+                    t.append("")
+                l = list(t[line])
+                l.insert(col, "".join(balises[index]))
+                t[line] = "".join(l)
+    txt.destroy()
+
+    ### list
+    if data["mode"] == "list":
+        for i,line in enumerate(t):
+            if "\t•\t" in line:
+                t[i] = line.replace("\t•\t", "<li>") + "</li>"
+        t = "<br>\n".join(t)
+        t = "<ul>%s</ul>" % t
+    else:
+        t = "<br>\n".join(t)
+    return t
+
+def note_to_txt(data):
+    """ .txt export"""
+    t = data["txt"].splitlines()
+    obj = data["inserted_objects"]
+    indexes = list(obj.keys())
+    indexes.sort(reverse=True, key=sorting)
+    for i in indexes:
+        tp, val = obj[i]
+        line, col = i.split(".")
+        line = int(line) - 1
+        while line >= len(t):
+            t.append("")
+        col = int(col)
+        l = list(t[line])
+        if tp == "checkbox":
+            if val:
+                l.insert(col, "☒ ")
+            else:
+                l.insert(col, "☐ ")
+        elif tp == "image":
+            l.insert(col, "![%s](%s)" % (os.path.split(val)[-1], val))
+        t[line] = "".join(l)
+    return "\n".join(t)
+
