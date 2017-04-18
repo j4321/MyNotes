@@ -23,7 +23,7 @@ Main class
 
 from tkinter import Tk, PhotoImage, Menu, Toplevel, TclError
 from tkinter.ttk import Style, Label, Checkbutton, Button, Entry
-import os, re
+import os, re, traceback
 from shutil import copy
 import pickle
 from mynoteslib import tktray
@@ -258,14 +258,14 @@ class App(Tk):
                                           title=_('Restore Backup'))
             if fichier:
                 try:
-                    if not os.path.samefile(fichier, PATH_DATA):
-                        copy(fichier, PATH_DATA)
                     self.show_all()
                     keys = list(self.notes.keys())
                     for key in keys:
                         self.notes[key].delete(confirmation=False)
-                    with open(PATH_DATA, "rb") as fich:
-                        dp = pickle.Unpickler(fich)
+                    if not os.path.samefile(fichier, PATH_DATA):
+                        copy(fichier, PATH_DATA)
+                    with open(PATH_DATA, "rb") as myfich:
+                        dp = pickle.Unpickler(myfich)
                         note_data = dp.load()
                     for i, key in enumerate(note_data):
                         data = note_data[key]
@@ -276,8 +276,6 @@ class App(Tk):
                             CONFIG.set("Categories", cat, data["color"])
                         if data["visible"]:
                             self.notes[note_id] = Sticky(self, key, **data)
-                        else:
-                            self.add_note_to_menu(note_id, data["title"], cat)
                     self.nb = len(self.note_data)
                     self.update_menu()
                     self.update_notes()
@@ -366,11 +364,12 @@ class App(Tk):
                     self.notes[key].change_category(default)
                 self.note_data[key]["category"] = default
                 self.note_data[key]["color"] = default_color
-        for key, note in self.notes.items():
-            note.update_menu_cat(categories)
             if not self.note_data[key]['visible']:
                 self.add_note_to_menu(key, self.note_data[key]["title"],
                                       self.note_data[key]['category'])
+        for key, note in self.notes.items():
+            note.update_menu_cat(categories)
+
         self.save()
         if self.menu_notes.index("end")is not None:
             self.icon.menu.entryconfigure(4, state="normal")
@@ -519,16 +518,15 @@ class App(Tk):
                     cat = data["category"]
                     if not CONFIG.has_option("Categories", cat):
                         CONFIG.set("Categories", cat, data["color"])
+                        self.hidden_notes[cat] = {}
                     if data["visible"]:
                         self.notes[note_id] = Sticky(self, note_id, **data)
-                    else:
-                        self.add_note_to_menu(note_id, data["title"], cat)
-                self.nb = max(self.note_data.keys(), lambda x: int(x)) + 1
+                self.nb = int(max(self.note_data.keys(), key=lambda x: int(x))) + 1
                 self.update_menu()
                 self.update_notes()
-            except Exception as e:
+            except Exception:
                 message = _("The file {file} is not a valid .notes file.").format(file=fichier)
-                showerror(_("Error"), message + "\n" + str(e))
+                showerror(_("Error"), message + "\n", traceback.format_exc())
 
     def quit(self):
         self.destroy()

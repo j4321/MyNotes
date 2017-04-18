@@ -34,7 +34,7 @@ Custom tkinter messageboxes
 """
 
 from tkinter import Toplevel, PhotoImage, Text
-from tkinter.ttk import Label, Button, Frame
+from tkinter.ttk import Label, Button, Frame, Scrollbar
 
 
 IM_ERROR_DATA = """
@@ -241,12 +241,11 @@ class OneButtonBox(Toplevel):
         frame.rowconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
         l = len(message)
-        w = min(l, 50)
-        h = l//50 + 1
+        w = max(1, min(l, 50))
+        h = max(1, l//w)
         if h < 3:
             w = min(l, 35)
-            h = l//35 + 1
-
+            h = max(1, l//w)
         display = Text(frame, relief='flat', highlightthickness=0,
                        font="TkDefaultFont 10 bold", bg=self.cget('bg'),
                        height=h, width=w, wrap="word")
@@ -259,6 +258,81 @@ class OneButtonBox(Toplevel):
             Label(frame, image=image).grid(row=0, column=0, padx=4, pady=(10, 4))
         b = Button(self, text=button, command=self.validate)
         frame.pack()
+        b.pack(padx=10, pady=10)
+        self.grab_set()
+        b.focus_set()
+
+    def validate(self):
+        self.result = self.button
+        self.destroy()
+
+    def get_result(self):
+        return self.result
+
+class ShowError(Toplevel):
+    def __init__(self, parent=None, title="", message="", traceback="",
+                 button="Ok", image="error"):
+        """
+            Create a message box with one button:
+                parent: parent of the toplevel window
+                title: message box title
+                message: message box text (that can be selected)
+                button: message displayed on the button
+                image: image displayed at the left of the message, either a PhotoImage or a string
+        """
+        Toplevel.__init__(self, parent)
+        self.transient(parent)
+        self.resizable(False, False)
+        self.title(title)
+        self.result = ""
+        self.button = button
+        if isinstance(image, str):
+            data = ICONS.get(image)
+            if data:
+                self.img = PhotoImage(master=self, data=data)
+            else:
+                self.img = PhotoImage(master=self, file=image)
+            image = self.img
+        frame = Frame(self)
+        frame.rowconfigure(0, weight=1)
+        frame.columnconfigure(1, weight=1)
+        l = len(message)
+        l2 = len(traceback)
+        w = max(1, min(max(l, l2), 50))
+        h = max(1, l//w)
+        h2 = max(1, l2//w)
+        if h + h2 < 3:
+            w = min(l, 35)
+            h = max(1, l//w)
+            h2 = max(1, l2//w)
+        display = Text(frame, relief='flat', highlightthickness=0,
+                       font="TkDefaultFont 10 bold", bg=self.cget('bg'),
+                       height=h, width=w, wrap="word")
+        display.configure(inactiveselectbackground=display.cget("selectbackground"))
+        display.insert("1.0", message)
+        display.configure(state="disabled")
+        display.grid(row=0, column=1, pady=(10, 4), padx=4, sticky="ewns")
+        display.bind("<Button-1>", lambda event: display.focus_set())
+        if image:
+#            Label(frame, image=image).pack(side='left', padx=4, pady=(10, 4))
+            Label(frame, image=image).grid(row=0, column=0, padx=4, pady=(10, 4))
+#        display.pack(side='left', pady=(10, 4), padx=4)
+
+        frame2 = Frame(self)
+        if traceback:
+            error_msg = Text(frame2, width=w, wrap='word', font="TkDefaultFont 10",
+                             bg='white', height=5, highlightthickness=0)
+            error_msg.bind("<Button-1>", lambda event: error_msg.focus_set())
+            error_msg.insert('1.0', traceback)
+            error_msg.configure(state="disabled")
+            if h2 > 5 or len(traceback.splitlines()) >= 5:
+                scroll = Scrollbar(frame2, orient='vertical', command=error_msg.yview)
+                scroll.pack(side='right', fill='y')
+                error_msg.configure(yscrollcommand=scroll.set)
+            error_msg.pack(side='left', fill='both', expand=True)
+        b = Button(self, text=button, command=self.validate)
+        frame.pack(fill='x')
+        frame2.pack(fill='both', padx=4, pady=(4,0))
         b.pack(padx=10, pady=10)
         self.grab_set()
         b.focus_set()
@@ -387,13 +461,17 @@ class AskYesNoCancel(Toplevel):
     def get_result(self):
         return self.result
 
+
+
 def showmessage(title="", message="", parent=None, button="Ok", image=None):
     box = OneButtonBox(parent, title, message, button, image)
     box.wait_window(box)
     return box.get_result()
 
-def showerror(title="", message="", parent=None):
-    return showmessage(title, message, parent, image="error")
+def showerror(title="", message="", traceback="", parent=None):
+    box = ShowError(parent, title, message, traceback)
+    box.wait_window(box)
+    return box.get_result()
 
 def showinfo(title="", message="", parent=None):
     return showmessage(title, message, parent, image="information")

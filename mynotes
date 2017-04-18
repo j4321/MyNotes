@@ -22,8 +22,7 @@ Main
 """
 
 
-import os
-import sys
+import os, sys, traceback
 from tkinter import Tk
 from tkinter.ttk import Style
 from mynoteslib.constantes import save_config
@@ -52,8 +51,13 @@ open(pidfile, 'w').write(pid)
 try:
     app = App()
     app.mainloop()
+except Exception as e:
+    showerror(_("Error"), str(e), traceback.format_exc())
 finally:
-    app.save()
-    save_config()
-    os.unlink(pidfile)
+    try:
+        app.save()
+        save_config()
+        os.unlink(pidfile)
+    except Exception:
+        pass
 
