@@ -37,7 +37,7 @@ class Config(Toplevel):
         self.grab_set()
         self.resizable(False, False)
         self.protocol("WM_DELETE_WINDOW", self.quit)
-        self.changes = None
+        self.changes = {}, {}
 
         ### style
         style = Style(self)
@@ -377,19 +377,26 @@ class Config(Toplevel):
         CONFIG.set("Font", "title_size", sizetitle)
         CONFIG.set("Font", "title_style", style)
 
-        changes = {}
+        col_changes = {}
+        name_changes = {}
         for cat in self.category_settings.categories:
+            new_name = self.category_settings.get_name(cat)
             if cat in CONFIG.options("Categories"):
                 old_color = CONFIG.get("Categories", cat)
-                new_color = COLORS[self.category_settings.cat_colors[cat].get()]
-                CONFIG.set("Categories", cat, new_color)
+                new_color = COLORS[self.category_settings.get_color(cat)]
+                if new_name != cat:
+                    name_changes[cat] = new_name
+                    CONFIG.remove_option("Categories", cat)
+                    CONFIG.set("Categories", new_name, new_color)
                 if old_color != new_color:
-                    changes[cat] = (old_color, new_color)
+                    col_changes[new_name] = (old_color, new_color)
+                    CONFIG.set("Categories", new_name, new_color)
+
             else:
-                CONFIG.set("Categories", cat,
-                           COLORS[self.category_settings.cat_colors[cat].get()])
+                CONFIG.set("Categories", new_name,
+                           COLORS[self.category_settings.get_color(cat)])
         save_config()
-        self.changes = changes
+        self.changes = col_changes, name_changes
         self.destroy()
 
     def get_changes(self):

@@ -336,7 +336,7 @@ class ShowError(Toplevel):
             txt_frame = Frame(frame2, style='txt.TFrame', relief='sunken',
                               borderwidth=1)
             error_msg = Text(txt_frame, width=w, wrap='word', font="TkDefaultFont 10",
-                             bg='white', height=5, highlightthickness=0)
+                             bg='white', height=8, highlightthickness=0)
             error_msg.bind("<Button-1>", lambda event: error_msg.focus_set())
             error_msg.insert('1.0', traceback)
             error_msg.configure(state="disabled")
@@ -348,8 +348,8 @@ class ShowError(Toplevel):
             scrollx.grid(row=1, column=0, sticky='ew')
             error_msg.configure(yscrollcommand=scrolly.set,
                                 xscrollcommand=scrollx.set)
-            error_msg.grid(row=0, column=0, sticky='ewsn')
-            txt_frame.pack(side='left', fill='both', expand=True)
+            error_msg.pack(side='left', fill='both', expand=True)
+            txt_frame.grid(row=0, column=0, sticky='ewsn')
         if report_msg:
             Label(report_frame, text=_("Please report this bug on ")).pack(side="left")
             url = Label(report_frame, style="url.TLabel", cursor="hand1",

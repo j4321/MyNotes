@@ -318,18 +318,16 @@ class App(Tk):
 
     def manage(self):
         """ Launch note manager """
-        manager = Deleter(self)
-#        self.wait_window(manager)
+        Deleter(self)
 
     def config(self):
         """ Launch the setting manager """
         conf = Config(self)
         self.wait_window(conf)
-        changes = conf.get_changes()
-        if changes is not None:
-            self.update_notes()
+        col_changes, name_changes = conf.get_changes()
+        if col_changes or name_changes:
+            self.update_notes(col_changes, name_changes)
             self.update_menu()
-            self.update_cat_colors(changes)
             alpha = CONFIG.getint("General", "opacity")/100
             for note in self.notes.values():
                 note.attributes("-alpha", alpha)
@@ -383,44 +381,44 @@ class App(Tk):
                self.icon.menu.entryconfigure(4, state="disabled")
         self.make_notes_sticky()
 
-    def update_notes(self):
+    def update_notes(self, col_changes={}, name_changes={}):
         """ Update the notes after changes in the categories """
         categories = CONFIG.options("Categories")
         categories.sort()
         self.menu_notes.delete(0, "end")
         self.hidden_notes = {cat: {} for cat in categories}
         for key in self.note_data:
-            if not self.note_data[key]["category"] in categories:
+            cat = self.note_data[key]["category"]
+            if cat in name_changes:
+                cat = name_changes[cat]
+                self.note_data[key]["category"] = cat
+                if self.note_data[key]["visible"]:
+                    self.notes[key].change_category(cat)
+            elif not cat in categories:
                 default = CONFIG.get("General", "default_category")
                 default_color = CONFIG.get("Categories", default)
                 if self.note_data[key]["visible"]:
                     self.notes[key].change_category(default)
                 self.note_data[key]["category"] = default
                 self.note_data[key]["color"] = default_color
+                cat = default
+            if cat in col_changes:
+                old_color, new_color = col_changes[cat]
+                if self.note_data[key]["color"] == old_color:
+                    self.note_data[key]["color"] = new_color
+                    if self.note_data[key]["visible"]:
+                        self.notes[key].change_color(cst.INV_COLORS[new_color])
             if not self.note_data[key]['visible']:
                 self.add_note_to_menu(key, self.note_data[key]["title"],
                                       self.note_data[key]['category'])
-        for key, note in self.notes.items():
-            note.update_menu_cat(categories)
+            else:
+                self.notes[key].update_menu_cat(categories)
 
         self.save()
         if self.menu_notes.index("end")is not None:
             self.icon.menu.entryconfigure(4, state="normal")
         else:
             self.icon.menu.entryconfigure(4, state="disabled")
-
-    def update_cat_colors(self, changes):
-        """ Default color of the categories was changed, so change the color of the
-            notes belonging to this category if they were of the default color
-            changes = {category: (old_color, new_color)}
-        """
-        for key in self.note_data:
-            if self.note_data[key]["category"] in changes:
-                old_color, new_color = changes[self.note_data[key]["category"]]
-                if self.note_data[key]["color"] == old_color:
-                    self.note_data[key]["color"] = new_color
-                    if self.note_data[key]["visible"]:
-                        self.notes[key].change_color(cst.INV_COLORS[new_color])
 
     def update_menu(self):
         """ Populate self.menu_show_cat and self.menu_hide_cat with the categories """
