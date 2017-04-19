@@ -732,6 +732,7 @@ class Sticky(Toplevel):
         top.transient(self)
         top.grab_set()
         top.title(_("Link"))
+        top.columnconfigure(1, weight=1)
         text = Entry(top)
         link = Entry(top)
         Label(top, text=_("Text")).grid(row=0, column=0, sticky="e", padx=4, pady=4)
@@ -774,7 +775,7 @@ class Sticky(Toplevel):
         top.grab_set()
         top.title(_("Latex"))
         text = Entry(top)
-        text.pack()
+        text.pack(fill='x', expand=True)
         text.bind('<Return>', ok)
         text.focus_set()
 
