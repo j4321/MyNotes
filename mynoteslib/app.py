@@ -281,7 +281,7 @@ class App(Tk):
                         if not CONFIG.has_option("Categories", cat):
                             CONFIG.set("Categories", cat, data["color"])
                         if data["visible"]:
-                            self.notes[note_id] = Sticky(self, key, **data)
+                            self.notes[note_id] = Sticky(self, note_id, **data)
                     self.nb = len(self.note_data)
                     self.update_menu()
                     self.update_notes()
