@@ -35,6 +35,11 @@ import pkg_resources
 from tkinter import Text, PhotoImage
 from tkinter.ttk import Checkbutton
 from webbrowser import open as open_url
+from matplotlib.mathtext import MathTextParser, rcParams
+from matplotlib.image import imsave
+
+parser =  MathTextParser('bitmap')
+rcParams['text.usetex'] = True
 
 VERSION = pkg_resources.require("mynotes")[0].version
 
@@ -65,6 +70,10 @@ else:
     PATH_DATA = os.path.join(LOCAL_PATH, "notes")
 
 PATH_CONFIG = os.path.join(LOCAL_PATH, "mynotes.ini")
+PATH_LATEX = os.path.join(LOCAL_PATH, "latex")
+
+if not os.path.exists(PATH_LATEX):
+    os.mkdir(PATH_LATEX)
 
 ### images files
 IM_ICON = os.path.join(PATH_IMAGES, "mynotes.png")
@@ -153,6 +162,11 @@ TEXT_COLORS = {_("Black"): "black", _("White"): "white",
                _("Cyan"): "cyan", _("Magenta"): "magenta",
                _("Grey"): "grey", _("Orange"):"orange",
                }
+
+### latex
+def math_to_image(latex, image_path, **options):
+    img = parser.to_rgba(latex, **options)[0]
+    imsave(image_path, img)
 
 ### filebrowser
 ZENITY = False
@@ -317,6 +331,7 @@ def text_ranges(widget, tag, index1="1.0", index2="end"):
         tag_ranges.append(i2)
 
     return tag_ranges
+
 
 ### export
 

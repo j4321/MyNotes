@@ -25,12 +25,11 @@ Sticky note class
 from tkinter import Text, Toplevel, PhotoImage, StringVar, Menu, TclError
 from tkinter.ttk import  Style, Sizegrip, Entry, Checkbutton, Label, Button
 from tkinter.font import Font
-import os
-import re
+import os, re
 from time import strftime
 import ewmh
 from mynoteslib.constantes import CONFIG, COLORS, IM_LOCK, askopenfilename, open_url
-from mynoteslib.constantes import TEXT_COLORS, sorting, text_ranges
+from mynoteslib.constantes import TEXT_COLORS, sorting, text_ranges, PATH_LATEX, math_to_image
 from mynoteslib.symbols import pick_symbol
 from mynoteslib.messagebox import showerror, askokcancel
 
@@ -227,6 +226,7 @@ class Sticky(Toplevel):
         menu_insert.add_command(label=_("Image"), command=self.add_image)
         menu_insert.add_command(label=_("Date"), command=self.add_date)
         menu_insert.add_command(label=_("Link"), command=self.add_link)
+        menu_insert.add_command(label=_("Latex"), command=self.add_latex)
 
         self.menu_txt.add_cascade(label=_("Style"), menu=menu_style)
         self.menu_txt.add_cascade(label=_("Alignment"), menu=menu_align)
@@ -752,6 +752,32 @@ class Sticky(Toplevel):
     def add_date(self):
         self.txt.insert("current", strftime("%x"))
 
+    def add_latex(self):
+        def ok(event):
+            latex = r'%s' % text.get()
+            if latex:
+                l = [int(os.path.splitext(f)[0]) for f in os.listdir(PATH_LATEX)]
+                l.sort()
+                if l:
+                    i = l[-1] + 1
+                else:
+                    i = 0
+                im = os.path.join(PATH_LATEX, "%i.png" % i)
+                math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size"))
+                self.images.append(PhotoImage(file=im, master=self))
+                self.txt.image_create("current", align='bottom',
+                                      image=self.images[-1],
+                                      name=im)
+            top.destroy()
+        top = Toplevel(self)
+        top.transient(self)
+        top.grab_set()
+        top.title(_("Latex"))
+        text = Entry(top)
+        text.pack()
+        text.bind('<Return>', ok)
+        text.focus_set()
+
     def add_image(self):
         fichier = askopenfilename(defaultextension=".png",
                                   filetypes=[("PNG", "*.png")],
@@ -763,7 +789,7 @@ class Sticky(Toplevel):
             self.txt.image_create("current",
                                   image=self.images[-1],
                                   name=fichier)
-        else:
+        elif fichier:
             showerror("Erreur", "L'image %s n'existe pas" % fichier)
 
     def add_symbols(self):

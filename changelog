@@ -9,6 +9,7 @@ Changelog
     * Added Note manager to delete easily notes
     * Added autoscrollbar to error messagebox
     * Added category renaming by double click on the category name in Preference dialog
+    * Removed error message when cancel image insertion
 
 - Version 2.1.0
     * Automatically fetch right version (with pkg_resources)
