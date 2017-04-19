@@ -15,11 +15,13 @@ mynotes.egg-info/top_level.txt
 mynoteslib/__init__.py
 mynoteslib/about.py
 mynoteslib/app.py
+mynoteslib/autoscrollbar.py
 mynoteslib/categories.py
 mynoteslib/config.py
 mynoteslib/constantes.py
 mynoteslib/export.py
 mynoteslib/messagebox.py
+mynoteslib/notedelete.py
 mynoteslib/sticky.py
 mynoteslib/symbols.py
 mynoteslib/tktray.py

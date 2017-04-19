@@ -36,7 +36,8 @@ Custom tkinter messageboxes
 
 from webbrowser import open as url_open
 from tkinter import Toplevel, PhotoImage, Text
-from tkinter.ttk import Label, Button, Frame, Scrollbar, Style
+from tkinter.ttk import Label, Button, Frame, Style
+from mynoteslib.autoscrollbar import AutoScrollbar as Scrollbar
 
 
 IM_ERROR_DATA = """
@@ -291,6 +292,9 @@ class ShowError(Toplevel):
 
         style = Style(self)
         style.configure("url.TLabel", foreground="blue")
+        style.configure("txt.TFrame",  backgroumd='white')
+        if not parent:
+            style.theme_use('clam')
 
         if isinstance(image, str):
             data = ICONS.get(image)
@@ -325,18 +329,27 @@ class ShowError(Toplevel):
 #        display.pack(side='left', pady=(10, 4), padx=4)
 
         frame2 = Frame(self)
+        frame2.columnconfigure(0, weight=1)
+        frame2.rowconfigure(0, weight=1)
         report_frame = Frame(self)
         if traceback:
-            error_msg = Text(frame2, width=w, wrap='word', font="TkDefaultFont 10",
+            txt_frame = Frame(frame2, style='txt.TFrame', relief='sunken',
+                              borderwidth=1)
+            error_msg = Text(txt_frame, width=w, wrap='word', font="TkDefaultFont 10",
                              bg='white', height=5, highlightthickness=0)
             error_msg.bind("<Button-1>", lambda event: error_msg.focus_set())
             error_msg.insert('1.0', traceback)
             error_msg.configure(state="disabled")
-            if h2 > 5 or len(traceback.splitlines()) >= 5:
-                scroll = Scrollbar(frame2, orient='vertical', command=error_msg.yview)
-                scroll.pack(side='right', fill='y')
-                error_msg.configure(yscrollcommand=scroll.set)
-            error_msg.pack(side='left', fill='both', expand=True)
+            scrolly = Scrollbar(frame2, orient='vertical',
+                                command=error_msg.yview)
+            scrolly.grid(row=0, column=1, sticky='ns')
+            scrollx = Scrollbar(frame2, orient='horizontal',
+                                command=error_msg.xview)
+            scrollx.grid(row=1, column=0, sticky='ew')
+            error_msg.configure(yscrollcommand=scrolly.set,
+                                xscrollcommand=scrollx.set)
+            error_msg.grid(row=0, column=0, sticky='ewsn')
+            txt_frame.pack(side='left', fill='both', expand=True)
         if report_msg:
             Label(report_frame, text=_("Please report this bug on ")).pack(side="left")
             url = Label(report_frame, style="url.TLabel", cursor="hand1",
@@ -347,7 +360,7 @@ class ShowError(Toplevel):
         b = Button(self, text=button, command=self.validate)
         frame.pack(fill='x')
         frame2.pack(fill='both', padx=4, pady=(4,4))
-        report_frame = Frame(self).pack(fill="x", padx=4, pady=(4,0))
+        report_frame.pack(fill="x", padx=4, pady=(4,0))
         b.pack(padx=10, pady=10)
         self.grab_set()
         b.focus_set()

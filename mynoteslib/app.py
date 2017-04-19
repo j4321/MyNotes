@@ -34,6 +34,7 @@ from mynoteslib.config import Config
 from mynoteslib.export import Export
 from mynoteslib.sticky import Sticky
 from mynoteslib.about import About
+from mynoteslib.notedelete import Deleter
 from mynoteslib.version_check import UpdateChecker
 from mynoteslib.messagebox import showerror, showinfo, askokcancel
 import ewmh
@@ -85,6 +86,7 @@ class App(Tk):
         self.icon.menu.add_separator()
         self.icon.menu.add_command(label=_("Preferences"),
                                    command=self.config)
+        self.icon.menu.add_command(label=_("Note Manager"), command=self.manage)
         self.icon.menu.add_separator()
         self.icon.menu.add_command(label=_("Backup Notes"), command=self.backup)
         self.icon.menu.add_command(label=_("Restore Backup"), command=self.restore)
@@ -263,10 +265,9 @@ class App(Tk):
                                           title=_('Restore Backup'))
             if fichier:
                 try:
-                    self.show_all()
-                    keys = list(self.notes.keys())
+                    keys = list(self.note_data.keys())
                     for key in keys:
-                        self.notes[key].delete(confirmation=False)
+                        self.delete_note(key)
                     if not os.path.samefile(fichier, PATH_DATA):
                         copy(fichier, PATH_DATA)
                     with open(PATH_DATA, "rb") as myfich:
@@ -315,6 +316,11 @@ class App(Tk):
             if self.note_data[key]["category"] == category:
                 self.notes[key].hide()
 
+    def manage(self):
+        """ Launch note manager """
+        manager = Deleter(self)
+#        self.wait_window(manager)
+
     def config(self):
         """ Launch the setting manager """
         conf = Config(self)
@@ -337,6 +343,26 @@ class App(Tk):
         for key in keys:
             if self.note_data[key]["category"] == category:
                 self.notes[key].delete(confirmation=False)
+
+    def delete_note(self, nb):
+        if self.note_data[nb]["visible"]:
+            self.notes[nb].delete(confirmation=False)
+        else:
+            cat = self.note_data[nb]["category"]
+            name = self.menu_notes.entrycget(cat.capitalize(), 'menu')
+            if not isinstance(name, str):
+                name = str(name)
+            menu = self.menu_notes.children[name.split('.')[-1]]
+            index = menu.index(self.hidden_notes[cat][nb])
+            menu.delete(index)
+            if menu.index("end") is None:
+                # the menu is empty
+                self.menu_notes.delete(cat.capitalize())
+                if self.menu_notes.index('end') is None:
+                   self.icon.menu.entryconfigure(4, state="disabled")
+            del(self.hidden_notes[cat][nb])
+            del(self.note_data[nb])
+            self.save()
 
     def show_note(self, nb):
         """ Display the note corresponding to the 'nb' key in self.note_data """

@@ -25,7 +25,7 @@ from tkinter import Toplevel, StringVar, Menu, TclError, Text, PhotoImage
 from mynoteslib.messagebox import showinfo
 from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator
 from tkinter.ttk import Notebook, Combobox, Frame, Menubutton, Checkbutton
-from mynoteslib.constantes import CONFIG, save_config, COLORS
+from mynoteslib.constantes import CONFIG, save_config, COLORS, SYMBOLS
 from mynoteslib.categories import CategoryManager
 from tkinter import font
 
@@ -271,6 +271,8 @@ class Config(Toplevel):
         Label(symbols_settings, text=_("Available symbols")).pack(padx=4, pady=4)
         txt_frame.pack(fill="both", expand=True, padx=4, pady=4)
         self.symbols.pack(fill="both", expand=True)
+        Button(symbols_settings, text=_('Reset'),
+               command=self.reset_symbols).pack(padx=4, pady=4)
 
         ### Ok/Cancel buttons
         Button(okcancel_frame, text="Ok",
@@ -286,6 +288,10 @@ class Config(Toplevel):
         self.fonttitle_size.bind('<<ComboboxSelected>>', self.update_preview_title, add=True)
         self.fonttitle_family.bind('<Return>', self.update_preview_title)
         self.fonttitle_size.bind('<Return>', self.update_preview_title, add=True)
+
+    def reset_symbols(self):
+        self.symbols.delete('1.0', 'end')
+        self.symbols.insert('1.0', SYMBOLS)
 
     def validate_font_size(self, combo, d, ch, V):
         ''' Validation of the size entry content '''
