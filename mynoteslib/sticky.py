@@ -779,8 +779,8 @@ class Sticky(Toplevel):
                     img = "%i.png" % i
                     self.latex[img] = latex
                     im = os.path.join(PATH_LATEX, img)
-                    res = math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-3)
-                    if res:
+                    try:
+                        math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-3)
                         self.images.append(PhotoImage(file=im, master=self))
                         index = self.txt.index("current")
                         self.txt.image_create(index,
@@ -789,11 +789,13 @@ class Sticky(Toplevel):
                         self.txt.tag_add(img, index)
                         self.txt.tag_bind(img, '<Double-Button-1>',
                                           lambda e: self.add_latex(img))
+                    except Exception as e:
+                        showerror(_("Error"), str(e))
 
                 else:
                     im = os.path.join(PATH_LATEX, img_name)
-                    res = math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-3)
-                    if res:
+                    try:
+                        math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-3)
                         self.images.append(PhotoImage(file=im, master=self))
                         index = self.txt.tag_ranges(img_name)[0]
                         self.txt.delete(index)
@@ -801,6 +803,8 @@ class Sticky(Toplevel):
                                               image=self.images[-1],
                                               name=im)
                         self.txt.tag_add(img_name, index)
+                    except Exception as e:
+                        showerror(_("Error"), str(e))
 
             top.destroy()
         top = Toplevel(self)

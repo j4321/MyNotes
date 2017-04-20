@@ -35,7 +35,6 @@ import pkg_resources
 from tkinter import Text, PhotoImage
 from tkinter.ttk import Checkbutton
 from webbrowser import open as open_url
-from mynoteslib.messagebox import showerror
 
 
 VERSION = pkg_resources.require("mynotes")[0].version
@@ -171,13 +170,9 @@ except ImportError:
     LATEX = False
 
 def math_to_image(latex, image_path, **options):
-    try:
-        img = parser.to_rgba(latex, **options)[0]
-        imsave(image_path, img)
-        return True
-    except Exception as e:
-        showerror(_("Error"), str(e))
-        return False
+    img = parser.to_rgba(latex, **options)[0]
+    imsave(image_path, img)
+
 
 ### filebrowser
 ZENITY = False
