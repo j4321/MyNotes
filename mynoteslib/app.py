@@ -564,5 +564,15 @@ class App(Tk):
                 message = _("The file {file} is not a valid .notes file.").format(file=fichier)
                 showerror(_("Error"), message, traceback.format_exc())
 
+    def cleanup(self):
+        """ Remove unused latex images """
+        img_stored = os.listdir(cst.PATH_LATEX)
+        img_used = []
+        for data in self.note_data.values():
+            img_used.extend(list(data['latex'].keys()))
+        for img in img_stored:
+            if not img in img_used:
+                os.remove(os.path.join(cst.PATH_LATEX, img))
+
     def quit(self):
         self.destroy()

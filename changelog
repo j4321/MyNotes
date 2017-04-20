@@ -10,6 +10,10 @@ Changelog
     * Added autoscrollbar to error messagebox
     * Added category renaming by double click on the category name in Preference dialog
     * Removed error message when cancel image insertion
+    * Corrected bug: all links in a note open the same url
+    * Added optional (if matplotlib is available on the system) limited latex
+      support to insert one line formulas using matplotlib to render them as png
+      images.
 
 - Version 2.1.0
     * Automatically fetch right version (with pkg_resources)

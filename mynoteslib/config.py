@@ -25,7 +25,7 @@ from tkinter import Toplevel, StringVar, Menu, TclError, Text, PhotoImage
 from mynoteslib.messagebox import showinfo
 from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator
 from tkinter.ttk import Notebook, Combobox, Frame, Menubutton, Checkbutton
-from mynoteslib.constantes import CONFIG, save_config, COLORS, SYMBOLS
+from mynoteslib.constantes import CONFIG, save_config, COLORS, SYMBOLS, LATEX
 from mynoteslib.categories import CategoryManager
 from tkinter import font
 
@@ -144,20 +144,26 @@ class Config(Toplevel):
         for ch in left.children.values():
             ch.bind("<Button-1>", select_left)
         ### *-- placement
-        lang_frame.grid(row=0, sticky="w")
+        lang_frame.grid(sticky="w")
         Separator(general_settings,
-                  orient="horizontal").grid(row=1, sticky="ew", pady=10)
+                  orient="horizontal").grid(sticky="ew", pady=10)
         Label(general_settings,
-              text=_("Opacity")).grid(row=2, sticky="w", padx=4, pady=4)
-        self.opacity_scale.grid(row=3, padx=4, pady=(4,10))
+              text=_("Opacity")).grid(sticky="w", padx=4, pady=4)
+        self.opacity_scale.grid(padx=4, pady=(4,10))
         self.opacity_label.place(in_=self.opacity_scale, relx=1, rely=0.5,
                                  anchor="w", bordermode="outside")
         Separator(general_settings,
-                  orient="horizontal").grid(row=4, sticky="ew", pady=10)
-        frame_position.grid(row=5, sticky="ew")
+                  orient="horizontal").grid(sticky="ew", pady=10)
+        frame_position.grid(sticky="ew")
         Separator(general_settings,
-                  orient="horizontal").grid(row=6, sticky="ew", pady=10)
-        frame_titlebar.grid(row=7, sticky="ew", pady=4)
+                  orient="horizontal").grid(sticky="ew", pady=10)
+        frame_titlebar.grid(sticky="ew", pady=4)
+        if LATEX:
+            Separator(general_settings,
+                      orient="horizontal").grid(sticky="ew", pady=10)
+            Button(general_settings,
+                   text=_('Delete unused latex images'),
+                   command=self.cleanup).grid(padx=4, pady=4, sticky='w')
 
         ### * Font settings
         font_settings = Frame(self.notebook)
@@ -292,6 +298,10 @@ class Config(Toplevel):
     def reset_symbols(self):
         self.symbols.delete('1.0', 'end')
         self.symbols.insert('1.0', SYMBOLS)
+
+    def cleanup(self):
+        ''' Remove unused latex images '''
+        self.master.cleanup()
 
     def validate_font_size(self, combo, d, ch, V):
         ''' Validation of the size entry content '''

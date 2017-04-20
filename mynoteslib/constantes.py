@@ -35,11 +35,8 @@ import pkg_resources
 from tkinter import Text, PhotoImage
 from tkinter.ttk import Checkbutton
 from webbrowser import open as open_url
-from matplotlib.mathtext import MathTextParser, rcParams
-from matplotlib.image import imsave
+from mynoteslib.messagebox import showerror
 
-parser =  MathTextParser('bitmap')
-rcParams['text.usetex'] = True
 
 VERSION = pkg_resources.require("mynotes")[0].version
 
@@ -163,10 +160,24 @@ TEXT_COLORS = {_("Black"): "black", _("White"): "white",
                _("Grey"): "grey", _("Orange"):"orange",
                }
 
-### latex
+### latex (optional):  insertion of latex formulas via matplotlib
+try:
+    from matplotlib.mathtext import MathTextParser, rcParams
+    from matplotlib.image import imsave
+    rcParams['text.usetex'] = True
+    parser =  MathTextParser('bitmap')
+    LATEX = True
+except ImportError:
+    LATEX = False
+
 def math_to_image(latex, image_path, **options):
-    img = parser.to_rgba(latex, **options)[0]
-    imsave(image_path, img)
+    try:
+        img = parser.to_rgba(latex, **options)[0]
+        imsave(image_path, img)
+        return True
+    except Exception as e:
+        showerror(_("Error"), str(e))
+        return False
 
 ### filebrowser
 ZENITY = False

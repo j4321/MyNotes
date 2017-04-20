@@ -25,11 +25,11 @@ Sticky note class
 from tkinter import Text, Toplevel, PhotoImage, StringVar, Menu, TclError
 from tkinter.ttk import  Style, Sizegrip, Entry, Checkbutton, Label, Button
 from tkinter.font import Font
-import os, re
+import os, re, ewmh
 from time import strftime
-import ewmh
-from mynoteslib.constantes import CONFIG, COLORS, IM_LOCK, askopenfilename, open_url
-from mynoteslib.constantes import TEXT_COLORS, sorting, text_ranges, PATH_LATEX, math_to_image
+from mynoteslib.constantes import TEXT_COLORS, askopenfilename, open_url
+from mynoteslib.constantes import PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK
+from mynoteslib.constantes import sorting, text_ranges, math_to_image
 from mynoteslib.symbols import pick_symbol
 from mynoteslib.messagebox import showerror, askokcancel
 
@@ -50,6 +50,7 @@ class Sticky(Toplevel):
         self.is_locked = not (kwargs.get("locked", False))
         self.images = []
         self.links = {}
+        self.latex = {}
         self.nb_links = 0
         self.title('mynotes%s' % key)
         self.attributes("-type", "splash")
@@ -226,7 +227,8 @@ class Sticky(Toplevel):
         menu_insert.add_command(label=_("Image"), command=self.add_image)
         menu_insert.add_command(label=_("Date"), command=self.add_date)
         menu_insert.add_command(label=_("Link"), command=self.add_link)
-        menu_insert.add_command(label=_("Latex"), command=self.add_latex)
+        if LATEX:
+            menu_insert.add_command(label=_("Latex"), command=self.add_latex)
 
         self.menu_txt.add_cascade(label=_("Style"), menu=menu_style)
         self.menu_txt.add_cascade(label=_("Alignment"), menu=menu_align)
@@ -265,7 +267,13 @@ class Sticky(Toplevel):
             self.links[self.nb_links] = link
             self.txt.tag_bind("link#%i" % self.nb_links,
                               "<Button-1>",
-                              lambda e: open_url(link))
+                              lambda e, l=link: open_url(l))
+
+        for img, latex in kwargs.get("latex", {}).items():
+            self.latex[img] = latex
+            if LATEX:
+                self.txt.tag_bind(img, '<Double-Button-1>',
+                                  lambda e, im=img: self.add_latex(im))
         mode = self.mode.get()
         if mode != "note":
             self.txt.tag_add(mode, "1.0", "end")
@@ -433,6 +441,10 @@ class Sticky(Toplevel):
         for i, link in self.links.items():
             if self.txt.tag_ranges("link#%i" % i):
                 data["links"][i] = link
+        data["latex"] = {}
+        for img, latex in self.latex.items():
+            if self.txt.tag_ranges(img):
+                data["latex"][img] = latex
         for image in self.txt.image_names():
             data["inserted_objects"][self.txt.index(image)] = ("image",
                                                                image.split('#')[0])
@@ -753,28 +765,55 @@ class Sticky(Toplevel):
     def add_date(self):
         self.txt.insert("current", strftime("%x"))
 
-    def add_latex(self):
+    def add_latex(self, img_name=None):
         def ok(event):
             latex = r'%s' % text.get()
             if latex:
-                l = [int(os.path.splitext(f)[0]) for f in os.listdir(PATH_LATEX)]
-                l.sort()
-                if l:
-                    i = l[-1] + 1
+                if img_name is None:
+                    l = [int(os.path.splitext(f)[0]) for f in os.listdir(PATH_LATEX)]
+                    l.sort()
+                    if l:
+                        i = l[-1] + 1
+                    else:
+                        i = 0
+                    img = "%i.png" % i
+                    self.latex[img] = latex
+                    im = os.path.join(PATH_LATEX, img)
+                    res = math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-3)
+                    if res:
+                        self.images.append(PhotoImage(file=im, master=self))
+                        index = self.txt.index("current")
+                        self.txt.image_create(index,
+                                              image=self.images[-1],
+                                              name=im)
+                        self.txt.tag_add(img, index)
+                        self.txt.tag_bind(img, '<Double-Button-1>',
+                                          lambda e: self.add_latex(img))
+
                 else:
-                    i = 0
-                im = os.path.join(PATH_LATEX, "%i.png" % i)
-                math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size"))
-                self.images.append(PhotoImage(file=im, master=self))
-                self.txt.image_create("current", align='bottom',
-                                      image=self.images[-1],
-                                      name=im)
+                    im = os.path.join(PATH_LATEX, img_name)
+                    res = math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-3)
+                    if res:
+                        self.images.append(PhotoImage(file=im, master=self))
+                        index = self.txt.tag_ranges(img_name)[0]
+                        self.txt.delete(index)
+                        self.txt.image_create(index,
+                                              image=self.images[-1],
+                                              name=im)
+                        self.txt.tag_add(img_name, index)
+
             top.destroy()
         top = Toplevel(self)
         top.transient(self)
+        top.update_idletasks()
         top.grab_set()
         top.title(_("Latex"))
-        text = Entry(top)
+        text = Entry(top, justify='center')
+        if img_name is not None:
+            text.insert(0, self.latex[img_name])
+        else:
+            text.insert(0, '$$')
+            text.icursor(1)
         text.pack(fill='x', expand=True)
         text.bind('<Return>', ok)
         text.focus_set()
