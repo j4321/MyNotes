@@ -708,7 +708,12 @@ class Sticky(Toplevel):
                 if not txt:
                     txt = lien
                 self.nb_links += 1
-                tags = self.txt.tag_names("current") + ("link", "link#%i" % self.nb_links)
+                if self.txt.tag_ranges("sel"):
+                    index = self.txt.index("sel.first")
+                    self.txt.delete('sel.first', 'sel.last')
+                else:
+                    index = "current"
+                tags = self.txt.tag_names(index) + ("link", "link#%i" % self.nb_links)
                 self.txt.insert("current", txt, tags)
                 if not lien[:4] == "http":
                     lien = "http://" + lien
@@ -728,6 +733,12 @@ class Sticky(Toplevel):
         top.columnconfigure(1, weight=1)
         text = Entry(top)
         link = Entry(top)
+        if self.txt.tag_ranges('sel'):
+            txt = self.txt.get('sel.first', 'sel.last')
+        else:
+            txt = ''
+        text.insert(0, txt)
+        text.icursor("end")
         Label(top, text=_("Text")).grid(row=0, column=0, sticky="e", padx=4, pady=4)
         Label(top, text=_("Link")).grid(row=1, column=0, sticky="e", padx=4, pady=4)
         text.grid(row=0, column=1, sticky="ew", padx=4, pady=4)
@@ -768,7 +779,11 @@ class Sticky(Toplevel):
                 try:
                     math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
                     self.images.append(PhotoImage(file=im, master=self))
-                    index = self.txt.index("current")
+                    if self.txt.tag_ranges("sel"):
+                        index = self.txt.index("sel.first")
+                        self.txt.delete('sel.first', 'sel.last')
+                    else:
+                        index = self.txt.index("current")
                     self.txt.image_create(index,
                                           image=self.images[-1],
                                           name=im)
@@ -789,8 +804,12 @@ class Sticky(Toplevel):
         if img_name is not None:
             text.insert(0, self.latex[img_name])
         else:
-            text.insert(0, '$$')
-            text.icursor(1)
+            if self.txt.tag_ranges('sel'):
+                text.insert(0, self.txt.get('sel.first', 'sel.last'))
+            else:
+                text.insert(0, '$$')
+                text.icursor(1)
+
         text.pack(fill='x', expand=True)
         text.bind('<Return>', ok)
         text.focus_set()
