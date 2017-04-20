@@ -23,7 +23,7 @@ Symbol palette
 
 from tkinter import Tk, Toplevel, Canvas, Menu, TclError
 from tkinter.ttk import Frame, Button, Label, Entry, Scrollbar, Menubutton, Style
-from mynoteslib.constantes import CONFIG
+
 
 
 class Palette(Toplevel):

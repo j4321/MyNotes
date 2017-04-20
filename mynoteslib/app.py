@@ -376,7 +376,6 @@ class App(Tk):
                                       self.note_data[key]['category'])
         for key, note in self.notes.items():
             note.update_menu_cat(categories)
-
         self.save()
         if self.menu_notes.index("end")is not None:
             self.icon.menu.entryconfigure(4, state="normal")
