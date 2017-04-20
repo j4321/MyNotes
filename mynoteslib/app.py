@@ -133,8 +133,8 @@ class App(Tk):
         # bind Ctrl+Y to redo
         self.bind_class('Text', '<Control-y>', self.redo_event)
         # unbind Ctrl+I and Ctrl+B
-        self.unbind_class('Text', '<Control-i>')
-        self.unbind_class('Text', '<Control-b>')
+        self.bind_class('Text', '<Control-i>', lambda e: None)
+        self.bind_class('Text', '<Control-b>', lambda e: None)
         # highlight checkboxes when inside text selection
         self.bind_class("Text", "<ButtonPress-1>", self.highlight_checkboxes, True)
         self.bind_class("Text", "<ButtonRelease-1>", self.highlight_checkboxes, True)
