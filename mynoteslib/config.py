@@ -25,7 +25,7 @@ from tkinter import Toplevel, StringVar, Menu, TclError, Text, PhotoImage
 from mynoteslib.messagebox import showinfo
 from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator
 from tkinter.ttk import Notebook, Combobox, Frame, Menubutton, Checkbutton
-from mynoteslib.constantes import CONFIG, save_config, COLORS
+from mynoteslib.constantes import CONFIG, save_config, COLORS, SYMBOLS, LATEX
 from mynoteslib.categories import CategoryManager
 from tkinter import font
 
@@ -37,7 +37,7 @@ class Config(Toplevel):
         self.grab_set()
         self.resizable(False, False)
         self.protocol("WM_DELETE_WINDOW", self.quit)
-        self.changes = None
+        self.changes = {}, {}
 
         ### style
         style = Style(self)
@@ -144,20 +144,26 @@ class Config(Toplevel):
         for ch in left.children.values():
             ch.bind("<Button-1>", select_left)
         ### *-- placement
-        lang_frame.grid(row=0, sticky="w")
+        lang_frame.grid(sticky="w")
         Separator(general_settings,
-                  orient="horizontal").grid(row=1, sticky="ew", pady=10)
+                  orient="horizontal").grid(sticky="ew", pady=10)
         Label(general_settings,
-              text=_("Opacity")).grid(row=2, sticky="w", padx=4, pady=4)
-        self.opacity_scale.grid(row=3, padx=4, pady=(4,10))
+              text=_("Opacity")).grid(sticky="w", padx=4, pady=4)
+        self.opacity_scale.grid(padx=4, pady=(4,10))
         self.opacity_label.place(in_=self.opacity_scale, relx=1, rely=0.5,
                                  anchor="w", bordermode="outside")
         Separator(general_settings,
-                  orient="horizontal").grid(row=4, sticky="ew", pady=10)
-        frame_position.grid(row=5, sticky="ew")
+                  orient="horizontal").grid(sticky="ew", pady=10)
+        frame_position.grid(sticky="ew")
         Separator(general_settings,
-                  orient="horizontal").grid(row=6, sticky="ew", pady=10)
-        frame_titlebar.grid(row=7, sticky="ew", pady=4)
+                  orient="horizontal").grid(sticky="ew", pady=10)
+        frame_titlebar.grid(sticky="ew", pady=4)
+        if LATEX:
+            Separator(general_settings,
+                      orient="horizontal").grid(sticky="ew", pady=10)
+            Button(general_settings,
+                   text=_('Delete unused LaTex data'),
+                   command=self.cleanup).grid(padx=4, pady=4, sticky='w')
 
         ### * Font settings
         font_settings = Frame(self.notebook)
@@ -271,6 +277,8 @@ class Config(Toplevel):
         Label(symbols_settings, text=_("Available symbols")).pack(padx=4, pady=4)
         txt_frame.pack(fill="both", expand=True, padx=4, pady=4)
         self.symbols.pack(fill="both", expand=True)
+        Button(symbols_settings, text=_('Reset'),
+               command=self.reset_symbols).pack(padx=4, pady=4)
 
         ### Ok/Cancel buttons
         Button(okcancel_frame, text="Ok",
@@ -286,6 +294,14 @@ class Config(Toplevel):
         self.fonttitle_size.bind('<<ComboboxSelected>>', self.update_preview_title, add=True)
         self.fonttitle_family.bind('<Return>', self.update_preview_title)
         self.fonttitle_size.bind('<Return>', self.update_preview_title, add=True)
+
+    def reset_symbols(self):
+        self.symbols.delete('1.0', 'end')
+        self.symbols.insert('1.0', SYMBOLS)
+
+    def cleanup(self):
+        ''' Remove unused latex images '''
+        self.master.cleanup()
 
     def validate_font_size(self, combo, d, ch, V):
         ''' Validation of the size entry content '''
@@ -371,19 +387,26 @@ class Config(Toplevel):
         CONFIG.set("Font", "title_size", sizetitle)
         CONFIG.set("Font", "title_style", style)
 
-        changes = {}
+        col_changes = {}
+        name_changes = {}
         for cat in self.category_settings.categories:
+            new_name = self.category_settings.get_name(cat)
             if cat in CONFIG.options("Categories"):
                 old_color = CONFIG.get("Categories", cat)
-                new_color = COLORS[self.category_settings.cat_colors[cat].get()]
-                CONFIG.set("Categories", cat, new_color)
+                new_color = COLORS[self.category_settings.get_color(cat)]
+                if new_name != cat:
+                    name_changes[cat] = new_name
+                    CONFIG.remove_option("Categories", cat)
+                    CONFIG.set("Categories", new_name, new_color)
                 if old_color != new_color:
-                    changes[cat] = (old_color, new_color)
+                    col_changes[new_name] = (old_color, new_color)
+                    CONFIG.set("Categories", new_name, new_color)
+
             else:
-                CONFIG.set("Categories", cat,
-                           COLORS[self.category_settings.cat_colors[cat].get()])
+                CONFIG.set("Categories", new_name,
+                           COLORS[self.category_settings.get_color(cat)])
         save_config()
-        self.changes = changes
+        self.changes = col_changes, name_changes
         self.destroy()
 
     def get_changes(self):

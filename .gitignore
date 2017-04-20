@@ -2,6 +2,7 @@
 build/
 dist/
 backup/
+latex/
 *.backup*
 *.ini
 mynotes.py

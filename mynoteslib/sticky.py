@@ -25,12 +25,11 @@ Sticky note class
 from tkinter import Text, Toplevel, PhotoImage, StringVar, Menu, TclError
 from tkinter.ttk import  Style, Sizegrip, Entry, Checkbutton, Label, Button
 from tkinter.font import Font
-import os
-import re
+import os, re, ewmh
 from time import strftime
-import ewmh
-from mynoteslib.constantes import CONFIG, COLORS, IM_LOCK, askopenfilename, open_url
-from mynoteslib.constantes import TEXT_COLORS, sorting, text_ranges
+from mynoteslib.constantes import TEXT_COLORS, askopenfilename, open_url
+from mynoteslib.constantes import PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK
+from mynoteslib.constantes import sorting, text_ranges, math_to_image
 from mynoteslib.symbols import pick_symbol
 from mynoteslib.messagebox import showerror, askokcancel
 
@@ -51,6 +50,7 @@ class Sticky(Toplevel):
         self.is_locked = not (kwargs.get("locked", False))
         self.images = []
         self.links = {}
+        self.latex = {}
         self.nb_links = 0
         self.title('mynotes%s' % key)
         self.attributes("-type", "splash")
@@ -106,7 +106,7 @@ class Sticky(Toplevel):
                         selectforeground='white',
                         inactiveselectbackground=selectbg,
                         selectbackground=selectbg,
-                        tabs=(10, 'right', 20, 'left'),
+                        tabs=(10, 'right', 21, 'left'),
                         relief="flat", borderwidth=0,
                         highlightthickness=0, font=font_text)
         # tags
@@ -122,10 +122,10 @@ class Sticky(Toplevel):
         self.txt.tag_configure("right", justify="right")
         self.txt.tag_configure("link", foreground="blue", underline=True,
                                selectforeground="white")
-        self.txt.tag_configure("list", lmargin1=0, lmargin2=20,
-                               tabs=(10, 'right', 20, 'left'))
-        self.txt.tag_configure("todolist", lmargin1=0, lmargin2=20,
-                               tabs=(10, 'right', 20, 'left'))
+        self.txt.tag_configure("list", lmargin1=0, lmargin2=21,
+                               tabs=(10, 'right', 21, 'left'))
+        self.txt.tag_configure("todolist", lmargin1=0, lmargin2=21,
+                               tabs=(10, 'right', 21, 'left'))
         margin = 2*Font(self, font=font_text).measure("m")
         self.txt.tag_configure("enum", lmargin1=0, lmargin2=margin + 5,
                                tabs=(margin, 'right', margin + 5, 'left'))
@@ -227,6 +227,8 @@ class Sticky(Toplevel):
         menu_insert.add_command(label=_("Image"), command=self.add_image)
         menu_insert.add_command(label=_("Date"), command=self.add_date)
         menu_insert.add_command(label=_("Link"), command=self.add_link)
+        if LATEX:
+            menu_insert.add_command(label="LaTex", command=self.add_latex)
 
         self.menu_txt.add_cascade(label=_("Style"), menu=menu_style)
         self.menu_txt.add_cascade(label=_("Alignment"), menu=menu_align)
@@ -265,7 +267,13 @@ class Sticky(Toplevel):
             self.links[self.nb_links] = link
             self.txt.tag_bind("link#%i" % self.nb_links,
                               "<Button-1>",
-                              lambda e: open_url(link))
+                              lambda e, l=link: open_url(l))
+
+        for img, latex in kwargs.get("latex", {}).items():
+            self.latex[img] = latex
+            if LATEX:
+                self.txt.tag_bind(img, '<Double-Button-1>',
+                                  lambda e, im=img: self.add_latex(im))
         mode = self.mode.get()
         if mode != "note":
             self.txt.tag_add(mode, "1.0", "end")
@@ -324,16 +332,17 @@ class Sticky(Toplevel):
                           lambda event: self.txt.configure(cursor=""))
         self.txt.bind("<FocusOut>", self.save_note)
         self.txt.bind('<Button-3>', self.show_menu_txt)
-        self.txt.bind("<ButtonRelease-1>", self.highlight_checkboxes, True)
-        self.txt.bind("<B1-Motion>", self.highlight_checkboxes, True)
-        self.txt.bind("<<SelectNextChar>>", self.highlight_checkboxes, True)
-        self.txt.bind("<<SelectPrevChar>>", self.highlight_checkboxes, True)
-        self.txt.bind("<<SelectNextLine>>", self.highlight_checkboxes, True)
-        self.txt.bind("<<SelectPrevLine>>", self.highlight_checkboxes, True)
         # add binding to the existing class binding so that the selected text
         # is erased on pasting
         self.txt.bind("<Control-v>", self.paste)
         self.corner.bind('<ButtonRelease-1>', self.resize)
+
+        ### keyboard shortcuts
+        self.txt.bind('<Control-b>', lambda e: self.toggle_text_style('bold'))
+        self.txt.bind('<Control-i>', lambda e: self.toggle_text_style('italic'))
+        self.txt.bind('<Control-u>', lambda e: self.toggle_underline())
+        self.txt.bind('<Control-r>', lambda e: self.set_align('right'))
+        self.txt.bind('<Control-l>', lambda e: self.set_align('left'))
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -433,6 +442,10 @@ class Sticky(Toplevel):
         for i, link in self.links.items():
             if self.txt.tag_ranges("link#%i" % i):
                 data["links"][i] = link
+        data["latex"] = {}
+        for img, latex in self.latex.items():
+            if self.txt.tag_ranges(img):
+                data["latex"][img] = latex
         for image in self.txt.image_names():
             data["inserted_objects"][self.txt.index(image)] = ("image",
                                                                image.split('#')[0])
@@ -553,31 +566,6 @@ class Sticky(Toplevel):
         self.save_note()
 
     ### bindings
-    def highlight_checkboxes(self, event):
-        try:
-            deb = sorting(self.txt.index("sel.first"))
-            fin = sorting(self.txt.index("sel.last"))
-#            for w in self.txt.window_names():
-#                ch = self.txt.children[w.split(".")[-1]]
-            for ch in self.txt.children.values():
-                try:
-                    i = sorting(self.txt.index(ch))
-                    if i >= deb and i <= fin:
-                        ch.configure(style="sel.TCheckbutton")
-                    else:
-                        ch.configure(style=self.id + ".TCheckbutton")
-                except TclError:
-                    pass
-        except TclError:
-#            for w in self.txt.window_names():
-#                ch = self.txt.children[w.split(".")[-1]]
-            for ch in self.txt.children.values():
-                try:
-                    i = sorting(self.txt.index(ch))
-                    ch.configure(style=self.id + ".TCheckbutton")
-                except TclError:
-                    pass
-
     def enter_roll(self, event):
         """ mouse is over the roll icon """
         self.roll.configure(image="img_rollactive")
@@ -621,10 +609,12 @@ class Sticky(Toplevel):
     def start_move(self, event):
         self.x = event.x
         self.y = event.y
+        self.configure(cursor='fleur')
 
     def stop_move(self, event):
         self.x = None
         self.y = None
+        self.configure(cursor='')
 
     def move(self, event):
         if self.x is not None and self.y is not None:
@@ -718,7 +708,12 @@ class Sticky(Toplevel):
                 if not txt:
                     txt = lien
                 self.nb_links += 1
-                tags = self.txt.tag_names("current") + ("link", "link#%i" % self.nb_links)
+                if self.txt.tag_ranges("sel"):
+                    index = self.txt.index("sel.first")
+                    self.txt.delete('sel.first', 'sel.last')
+                else:
+                    index = "current"
+                tags = self.txt.tag_names(index) + ("link", "link#%i" % self.nb_links)
                 self.txt.insert("current", txt, tags)
                 if not lien[:4] == "http":
                     lien = "http://" + lien
@@ -730,10 +725,20 @@ class Sticky(Toplevel):
 
         top = Toplevel(self)
         top.transient(self)
+        top.update_idletasks()
+        top.geometry("+%i+%i" % top.winfo_pointerxy())
         top.grab_set()
+        top.resizable(True, False)
         top.title(_("Link"))
+        top.columnconfigure(1, weight=1)
         text = Entry(top)
         link = Entry(top)
+        if self.txt.tag_ranges('sel'):
+            txt = self.txt.get('sel.first', 'sel.last')
+        else:
+            txt = ''
+        text.insert(0, txt)
+        text.icursor("end")
         Label(top, text=_("Text")).grid(row=0, column=0, sticky="e", padx=4, pady=4)
         Label(top, text=_("Link")).grid(row=1, column=0, sticky="e", padx=4, pady=4)
         text.grid(row=0, column=1, sticky="ew", padx=4, pady=4)
@@ -752,6 +757,63 @@ class Sticky(Toplevel):
     def add_date(self):
         self.txt.insert("current", strftime("%x"))
 
+    def add_latex(self, img_name=None):
+        def ok(event):
+            latex = r'%s' % text.get()
+            if latex:
+                if img_name is None:
+                    l = [int(os.path.splitext(f)[0]) for f in os.listdir(PATH_LATEX)]
+                    l.sort()
+                    if l:
+                        i = l[-1] + 1
+                    else:
+                        i = 0
+                    img = "%i.png" % i
+                    self.txt.tag_bind(img, '<Double-Button-1>',
+                                          lambda e: self.add_latex(img))
+                    self.latex[img] = latex
+
+                else:
+                    img = img_name
+                im = os.path.join(PATH_LATEX, img)
+                try:
+                    math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
+                    self.images.append(PhotoImage(file=im, master=self))
+                    if self.txt.tag_ranges("sel"):
+                        index = self.txt.index("sel.first")
+                        self.txt.delete('sel.first', 'sel.last')
+                    else:
+                        index = self.txt.index("current")
+                    self.txt.image_create(index,
+                                          image=self.images[-1],
+                                          name=im)
+                    self.txt.tag_add(img, index)
+                    top.destroy()
+
+                except Exception as e:
+                    showerror(_("Error"), str(e))
+
+        top = Toplevel(self)
+        top.transient(self)
+        top.update_idletasks()
+        top.geometry("+%i+%i" % top.winfo_pointerxy())
+        top.grab_set()
+        top.resizable(True, False)
+        top.title("LaTex")
+        text = Entry(top, justify='center')
+        if img_name is not None:
+            text.insert(0, self.latex[img_name])
+        else:
+            if self.txt.tag_ranges('sel'):
+                text.insert(0, self.txt.get('sel.first', 'sel.last'))
+            else:
+                text.insert(0, '$$')
+                text.icursor(1)
+
+        text.pack(fill='x', expand=True)
+        text.bind('<Return>', ok)
+        text.focus_set()
+
     def add_image(self):
         fichier = askopenfilename(defaultextension=".png",
                                   filetypes=[("PNG", "*.png")],
@@ -763,7 +825,7 @@ class Sticky(Toplevel):
             self.txt.image_create("current",
                                   image=self.images[-1],
                                   name=fichier)
-        else:
+        elif fichier:
             showerror("Erreur", "L'image %s n'existe pas" % fichier)
 
     def add_symbols(self):

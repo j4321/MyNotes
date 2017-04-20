@@ -34,6 +34,7 @@ from mynoteslib.config import Config
 from mynoteslib.export import Export
 from mynoteslib.sticky import Sticky
 from mynoteslib.about import About
+from mynoteslib.notedelete import Deleter
 from mynoteslib.version_check import UpdateChecker
 from mynoteslib.messagebox import showerror, showinfo, askokcancel
 import ewmh
@@ -85,6 +86,7 @@ class App(Tk):
         self.icon.menu.add_separator()
         self.icon.menu.add_command(label=_("Preferences"),
                                    command=self.config)
+        self.icon.menu.add_command(label=_("Note Manager"), command=self.manage)
         self.icon.menu.add_separator()
         self.icon.menu.add_command(label=_("Backup Notes"), command=self.backup)
         self.icon.menu.add_command(label=_("Restore Backup"), command=self.restore)
@@ -120,6 +122,7 @@ class App(Tk):
         self.update_notes()
         self.make_notes_sticky()
 
+        ### class bindings
         # newline depending on mode
         self.bind_class("Text", "<Return>",  self.insert_newline)
         # char deletion taking into account list type
@@ -129,12 +132,47 @@ class App(Tk):
         self.bind_class('TEntry', '<Control-a>', self.select_all_entry)
         # bind Ctrl+Y to redo
         self.bind_class('Text', '<Control-y>', self.redo_event)
+        # unbind Ctrl+I and Ctrl+B
+        self.bind_class('Text', '<Control-i>', lambda e: None)
+        self.bind_class('Text', '<Control-b>', lambda e: None)
+        # highlight checkboxes when inside text selection
+        self.bind_class("Text", "<ButtonPress-1>", self.highlight_checkboxes, True)
+        self.bind_class("Text", "<ButtonRelease-1>", self.highlight_checkboxes, True)
+        self.bind_class("Text", "<B1-Motion>", self.highlight_checkboxes, True)
+        evs = ['<<SelectAll>>', '<<SelectLineEnd>>', '<<SelectLineStart>>',
+               '<<SelectNextChar>>', '<<SelectNextLine>>', '<<SelectNextPara>>',
+               '<<SelectNextWord>>', '<<SelectNone>>', '<<SelectPrevChar>>',
+               '<<SelectPrevLine>>','<<SelectPrevPara>>','<<SelectPrevWord>>']
+        for ev in evs:
+            self.bind_class("Text", ev, self.highlight_checkboxes, True)
 
         # check for updates
         if CONFIG.getboolean("General", "check_update"):
             UpdateChecker(self)
 
-    ### class bindings
+    ### class bindings methods
+    def highlight_checkboxes(self, event):
+        txt = event.widget
+        try:
+            deb = cst.sorting(txt.index("sel.first"))
+            fin = cst.sorting(txt.index("sel.last"))
+            for ch in txt.children.values():
+                try:
+                    i = cst.sorting(txt.index(ch))
+                    if i >= deb and i <= fin:
+                        ch.configure(style="sel.TCheckbutton")
+                    else:
+                        ch.configure(style=txt.master.id + ".TCheckbutton")
+                except TclError:
+                    pass
+        except TclError:
+            for ch in txt.children.values():
+                try:
+                    i = cst.sorting(txt.index(ch))
+                    ch.configure(style=txt.master.id + ".TCheckbutton")
+                except TclError:
+                    pass
+
     def redo_event(self, event):
         try:
             event.widget.edit_redo()
@@ -146,7 +184,8 @@ class App(Tk):
         event.widget.selection_range(0, "end")
 
     def select_all_text(self, event):
-        event.widget.tag_add("sel","1.0","end")
+        event.widget.tag_add("sel", "1.0", "end-1c")
+        self.highlight_checkboxes(event)
 
     def delete_char(self, event):
         txt = event.widget
@@ -163,12 +202,21 @@ class App(Tk):
         elif txt.index("insert") != "1.0":
             if re.match('^\t[0-9]+\.\t$', deb_line) and 'enum' in tags:
                 txt.delete("insert linestart", "insert")
+                txt.insert("insert", "\t\t")
                 txt.master.update_enum()
             elif deb_line == "\t•\t" and 'list' in tags:
                 txt.delete("insert linestart", "insert")
                 txt.insert("insert", "\t\t")
             elif deb_line == "\t\t":
                 txt.delete("insert linestart", "insert")
+            elif "todolist" in tags and txt.index("insert") == txt.index("insert linestart+1c"):
+                try:
+                    ch = txt.window_cget("insert-1c", "window")
+                    txt.delete("insert-1c")
+                    txt.children[ch.split('.')[-1]].destroy()
+                    txt.insert("insert", "\t\t")
+                except TclError:
+                    txt.delete("insert-1c")
             else:
                 txt.delete("insert-1c")
 
@@ -187,7 +235,6 @@ class App(Tk):
             event.widget.configure(autoseparators=False)
             event.widget.edit_separator()
             event.widget.insert("insert", "\n\t0.\t")
-#            event.widget.tag_add("enum", "1.0", "end")
             event.widget.master.update_enum()
             event.widget.edit_separator()
             event.widget.configure(autoseparators=True)
@@ -263,10 +310,9 @@ class App(Tk):
                                           title=_('Restore Backup'))
             if fichier:
                 try:
-                    self.show_all()
-                    keys = list(self.notes.keys())
+                    keys = list(self.note_data.keys())
                     for key in keys:
-                        self.notes[key].delete(confirmation=False)
+                        self.delete_note(key)
                     if not os.path.samefile(fichier, PATH_DATA):
                         copy(fichier, PATH_DATA)
                     with open(PATH_DATA, "rb") as myfich:
@@ -280,7 +326,7 @@ class App(Tk):
                         if not CONFIG.has_option("Categories", cat):
                             CONFIG.set("Categories", cat, data["color"])
                         if data["visible"]:
-                            self.notes[note_id] = Sticky(self, key, **data)
+                            self.notes[note_id] = Sticky(self, note_id, **data)
                     self.nb = len(self.note_data)
                     self.update_menu()
                     self.update_notes()
@@ -315,15 +361,18 @@ class App(Tk):
             if self.note_data[key]["category"] == category:
                 self.notes[key].hide()
 
+    def manage(self):
+        """ Launch note manager """
+        Deleter(self)
+
     def config(self):
         """ Launch the setting manager """
         conf = Config(self)
         self.wait_window(conf)
-        changes = conf.get_changes()
-        if changes is not None:
-            self.update_notes()
+        col_changes, name_changes = conf.get_changes()
+        if col_changes or name_changes:
+            self.update_notes(col_changes, name_changes)
             self.update_menu()
-            self.update_cat_colors(changes)
             alpha = CONFIG.getint("General", "opacity")/100
             for note in self.notes.values():
                 note.attributes("-alpha", alpha)
@@ -337,6 +386,26 @@ class App(Tk):
         for key in keys:
             if self.note_data[key]["category"] == category:
                 self.notes[key].delete(confirmation=False)
+
+    def delete_note(self, nb):
+        if self.note_data[nb]["visible"]:
+            self.notes[nb].delete(confirmation=False)
+        else:
+            cat = self.note_data[nb]["category"]
+            name = self.menu_notes.entrycget(cat.capitalize(), 'menu')
+            if not isinstance(name, str):
+                name = str(name)
+            menu = self.menu_notes.children[name.split('.')[-1]]
+            index = menu.index(self.hidden_notes[cat][nb])
+            menu.delete(index)
+            if menu.index("end") is None:
+                # the menu is empty
+                self.menu_notes.delete(cat.capitalize())
+                if self.menu_notes.index('end') is None:
+                   self.icon.menu.entryconfigure(4, state="disabled")
+            del(self.hidden_notes[cat][nb])
+            del(self.note_data[nb])
+            self.save()
 
     def show_note(self, nb):
         """ Display the note corresponding to the 'nb' key in self.note_data """
@@ -357,43 +426,43 @@ class App(Tk):
                self.icon.menu.entryconfigure(4, state="disabled")
         self.make_notes_sticky()
 
-    def update_notes(self):
+    def update_notes(self, col_changes={}, name_changes={}):
         """ Update the notes after changes in the categories """
         categories = CONFIG.options("Categories")
         categories.sort()
         self.menu_notes.delete(0, "end")
         self.hidden_notes = {cat: {} for cat in categories}
         for key in self.note_data:
-            if not self.note_data[key]["category"] in categories:
+            cat = self.note_data[key]["category"]
+            if cat in name_changes:
+                cat = name_changes[cat]
+                self.note_data[key]["category"] = cat
+                if self.note_data[key]["visible"]:
+                    self.notes[key].change_category(cat)
+            elif not cat in categories:
                 default = CONFIG.get("General", "default_category")
                 default_color = CONFIG.get("Categories", default)
                 if self.note_data[key]["visible"]:
                     self.notes[key].change_category(default)
                 self.note_data[key]["category"] = default
                 self.note_data[key]["color"] = default_color
+                cat = default
+            if cat in col_changes:
+                old_color, new_color = col_changes[cat]
+                if self.note_data[key]["color"] == old_color:
+                    self.note_data[key]["color"] = new_color
+                    if self.note_data[key]["visible"]:
+                        self.notes[key].change_color(cst.INV_COLORS[new_color])
             if not self.note_data[key]['visible']:
                 self.add_note_to_menu(key, self.note_data[key]["title"],
                                       self.note_data[key]['category'])
-        for key, note in self.notes.items():
-            note.update_menu_cat(categories)
+            else:
+                self.notes[key].update_menu_cat(categories)
         self.save()
         if self.menu_notes.index("end")is not None:
             self.icon.menu.entryconfigure(4, state="normal")
         else:
             self.icon.menu.entryconfigure(4, state="disabled")
-
-    def update_cat_colors(self, changes):
-        """ Default color of the categories was changed, so change the color of the
-            notes belonging to this category if they were of the default color
-            changes = {category: (old_color, new_color)}
-        """
-        for key in self.note_data:
-            if self.note_data[key]["category"] in changes:
-                old_color, new_color = changes[self.note_data[key]["category"]]
-                if self.note_data[key]["color"] == old_color:
-                    self.note_data[key]["color"] = new_color
-                    if self.note_data[key]["visible"]:
-                        self.notes[key].change_color(cst.INV_COLORS[new_color])
 
     def update_menu(self):
         """ Populate self.menu_show_cat and self.menu_hide_cat with the categories """
@@ -538,6 +607,16 @@ class App(Tk):
             except Exception:
                 message = _("The file {file} is not a valid .notes file.").format(file=fichier)
                 showerror(_("Error"), message, traceback.format_exc())
+
+    def cleanup(self):
+        """ Remove unused latex images """
+        img_stored = os.listdir(cst.PATH_LATEX)
+        img_used = []
+        for data in self.note_data.values():
+            img_used.extend(list(data['latex'].keys()))
+        for img in img_stored:
+            if not img in img_used:
+                os.remove(os.path.join(cst.PATH_LATEX, img))
 
     def quit(self):
         self.destroy()

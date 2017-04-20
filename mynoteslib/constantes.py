@@ -36,6 +36,7 @@ from tkinter import Text, PhotoImage
 from tkinter.ttk import Checkbutton
 from webbrowser import open as open_url
 
+
 VERSION = pkg_resources.require("mynotes")[0].version
 
 SYMBOLS = 'ΓΔΘΛΞΠΣΦΨΩαβγδεζηθικλμνξοπρςστυφχψωϐϑϒϕϖæœ«»¡¿£¥$€§ø∞∀∃∄∈∉∫∧∨∩∪÷±√∝∼≃≅≡≤≥≪≫≲≳▪•✭✦➔➢✔▴▸✗✚✳☎✉✎♫⚠⇒⇔'
@@ -65,6 +66,10 @@ else:
     PATH_DATA = os.path.join(LOCAL_PATH, "notes")
 
 PATH_CONFIG = os.path.join(LOCAL_PATH, "mynotes.ini")
+PATH_LATEX = os.path.join(LOCAL_PATH, "latex")
+
+if not os.path.exists(PATH_LATEX):
+    os.mkdir(PATH_LATEX)
 
 ### images files
 IM_ICON = os.path.join(PATH_IMAGES, "mynotes.png")
@@ -153,6 +158,22 @@ TEXT_COLORS = {_("Black"): "black", _("White"): "white",
                _("Cyan"): "cyan", _("Magenta"): "magenta",
                _("Grey"): "grey", _("Orange"):"orange",
                }
+
+### latex (optional):  insertion of latex formulas via matplotlib
+try:
+    from matplotlib import rc
+    rc('text', usetex=True)
+    from matplotlib.mathtext import MathTextParser
+    from matplotlib.image import imsave
+    parser =  MathTextParser('bitmap')
+    LATEX = True
+except ImportError:
+    LATEX = False
+
+def math_to_image(latex, image_path, **options):
+    img = parser.to_rgba(latex, **options)[0]
+    imsave(image_path, img)
+
 
 ### filebrowser
 ZENITY = False
@@ -318,6 +339,7 @@ def text_ranges(widget, tag, index1="1.0", index2="end"):
 
     return tag_ranges
 
+
 ### export
 
 BALISES_OPEN = {"bold": "<b>",
@@ -360,6 +382,11 @@ def note_to_html(data, master):
     for key, link in data["links"].items():
         b_open["link#%i" % key] = "<a href='%s'>" % link
         b_close["link#%i" % key] = "</a>"
+
+    for key in data['tags']:
+        if not key in b_open:
+            b_open[key] = ''
+            b_close[key] = ''
 
     for index in indexes:
         txt.insert(index, " ")
@@ -444,7 +471,7 @@ def note_to_html(data, master):
                         else:
                             balises[i].append('<input type="checkbox" />')
                     elif tp == "image":
-                       balises[i].append('<img src="%s" alt="%s" /> ' % (val, os.path.split(val)[-1]))
+                       balises[i].append('<img src="%s" style="vertical-align:middle" alt="%s" />' % (val, os.path.split(val)[-1]))
             indices = list(balises.keys())
             indices.sort(key=sorting, reverse=True)
             for index in indices:
@@ -454,6 +481,8 @@ def note_to_html(data, master):
                 while line >= len(t):
                     t.append("")
                 l = list(t[line])
+                if index in indexes:
+                    del(l[col])
                 l.insert(col, "".join(balises[index]))
                 t[line] = "".join(l)
     txt.destroy()
