@@ -27,7 +27,7 @@ from tkinter.ttk import Label, Frame, Button, Notebook
 from mynoteslib.constantes import CONFIG, IM_MOINS
 from mynoteslib.autoscrollbar import AutoScrollbar as Scrollbar
 
-class Deleter(Toplevel):
+class Manager(Toplevel):
     """ Note manager """
     def __init__(self, master):
         Toplevel.__init__(self, master)
@@ -38,14 +38,14 @@ class Deleter(Toplevel):
 
         self.im_moins = PhotoImage(file=IM_MOINS, master=self)
 
-        notebook = Notebook(self)
-        notebook.pack(fill='both', expand=True)
+        self.notebook = Notebook(self)
+        self.notebook.pack(fill='both', expand=True)
 
         self.texts = {}
-        self.frames = {}
+        frames = {}
         self.notes = {}
         for cat in categories:
-            frame = Frame(notebook)
+            frame = Frame(self.notebook)
             self.texts[cat] = Text(frame, width=1, height=1, bg=self.cget('bg'),
                                    relief='flat', highlightthickness=0,
                                    padx=4, pady=4, cursor='arrow')
@@ -61,21 +61,21 @@ class Deleter(Toplevel):
             scrollx.grid(row=1, column=0, sticky='ew')
             self.texts[cat].configure(xscrollcommand=scrollx.set,
                                       yscrollcommand=scrolly.set)
-            self.frames[cat] = Frame(self.texts[cat])
-            self.frames[cat].columnconfigure(0, weight=1, minsize=170)
-            self.frames[cat].columnconfigure(1, weight=1, minsize=170)
-            self.frames[cat].columnconfigure(2, minsize=20)
-            self.texts[cat].window_create('1.0', window=self.frames[cat])
+            frames[cat] = Frame(self.texts[cat])
+            frames[cat].columnconfigure(0, weight=1, minsize=170)
+            frames[cat].columnconfigure(1, weight=1, minsize=170)
+            frames[cat].columnconfigure(2, minsize=20)
+            self.texts[cat].window_create('1.0', window=frames[cat])
 
-            notebook.add(frame, text=cat.capitalize(), sticky="ewsn",
-                         padding=0)
+            self.notebook.add(frame, text=cat.capitalize(), sticky="ewsn",
+                              padding=0)
         for key, note_data in self.master.note_data.items():
             cat = note_data["category"]
-            c, r = self.frames[cat].grid_size()
+            c, r = frames[cat].grid_size()
             self.notes[key] = []
             title = note_data['title'][:20]
             title = title.replace('\t', ' ') + ' '*(20 - len(title))
-            self.notes[key].append(Label(self.frames[cat], text=title,
+            self.notes[key].append(Label(frames[cat], text=title,
                                          font='TkDefaultFont 10 bold'))
             txt = note_data['txt'].splitlines()
             if txt:
@@ -83,16 +83,26 @@ class Deleter(Toplevel):
             else:
                 txt = ''
             txt = txt.replace('\t', ' ') + ' '*(20 - len(txt))
-            self.notes[key].append(Label(self.frames[cat], text=txt))
-            self.notes[key].append(Button(self.frames[cat], image=self.im_moins,
+            self.notes[key].append(Label(frames[cat], text=txt))
+            self.notes[key].append(Button(frames[cat], image=self.im_moins,
                                           command=lambda iid=key: self.delete_note(iid)))
             for i, widget in enumerate(self.notes[key]):
                 widget.grid(row=r, column=i, sticky='w', padx=4, pady=4)
+
         for txt in self.texts.values():
             txt.configure(state='disabled')
         self.geometry('410x450')
+        self.bind_all("<Button-4>", lambda e: self.scroll(-1))
+        self.bind_all("<Button-5>", lambda e: self.scroll(1))
 
     def delete_note(self, note_id):
         self.master.delete_note(note_id)
         for widget in self.notes[note_id]:
             widget.destroy()
+
+    def scroll(self, delta):
+        cat = self.notebook.tab("current", "text").lower()
+        top, bottom = self.texts[cat].yview()
+        top += delta*0.05
+        top = min(max(top, 0), 1)
+        self.texts[cat].yview_moveto(top)

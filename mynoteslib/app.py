@@ -34,7 +34,7 @@ from mynoteslib.config import Config
 from mynoteslib.export import Export
 from mynoteslib.sticky import Sticky
 from mynoteslib.about import About
-from mynoteslib.notedelete import Deleter
+from mynoteslib.notemanager import Manager
 from mynoteslib.version_check import UpdateChecker
 from mynoteslib.messagebox import showerror, showinfo, askokcancel
 import ewmh
@@ -363,7 +363,7 @@ class App(Tk):
 
     def manage(self):
         """ Launch note manager """
-        Deleter(self)
+        Manager(self)
 
     def config(self):
         """ Launch the setting manager """
@@ -613,7 +613,7 @@ class App(Tk):
         img_stored = os.listdir(cst.PATH_LATEX)
         img_used = []
         for data in self.note_data.values():
-            img_used.extend(list(data['latex'].keys()))
+            img_used.extend(list(data.get("latex", {}).keys()))
         for img in img_stored:
             if not img in img_used:
                 os.remove(os.path.join(cst.PATH_LATEX, img))
