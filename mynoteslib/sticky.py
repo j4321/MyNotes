@@ -602,10 +602,12 @@ class Sticky(Toplevel):
     def start_move(self, event):
         self.x = event.x
         self.y = event.y
+        self.configure(cursor='fleur')
 
     def stop_move(self, event):
         self.x = None
         self.y = None
+        self.configure(cursor='')
 
     def move(self, event):
         if self.x is not None and self.y is not None:
