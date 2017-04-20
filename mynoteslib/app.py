@@ -132,6 +132,9 @@ class App(Tk):
         self.bind_class('TEntry', '<Control-a>', self.select_all_entry)
         # bind Ctrl+Y to redo
         self.bind_class('Text', '<Control-y>', self.redo_event)
+        # unbind Ctrl+I and Ctrl+B
+        self.unbind_class('Text', '<Control-i>')
+        self.unbind_class('Text', '<Control-b>')
         # highlight checkboxes when inside text selection
         self.bind_class("Text", "<ButtonPress-1>", self.highlight_checkboxes, True)
         self.bind_class("Text", "<ButtonRelease-1>", self.highlight_checkboxes, True)
@@ -181,7 +184,7 @@ class App(Tk):
         event.widget.selection_range(0, "end")
 
     def select_all_text(self, event):
-        event.widget.tag_add("sel", "1.0", "end")
+        event.widget.tag_add("sel", "1.0", "end-1c")
         self.highlight_checkboxes(event)
 
     def delete_char(self, event):

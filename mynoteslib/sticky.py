@@ -228,7 +228,7 @@ class Sticky(Toplevel):
         menu_insert.add_command(label=_("Date"), command=self.add_date)
         menu_insert.add_command(label=_("Link"), command=self.add_link)
         if LATEX:
-            menu_insert.add_command(label=_("Latex"), command=self.add_latex)
+            menu_insert.add_command(label="LaTex", command=self.add_latex)
 
         self.menu_txt.add_cascade(label=_("Style"), menu=menu_style)
         self.menu_txt.add_cascade(label=_("Alignment"), menu=menu_align)
@@ -336,6 +336,13 @@ class Sticky(Toplevel):
         # is erased on pasting
         self.txt.bind("<Control-v>", self.paste)
         self.corner.bind('<ButtonRelease-1>', self.resize)
+
+        ### keyboard shortcuts
+        self.txt.bind('<Control-b>', lambda e: self.toggle_text_style('bold'))
+        self.txt.bind('<Control-i>', lambda e: self.toggle_text_style('italic'))
+        self.txt.bind('<Control-u>', lambda e: self.toggle_underline())
+        self.txt.bind('<Control-r>', lambda e: self.set_align('right'))
+        self.txt.bind('<Control-l>', lambda e: self.set_align('left'))
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -787,7 +794,7 @@ class Sticky(Toplevel):
         top.geometry("+%i+%i" % top.winfo_pointerxy())
         top.grab_set()
         top.resizable(True, False)
-        top.title(_("Latex"))
+        top.title("LaTex")
         text = Entry(top, justify='center')
         if img_name is not None:
             text.insert(0, self.latex[img_name])

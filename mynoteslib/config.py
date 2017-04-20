@@ -162,7 +162,7 @@ class Config(Toplevel):
             Separator(general_settings,
                       orient="horizontal").grid(sticky="ew", pady=10)
             Button(general_settings,
-                   text=_('Delete unused latex images'),
+                   text=_('Delete unused LaTex data'),
                    command=self.cleanup).grid(padx=4, pady=4, sticky='w')
 
         ### * Font settings
