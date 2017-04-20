@@ -106,7 +106,7 @@ class Sticky(Toplevel):
                         selectforeground='white',
                         inactiveselectbackground=selectbg,
                         selectbackground=selectbg,
-                        tabs=(10, 'right', 20, 'left'),
+                        tabs=(10, 'right', 21, 'left'),
                         relief="flat", borderwidth=0,
                         highlightthickness=0, font=font_text)
         # tags
@@ -122,10 +122,10 @@ class Sticky(Toplevel):
         self.txt.tag_configure("right", justify="right")
         self.txt.tag_configure("link", foreground="blue", underline=True,
                                selectforeground="white")
-        self.txt.tag_configure("list", lmargin1=0, lmargin2=20,
-                               tabs=(10, 'right', 20, 'left'))
-        self.txt.tag_configure("todolist", lmargin1=0, lmargin2=20,
-                               tabs=(10, 'right', 20, 'left'))
+        self.txt.tag_configure("list", lmargin1=0, lmargin2=21,
+                               tabs=(10, 'right', 21, 'left'))
+        self.txt.tag_configure("todolist", lmargin1=0, lmargin2=21,
+                               tabs=(10, 'right', 21, 'left'))
         margin = 2*Font(self, font=font_text).measure("m")
         self.txt.tag_configure("enum", lmargin1=0, lmargin2=margin + 5,
                                tabs=(margin, 'right', margin + 5, 'left'))
@@ -758,36 +758,26 @@ class Sticky(Toplevel):
                     else:
                         i = 0
                     img = "%i.png" % i
-                    self.latex[img] = latex
-                    im = os.path.join(PATH_LATEX, img)
-                    try:
-                        math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
-                        self.images.append(PhotoImage(file=im, master=self))
-                        index = self.txt.index("current")
-                        self.txt.image_create(index,
-                                              image=self.images[-1],
-                                              name=im)
-                        self.txt.tag_add(img, index)
-                        self.txt.tag_bind(img, '<Double-Button-1>',
+                    self.txt.tag_bind(img, '<Double-Button-1>',
                                           lambda e: self.add_latex(img))
-                    except Exception as e:
-                        showerror(_("Error"), str(e))
+                    self.latex[img] = latex
 
                 else:
-                    im = os.path.join(PATH_LATEX, img_name)
-                    try:
-                        math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
-                        self.images.append(PhotoImage(file=im, master=self))
-                        index = self.txt.tag_ranges(img_name)[0]
-                        self.txt.delete(index)
-                        self.txt.image_create(index,
-                                              image=self.images[-1],
-                                              name=im)
-                        self.txt.tag_add(img_name, index)
-                    except Exception as e:
-                        showerror(_("Error"), str(e))
+                    img = img_name
+                im = os.path.join(PATH_LATEX, img)
+                try:
+                    math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
+                    self.images.append(PhotoImage(file=im, master=self))
+                    index = self.txt.index("current")
+                    self.txt.image_create(index,
+                                          image=self.images[-1],
+                                          name=im)
+                    self.txt.tag_add(img, index)
+                    top.destroy()
 
-            top.destroy()
+                except Exception as e:
+                    showerror(_("Error"), str(e))
+
         top = Toplevel(self)
         top.transient(self)
         top.update_idletasks()

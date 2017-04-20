@@ -161,9 +161,10 @@ TEXT_COLORS = {_("Black"): "black", _("White"): "white",
 
 ### latex (optional):  insertion of latex formulas via matplotlib
 try:
-    from matplotlib.mathtext import MathTextParser, rcParams
+    from matplotlib import rc
+    rc('text', usetex=True)
+    from matplotlib.mathtext import MathTextParser
     from matplotlib.image import imsave
-    rcParams['text.usetex'] = True
     parser =  MathTextParser('bitmap')
     LATEX = True
 except ImportError:

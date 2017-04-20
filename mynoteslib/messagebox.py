@@ -244,11 +244,15 @@ class OneButtonBox(Toplevel):
         frame.rowconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
         l = len(message)
-        w = max(1, min(l, 50))
-        h = max(1, l//w)
-        if h < 3:
+        w = max(1, min(max(l, l2), 50))
+        h = 0
+        for line in message.splitlines():
+            h += 1 + len(line)//w
+        if h  < 3:
             w = min(l, 35)
-            h = max(1, l//w)
+            h = 0
+            for line in message.splitlines():
+                h += 1 + len(line)//w
         display = Text(frame, relief='flat', highlightthickness=0,
                        font="TkDefaultFont 10 bold", bg=self.cget('bg'),
                        height=h, width=w, wrap="word")
@@ -309,12 +313,21 @@ class ShowError(Toplevel):
         l = len(message)
         l2 = len(traceback)
         w = max(1, min(max(l, l2), 50))
-        h = max(1, l//w)
-        h2 = max(1, l2//w)
+        h = 0
+        for line in message.splitlines():
+            h += 1 + len(line)//w
+        h2 = 0
+        for line in traceback.splitlines():
+            h2 += 1 + len(line)//w
         if h + h2 < 3:
             w = min(l, 35)
-            h = max(1, l//w)
-            h2 = max(1, l2//w)
+            h = 0
+            for line in message.splitlines():
+                h += 1 + len(line)//w
+            h2 = 0
+            for line in traceback.splitlines():
+                h2 += 1 + len(line)//w
+
         display = Text(frame, relief='flat', highlightthickness=0,
                        font="TkDefaultFont 10 bold", bg=self.cget('bg'),
                        height=h, width=w, wrap="word")

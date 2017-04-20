@@ -202,12 +202,21 @@ class App(Tk):
         elif txt.index("insert") != "1.0":
             if re.match('^\t[0-9]+\.\t$', deb_line) and 'enum' in tags:
                 txt.delete("insert linestart", "insert")
+                txt.insert("insert", "\t\t")
                 txt.master.update_enum()
             elif deb_line == "\t•\t" and 'list' in tags:
                 txt.delete("insert linestart", "insert")
                 txt.insert("insert", "\t\t")
             elif deb_line == "\t\t":
                 txt.delete("insert linestart", "insert")
+            elif "todolist" in tags and txt.index("insert") == txt.index("insert linestart+1c"):
+                try:
+                    ch = txt.window_cget("insert-1c", "window")
+                    txt.delete("insert-1c")
+                    txt.children[ch.split('.')[-1]].destroy()
+                    txt.insert("insert", "\t\t")
+                except TclError:
+                    txt.delete("insert-1c")
             else:
                 txt.delete("insert-1c")
 
@@ -226,7 +235,6 @@ class App(Tk):
             event.widget.configure(autoseparators=False)
             event.widget.edit_separator()
             event.widget.insert("insert", "\n\t0.\t")
-#            event.widget.tag_add("enum", "1.0", "end")
             event.widget.master.update_enum()
             event.widget.edit_separator()
             event.widget.configure(autoseparators=True)
