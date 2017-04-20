@@ -382,6 +382,11 @@ def note_to_html(data, master):
         b_open["link#%i" % key] = "<a href='%s'>" % link
         b_close["link#%i" % key] = "</a>"
 
+    for key in data['tags']:
+        if not key in b_open:
+            b_open[key] = ''
+            b_close[key] = ''
+
     for index in indexes:
         txt.insert(index, " ")
     # restore tags
@@ -465,7 +470,7 @@ def note_to_html(data, master):
                         else:
                             balises[i].append('<input type="checkbox" />')
                     elif tp == "image":
-                       balises[i].append('<img src="%s" alt="%s" /> ' % (val, os.path.split(val)[-1]))
+                       balises[i].append('<img src="%s" style="vertical-align:middle" alt="%s" />' % (val, os.path.split(val)[-1]))
             indices = list(balises.keys())
             indices.sort(key=sorting, reverse=True)
             for index in indices:
@@ -475,6 +480,8 @@ def note_to_html(data, master):
                 while line >= len(t):
                     t.append("")
                 l = list(t[line])
+                if index in indexes:
+                    del(l[col])
                 l.insert(col, "".join(balises[index]))
                 t[line] = "".join(l)
     txt.destroy()

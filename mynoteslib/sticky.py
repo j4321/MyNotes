@@ -742,7 +742,10 @@ class Sticky(Toplevel):
 
         top = Toplevel(self)
         top.transient(self)
+        top.update_idletasks()
+        top.geometry("+%i+%i" % top.winfo_pointerxy())
         top.grab_set()
+        top.resizable(True, False)
         top.title(_("Link"))
         top.columnconfigure(1, weight=1)
         text = Entry(top)
@@ -780,7 +783,7 @@ class Sticky(Toplevel):
                     self.latex[img] = latex
                     im = os.path.join(PATH_LATEX, img)
                     try:
-                        math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-3)
+                        math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
                         self.images.append(PhotoImage(file=im, master=self))
                         index = self.txt.index("current")
                         self.txt.image_create(index,
@@ -795,7 +798,7 @@ class Sticky(Toplevel):
                 else:
                     im = os.path.join(PATH_LATEX, img_name)
                     try:
-                        math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-3)
+                        math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
                         self.images.append(PhotoImage(file=im, master=self))
                         index = self.txt.tag_ranges(img_name)[0]
                         self.txt.delete(index)
@@ -810,7 +813,9 @@ class Sticky(Toplevel):
         top = Toplevel(self)
         top.transient(self)
         top.update_idletasks()
+        top.geometry("+%i+%i" % top.winfo_pointerxy())
         top.grab_set()
+        top.resizable(True, False)
         top.title(_("Latex"))
         text = Entry(top, justify='center')
         if img_name is not None:
