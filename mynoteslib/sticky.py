@@ -332,12 +332,6 @@ class Sticky(Toplevel):
                           lambda event: self.txt.configure(cursor=""))
         self.txt.bind("<FocusOut>", self.save_note)
         self.txt.bind('<Button-3>', self.show_menu_txt)
-        self.txt.bind("<ButtonRelease-1>", self.highlight_checkboxes, True)
-        self.txt.bind("<B1-Motion>", self.highlight_checkboxes, True)
-        self.txt.bind("<<SelectNextChar>>", self.highlight_checkboxes, True)
-        self.txt.bind("<<SelectPrevChar>>", self.highlight_checkboxes, True)
-        self.txt.bind("<<SelectNextLine>>", self.highlight_checkboxes, True)
-        self.txt.bind("<<SelectPrevLine>>", self.highlight_checkboxes, True)
         # add binding to the existing class binding so that the selected text
         # is erased on pasting
         self.txt.bind("<Control-v>", self.paste)
@@ -565,31 +559,6 @@ class Sticky(Toplevel):
         self.save_note()
 
     ### bindings
-    def highlight_checkboxes(self, event):
-        try:
-            deb = sorting(self.txt.index("sel.first"))
-            fin = sorting(self.txt.index("sel.last"))
-#            for w in self.txt.window_names():
-#                ch = self.txt.children[w.split(".")[-1]]
-            for ch in self.txt.children.values():
-                try:
-                    i = sorting(self.txt.index(ch))
-                    if i >= deb and i <= fin:
-                        ch.configure(style="sel.TCheckbutton")
-                    else:
-                        ch.configure(style=self.id + ".TCheckbutton")
-                except TclError:
-                    pass
-        except TclError:
-#            for w in self.txt.window_names():
-#                ch = self.txt.children[w.split(".")[-1]]
-            for ch in self.txt.children.values():
-                try:
-                    i = sorting(self.txt.index(ch))
-                    ch.configure(style=self.id + ".TCheckbutton")
-                except TclError:
-                    pass
-
     def enter_roll(self, event):
         """ mouse is over the roll icon """
         self.roll.configure(image="img_rollactive")

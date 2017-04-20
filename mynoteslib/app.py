@@ -122,6 +122,7 @@ class App(Tk):
         self.update_notes()
         self.make_notes_sticky()
 
+        ### class bindings
         # newline depending on mode
         self.bind_class("Text", "<Return>",  self.insert_newline)
         # char deletion taking into account list type
@@ -131,12 +132,44 @@ class App(Tk):
         self.bind_class('TEntry', '<Control-a>', self.select_all_entry)
         # bind Ctrl+Y to redo
         self.bind_class('Text', '<Control-y>', self.redo_event)
+        # highlight checkboxes when inside text selection
+        self.bind_class("Text", "<ButtonPress-1>", self.highlight_checkboxes, True)
+        self.bind_class("Text", "<ButtonRelease-1>", self.highlight_checkboxes, True)
+        self.bind_class("Text", "<B1-Motion>", self.highlight_checkboxes, True)
+        evs = ['<<SelectAll>>', '<<SelectLineEnd>>', '<<SelectLineStart>>',
+               '<<SelectNextChar>>', '<<SelectNextLine>>', '<<SelectNextPara>>',
+               '<<SelectNextWord>>', '<<SelectNone>>', '<<SelectPrevChar>>',
+               '<<SelectPrevLine>>','<<SelectPrevPara>>','<<SelectPrevWord>>']
+        for ev in evs:
+            self.bind_class("Text", ev, self.highlight_checkboxes, True)
 
         # check for updates
         if CONFIG.getboolean("General", "check_update"):
             UpdateChecker(self)
 
-    ### class bindings
+    ### class bindings methods
+    def highlight_checkboxes(self, event):
+        txt = event.widget
+        try:
+            deb = cst.sorting(txt.index("sel.first"))
+            fin = cst.sorting(txt.index("sel.last"))
+            for ch in txt.children.values():
+                try:
+                    i = cst.sorting(txt.index(ch))
+                    if i >= deb and i <= fin:
+                        ch.configure(style="sel.TCheckbutton")
+                    else:
+                        ch.configure(style=txt.master.id + ".TCheckbutton")
+                except TclError:
+                    pass
+        except TclError:
+            for ch in txt.children.values():
+                try:
+                    i = cst.sorting(txt.index(ch))
+                    ch.configure(style=txt.master.id + ".TCheckbutton")
+                except TclError:
+                    pass
+
     def redo_event(self, event):
         try:
             event.widget.edit_redo()
@@ -148,7 +181,8 @@ class App(Tk):
         event.widget.selection_range(0, "end")
 
     def select_all_text(self, event):
-        event.widget.tag_add("sel","1.0","end")
+        event.widget.tag_add("sel", "1.0", "end")
+        self.highlight_checkboxes(event)
 
     def delete_char(self, event):
         txt = event.widget
