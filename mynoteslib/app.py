@@ -498,9 +498,8 @@ class App(Tk):
         categories_to_export, only_visible = export.get_export()
         if categories_to_export:
             initialdir, initialfile = os.path.split(PATH_DATA_BACKUP % 0)
-            fichier = asksaveasfilename(defaultextension=".notes",
-                                        filetypes=[(_("Notes (.notes)"), "*.notes"),
-                                                   (_("HTML file (.html)"), "*.html"),
+            fichier = asksaveasfilename(defaultextension=".html",
+                                        filetypes=[(_("HTML file (.html)"), "*.html"),
                                                    (_("Text file (.txt)"), "*.txt"),
                                                    (_("All files"), "*")],
                                         initialdir=initialdir,
@@ -508,7 +507,33 @@ class App(Tk):
                                         title=_('Export Notes As'))
             if fichier:
                 try:
-                    if os.path.splitext(fichier)[-1] == ".txt":
+                    if os.path.splitext(fichier)[-1] == ".html":
+        ### html export
+                        cats = {cat: [] for cat in categories_to_export}
+                        for key in self.note_data:
+                            cat = self.note_data[key]["category"]
+                            if cat in cats and ((not only_visible) or self.note_data[key]["visible"]):
+                                cats[cat].append((self.note_data[key]["title"],
+                                                  cst.note_to_html(self.note_data[key], self)))
+                        text = ""
+                        for cat in cats:
+                            cat_txt = "<h1 style='text-align:center'>" + _("Category: {category}").format(category=cat) + "<h1/>\n"
+                            text += cat_txt
+                            text += "<br>"
+                            for title, txt in cats[cat]:
+                                text += "<h2 style='text-align:center'>%s</h2>\n" % title
+                                text += txt
+                                text += "<br>\n"
+                                text += "<hr />"
+                                text += "<br>\n"
+                            text += '<hr style="height: 8px;background-color:grey" />'
+                            text += "<br>\n"
+                        with open(fichier, "w") as fich:
+                            fich.write('<body style="max-width:30em">\n')
+                            fich.write(text.encode('ascii', 'xmlcharrefreplace').decode("utf-8"))
+                            fich.write("\n</body>")
+#                if os.path.splitext(fichier)[-1] == ".txt":
+                    else:
         ### txt export
                         # export notes to .txt: all formatting is lost
                         cats = {cat: [] for cat in categories_to_export}
@@ -537,47 +562,22 @@ class App(Tk):
                         with open(fichier, "w") as fich:
                             fich.write(text)
 
-                    elif os.path.splitext(fichier)[-1] == ".html":
-        ### html export
-                        cats = {cat: [] for cat in categories_to_export}
-                        for key in self.note_data:
-                            cat = self.note_data[key]["category"]
-                            if cat in cats and ((not only_visible) or self.note_data[key]["visible"]):
-                                cats[cat].append((self.note_data[key]["title"],
-                                                  cst.note_to_html(self.note_data[key], self)))
-                        text = ""
-                        for cat in cats:
-                            cat_txt = "<h1 style='text-align:center'>" + _("Category: {category}").format(category=cat) + "<h1/>\n"
-                            text += cat_txt
-                            text += "<br>"
-                            for title, txt in cats[cat]:
-                                text += "<h2 style='text-align:center'>%s</h2>\n" % title
-                                text += txt
-                                text += "<br>\n"
-                                text += "<hr />"
-                                text += "<br>\n"
-                            text += '<hr style="height: 8px;background-color:grey" />'
-                            text += "<br>\n"
-                        with open(fichier, "w") as fich:
-                            fich.write('<body style="max-width:30em">\n')
-                            fich.write(text.encode('ascii', 'xmlcharrefreplace').decode("utf-8"))
-                            fich.write("\n</body>")
 
-                    else:
-        ### pickle export
-                        note_data = {}
-                        for key in self.note_data:
-                            if self.note_data[key]["category"] in categories_to_export:
-                                if (not only_visible) or self.note_data[key]["visible"]:
-                                    note_data[key] = self.note_data[key]
-
-                        with open(fichier, "wb") as fich:
-                            dp = pickle.Pickler(fich)
-                            dp.dump(note_data)
-                except Exception as e:
-                    report_msg = e.strerror != 'Permission denied'
-                    showerror(_("Error"), str(e), traceback.format_exc(),
-                              report_msg)
+#                    else:
+#        ### pickle export
+#                        note_data = {}
+#                        for key in self.note_data:
+#                            if self.note_data[key]["category"] in categories_to_export:
+#                                if (not only_visible) or self.note_data[key]["visible"]:
+#                                    note_data[key] = self.note_data[key]
+#
+#                        with open(fichier, "wb") as fich:
+#                            dp = pickle.Pickler(fich)
+#                            dp.dump(note_data)
+#                except Exception as e:
+#                    report_msg = e.strerror != 'Permission denied'
+#                    showerror(_("Error"), str(e), traceback.format_exc(),
+#                              report_msg)
 
     def import_notes(self):
         fichier = askopenfilename(defaultextension=".backup",
