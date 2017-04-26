@@ -561,8 +561,6 @@ class App(Tk):
                             text += "\n\n"
                         with open(fichier, "w") as fich:
                             fich.write(text)
-
-
 #                    else:
 #        ### pickle export
 #                        note_data = {}
@@ -574,10 +572,10 @@ class App(Tk):
 #                        with open(fichier, "wb") as fich:
 #                            dp = pickle.Pickler(fich)
 #                            dp.dump(note_data)
-#                except Exception as e:
-#                    report_msg = e.strerror != 'Permission denied'
-#                    showerror(_("Error"), str(e), traceback.format_exc(),
-#                              report_msg)
+                except Exception as e:
+                    report_msg = e.strerror != 'Permission denied'
+                    showerror(_("Error"), str(e), traceback.format_exc(),
+                              report_msg)
 
     def import_notes(self):
         fichier = askopenfilename(defaultextension=".backup",
