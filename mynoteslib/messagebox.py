@@ -518,11 +518,14 @@ def showinfo(title="", message="", parent=None):
     return showmessage(title, message, parent, image="information")
 
 def askokcancel(title="", message="", parent=None, icon=None):
+    """ Display messagebox with given title and message. 
+        If no icon is given, the question icon is used.
+        Return True if the user has selected Ok, False otherwise."""
     if icon is None:
         icon = "question"
     box = TwoButtonBox(parent, title, message, "Ok", _("Cancel"), icon)
     box.wait_window(box)
-    return box.get_result()
+    return box.get_result() == "Ok"
 
 def askyesnocancel(title="", message="", parent=None, icon=None):
     if icon is None:
