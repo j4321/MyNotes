@@ -1,15 +1,15 @@
 #! /usr/bin/python3
 # -*- coding:Utf-8 -*-
 """
-Sudoku-Tk - Sudoku games and puzzle solver
-Copyright 2016 Juliette Monsel <j_4321@protonmail.com>
+My Notes - Sticky notes/post-it
+Copyright 2016-2017 Juliette Monsel <j_4321@protonmail.com>
 
-Sudoku-Tk is free software: you can redistribute it and/or modify
+My Notes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-Sudoku-Tk is distributed in the hope that it will be useful,
+My Notes is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -19,15 +19,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 The images were taken from "icons.tcl":
 
-	A set of stock icons for use in Tk dialogs. The icons used here
-	were provided by the Tango Desktop project which provides a
-	unified set of high quality icons licensed under the
-	Creative Commons Attribution Share-Alike license
-	(http://creativecommons.org/licenses/by-sa/3.0/)
+A set of stock icons for use in Tk dialogs. The icons used here
+were provided by the Tango Desktop project which provides a
+fied set of high quality icons licensed under the
+Creative Commons Attribution Share-Alike license
+(http://creativecommons.org/licenses/by-sa/3.0/)
 
-	See http://tango.freedesktop.org/Tango_Desktop_Project
+See http://tango.freedesktop.org/Tango_Desktop_Project
 
-    Copyright (c) 2009 Pat Thoyts <patthoyts@users.sourceforge.net>
+Copyright (c) 2009 Pat Thoyts <patthoyts@users.sourceforge.net>
 
 
 Custom tkinter messageboxes
@@ -183,6 +183,7 @@ mfwLcAuinuFNL7QAAAAASUVORK5CYII=
 ICONS = {"information": IM_INFO_DATA, "error": IM_ERROR_DATA,
          "question": IM_QUESTION_DATA, "warning": IM_WARNING_DATA}
 
+
 class SyncConflict(Toplevel):
     def __init__(self, master=None,
                  text=_("There is a synchronization conflict. What do you want to do?")):
@@ -217,6 +218,7 @@ class SyncConflict(Toplevel):
     def get_action(self):
         return self.action
 
+
 class OneButtonBox(Toplevel):
     def __init__(self, parent=None, title="", message="", button="Ok", image=None):
         """
@@ -244,15 +246,15 @@ class OneButtonBox(Toplevel):
         frame.rowconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
         l = len(message)
-        w = max(1, min(max(l, l2), 50))
+        w = max(1, min(l, 50))
         h = 0
         for line in message.splitlines():
-            h += 1 + len(line)//w
-        if h  < 3:
+            h += 1 + len(line) // w
+        if h < 3:
             w = min(l, 35)
             h = 0
             for line in message.splitlines():
-                h += 1 + len(line)//w
+                h += 1 + len(line) // w
         display = Text(frame, relief='flat', highlightthickness=0,
                        font="TkDefaultFont 10 bold", bg=self.cget('bg'),
                        height=h, width=w, wrap="word")
@@ -276,16 +278,17 @@ class OneButtonBox(Toplevel):
     def get_result(self):
         return self.result
 
+
 class ShowError(Toplevel):
     def __init__(self, parent=None, title="", message="", traceback="",
                  report_msg=False, button="Ok", image="error"):
         """
-            Create a message box with one button:
-                parent: parent of the toplevel window
-                title: message box title
-                message: message box text (that can be selected)
-                button: message displayed on the button
-                image: image displayed at the left of the message, either a PhotoImage or a string
+        Create a message box with one button:
+            parent: parent of the toplevel window
+            title: message box title
+            message: message box text (that can be selected)
+            button: message displayed on the button
+            image: image displayed at the left of the message, either a PhotoImage or a string
         """
         Toplevel.__init__(self, parent)
         self.transient(parent)
@@ -296,7 +299,7 @@ class ShowError(Toplevel):
 
         style = Style(self)
         style.configure("url.TLabel", foreground="blue")
-        style.configure("txt.TFrame",  backgroumd='white')
+        style.configure("txt.TFrame", background='white')
         if not parent:
             style.theme_use('clam')
 
@@ -315,18 +318,18 @@ class ShowError(Toplevel):
         w = max(1, min(max(l, l2), 50))
         h = 0
         for line in message.splitlines():
-            h += 1 + len(line)//w
+            h += 1 + len(line) // w
         h2 = 0
         for line in traceback.splitlines():
-            h2 += 1 + len(line)//w
+            h2 += 1 + len(line) // w
         if h + h2 < 3:
             w = min(l, 35)
             h = 0
             for line in message.splitlines():
-                h += 1 + len(line)//w
+                h += 1 + len(line) // w
             h2 = 0
             for line in traceback.splitlines():
-                h2 += 1 + len(line)//w
+                h2 += 1 + len(line) // w
 
         display = Text(frame, relief='flat', highlightthickness=0,
                        font="TkDefaultFont 10 bold", bg=self.cget('bg'),
@@ -337,9 +340,7 @@ class ShowError(Toplevel):
         display.grid(row=0, column=1, pady=(10, 4), padx=4, sticky="ewns")
         display.bind("<Button-1>", lambda event: display.focus_set())
         if image:
-#            Label(frame, image=image).pack(side='left', padx=4, pady=(10, 4))
             Label(frame, image=image).grid(row=0, column=0, padx=4, pady=(10, 4))
-#        display.pack(side='left', pady=(10, 4), padx=4)
 
         frame2 = Frame(self)
         frame2.columnconfigure(0, weight=1)
@@ -372,8 +373,8 @@ class ShowError(Toplevel):
             url.bind("<Button-1>", lambda e: url_open("https://github.com/j4321/MyNotes/issues"))
         b = Button(self, text=button, command=self.validate)
         frame.pack(fill='x')
-        frame2.pack(fill='both', padx=4, pady=(4,4))
-        report_frame.pack(fill="x", padx=4, pady=(4,0))
+        frame2.pack(fill='both', padx=4, pady=(4, 4))
+        report_frame.pack(fill="x", padx=4, pady=(4, 0))
         b.pack(padx=10, pady=10)
         self.grab_set()
         b.focus_set()
@@ -392,12 +393,12 @@ class TwoButtonBox(Toplevel):
     def __init__(self, parent, title="", message="", button1=_("Yes"),
                  button2=_("No"), image=None):
         """
-            Create a messagebox with two buttons:
-                parent: parent of the toplevel window
-                title: message box title
-                message: message box text
-                button1/2: message displayed on the first/second button
-                image: image displayed at the left of the message
+        Create a messagebox with two buttons:
+            parent: parent of the toplevel window
+            title: message box title
+            message: message box text
+            button1/2: message displayed on the first/second button
+            image: image displayed at the left of the message
         """
 
         Toplevel.__init__(self, parent)
@@ -422,14 +423,14 @@ class TwoButtonBox(Toplevel):
         frame.grid(row=0, columnspan=2, sticky="ewsn")
         if image:
             Label(frame, image=image).pack(side="left", padx=(10, 4), pady=(10, 4))
-        Label(frame, text=message , font="TkDefaultFont 10 bold",
+        Label(frame, text=message, font="TkDefaultFont 10 bold",
               wraplength=335).pack(side="left", padx=(4, 10), pady=(10, 4))
 
         b1 = Button(self, text=button1, command=self.command1)
         b1.grid(row=1, column=0, padx=10, pady=10, sticky="e")
-        Button(self, text=button2, command=self.command2).grid(row=1, column=1,
-                                                              padx=10, pady=10,
-                                                              sticky="w")
+        Button(self, text=button2,
+               command=self.command2).grid(row=1, column=1, padx=10, pady=10,
+                                           sticky="w")
         self.grab_set()
         b1.focus_set()
 
@@ -444,18 +445,19 @@ class TwoButtonBox(Toplevel):
     def get_result(self):
         return self.result
 
+
 class AskYesNoCancel(Toplevel):
-    """ Messagebox with two buttons """
+    """Messagebox with two buttons."""
 
     def __init__(self, parent, title="", message="", image=None,
                  button1=_("Yes"), button2=_("No"), button3=_("Cancel")):
         """
-            Create a messagebox with three buttons:
-                parent: parent of the toplevel window
-                title: message box title
-                message: message box text
-                button1/2: message displayed on the first/second button
-                image: image displayed at the left of the message
+        Create a messagebox with three buttons:
+            parent: parent of the toplevel window
+            title: message box title
+            message: message box text
+            button1/2: message displayed on the first/second button
+            image: image displayed at the left of the message
         """
 
         Toplevel.__init__(self, parent)
@@ -479,13 +481,13 @@ class AskYesNoCancel(Toplevel):
         frame.grid(row=0, columnspan=3, sticky="ewsn")
         if image:
             Label(frame, image=image).pack(side="left", padx=(10, 4), pady=(10, 4))
-        Label(frame, text=message , font="TkDefaultFont 10 bold",
+        Label(frame, text=message, font="TkDefaultFont 10 bold",
               wraplength=335).pack(side="left", padx=(4, 10), pady=(10, 4))
 
         b1 = Button(self, text=button1, command=self.command1)
         b1.grid(row=1, column=0, padx=10, pady=10)
         Button(self, text=button2, command=self.command2).grid(row=1, column=1,
-                                                              padx=10, pady=10)
+                                                               padx=10, pady=10)
         Button(self, text=button3, command=self.destroy).grid(row=1, column=2,
                                                               padx=10, pady=10)
         self.grab_set()
@@ -503,22 +505,24 @@ class AskYesNoCancel(Toplevel):
         return self.result
 
 
-
 def showmessage(title="", message="", parent=None, button="Ok", image=None):
     box = OneButtonBox(parent, title, message, button, image)
     box.wait_window(box)
     return box.get_result()
+
 
 def showerror(title="", message="", traceback="", report_msg=False, parent=None):
     box = ShowError(parent, title, message, traceback, report_msg)
     box.wait_window(box)
     return box.get_result()
 
+
 def showinfo(title="", message="", parent=None):
     return showmessage(title, message, parent, image="information")
 
+
 def askokcancel(title="", message="", parent=None, icon=None):
-    """ Display messagebox with given title and message. 
+    """ Display messagebox with given title and message.
         If no icon is given, the question icon is used.
         Return True if the user has selected Ok, False otherwise."""
     if icon is None:
@@ -527,10 +531,10 @@ def askokcancel(title="", message="", parent=None, icon=None):
     box.wait_window(box)
     return box.get_result() == "Ok"
 
+
 def askyesnocancel(title="", message="", parent=None, icon=None):
     if icon is None:
         icon = "question"
     box = AskYesNoCancel(parent, title, message, image=icon)
     box.wait_window(box)
     return box.get_result()
-

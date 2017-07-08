@@ -27,9 +27,13 @@ Scrollbar that hide automatically when not needed.
 from tkinter.ttk import Scrollbar
 from tkinter import TclError
 
+
 class AutoScrollbar(Scrollbar):
-    """ a scrollbar that hides itself if it's not needed.  only
-        works if you use the grid geometry manager. """
+    """
+    Scrollbar that hides itself if it's not needed.
+
+    Only works with the grid geometry manager.
+    """
 
     def set(self, lo, hi):
         if float(lo) <= 0.0 and float(hi) >= 1.0:

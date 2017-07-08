@@ -25,11 +25,11 @@ from tkinter import Text, Toplevel, PhotoImage
 from tkinter.ttk import Button, Label, Style
 from mynoteslib.constantes import IM_ICON_48, VERSION
 
+
 class About(Toplevel):
-    """ Toplevel de l'application principale donnant les informations à
-        propos du logiciel """
+    """About dialog."""
     def __init__(self, master):
-        """ créer le Toplevel 'À propos de MyNotes' """
+        """Create about dialog."""
         Toplevel.__init__(self, master)
 
         self.title(_("About MyNotes"))
@@ -40,26 +40,36 @@ class About(Toplevel):
         Label(self, image=self.image).grid(row=0, columnspan=2, pady=10)
 
         Label(self,
-                  text=_("MyNotes %(version)s")
-                  % ({"version": VERSION})).grid(row=1, columnspan=2)
-        Label(self, text=_("Sticky notes/post-it system tray app")).grid(row=2, columnspan=2, padx=10)
-        Label(self, text="Copyright (C) Juliette Monsel 2016-2017").grid(row=3, columnspan=2, padx=10)
-        Label(self, text="j_4321@protonmail.com").grid(row=4, columnspan=2, padx=10)
-        github = Label(self, text="https://github.com/j4321/MyNotes", cursor="hand1",
-                       style="url.TLabel", font="TkDefaultFont 10 underline")
-        github.grid(row=5, columnspan=2, padx=10, pady=(10,0), sticky="w")
-        sourceforge = Label(self, text="https://sourceforge.net/projects/my-notes",
-                            style="url.TLabel", cursor="hand1",
+              text=_("MyNotes %(version)s") % ({"version": VERSION})).grid(row=1,
+                                                                           columnspan=2)
+        Label(self,
+              text=_("Sticky notes/post-it system tray app")).grid(row=2,
+                                                                   columnspan=2,
+                                                                   padx=10)
+        Label(self,
+              text="Copyright (C) Juliette Monsel 2016-2017").grid(row=3,
+                                                                   columnspan=2,
+                                                                   padx=10)
+        Label(self,
+              text="j_4321@protonmail.com").grid(row=4, columnspan=2, padx=10)
+        github = Label(self, text="https://github.com/j4321/MyNotes",
+                       cursor="hand1", style="url.TLabel",
+                       font="TkDefaultFont 10 underline")
+        github.grid(row=5, columnspan=2, padx=10, pady=(10, 0), sticky="w")
+        sourceforge = Label(self, cursor="hand1", style="url.TLabel",
+                            text="https://sourceforge.net/projects/my-notes",
                             font="TkDefaultFont 10 underline")
-        sourceforge.grid(row=6, columnspan=2, padx=10, pady=(0,10), sticky="w")
-        github.bind("<Button-1>", lambda e: webOpen("https://github.com/j4321/MyNotes"))
-        sourceforge.bind("<Button-1>", lambda e: webOpen("https://sourceforge.net/projects/my-notes/"))
-#        github.bind("<Enter>", lambda e:github.configure(cursor="hand1"))
-#        github.bind("<Leave>", lambda e:github.configure(cursor=""))
+        sourceforge.grid(row=6, columnspan=2, padx=10, pady=(0, 10), sticky="w")
+        github.bind("<Button-1>",
+                    lambda e: webOpen("https://github.com/j4321/MyNotes"))
+        sourceforge.bind("<Button-1>",
+                         lambda e: webOpen("https://sourceforge.net/projects/my-notes/"))
         Button(self, text=_("License"),
-               command=self._license).grid(row=7, column=0, pady=10, padx=6, sticky="e")
+               command=self._license).grid(row=7, column=0, pady=10, padx=6,
+                                           sticky="e")
         Button(self, text=_("Close"),
-               command=self.exit).grid(row=7, column=1, pady=10, padx=6, sticky="w")
+               command=self.exit).grid(row=7, column=1, pady=10, padx=6,
+                                       sticky="w")
 
         self.initial_focus = self
 

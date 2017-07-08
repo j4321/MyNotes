@@ -21,13 +21,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Configuration Window
 """
 
-from tkinter import Toplevel, StringVar, Menu, TclError, Text, PhotoImage
+
+from tkinter import Toplevel, StringVar, Menu, TclError, Text
 from mynoteslib.messagebox import showinfo
 from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator
 from tkinter.ttk import Notebook, Combobox, Frame, Menubutton, Checkbutton
 from mynoteslib.constantes import CONFIG, save_config, COLORS, SYMBOLS, LATEX
 from mynoteslib.categories import CategoryManager
 from tkinter import font
+
 
 class Config(Toplevel):
 
@@ -39,12 +41,12 @@ class Config(Toplevel):
         self.protocol("WM_DELETE_WINDOW", self.quit)
         self.changes = {}, {}
 
-        ### style
+        # --- style
         style = Style(self)
         style.theme_use("clam")
         style.configure("TScale", sliderlength=20)
         style.map("TCombobox",
-                  fieldbackground=[('readonly','white')],
+                  fieldbackground=[('readonly', 'white')],
                   selectbackground=[('readonly', 'white')],
                   selectforeground=[('readonly', 'black')])
         style.configure("prev.TLabel", background="white")
@@ -55,7 +57,7 @@ class Config(Toplevel):
         style.configure("titlebar.TLabel", background=color)
         style.configure("text.TFrame", background="white")
 
-        ### body
+        # --- body
         self.notebook = Notebook(self)
         okcancel_frame = Frame(self)
         okcancel_frame.columnconfigure(0, weight=1)
@@ -63,15 +65,15 @@ class Config(Toplevel):
         self.notebook.pack(expand=True, fill="both")
         okcancel_frame.pack(fill="x", expand=True)
 
-        ### * General settings
+        # --- * General settings
         general_settings = Frame(self.notebook)
         general_settings.columnconfigure(0, weight=1)
         self.notebook.add(general_settings, text=_("General"),
                           sticky="ewsn", padding=4)
 
-        ### *-- language
+        # --- *-- language
         lang = {"fr": "Français", "en": "English"}
-        self.lang = StringVar(self, lang[CONFIG.get("General","language")])
+        self.lang = StringVar(self, lang[CONFIG.get("General", "language")])
         lang_frame = Frame(general_settings)
         Label(lang_frame, text=_("Language")).grid(row=0, sticky="w", padx=4,
                                                    pady=4)
@@ -82,14 +84,14 @@ class Config(Toplevel):
                                   variable=self.lang, command=self.translate)
         menu_lang.add_radiobutton(label="Français", value="Français",
                                   variable=self.lang, command=self.translate)
-        ### *-- opacity
+        # --- *-- opacity
         self.opacity_scale = Scale(general_settings, orient="horizontal", length=200,
                                    from_=0, to=100,
                                    value=CONFIG.get("General", "opacity"),
                                    command=self.display_label)
         self.opacity_label = Label(general_settings,
                                    text="{val}%".format(val=self.opacity_scale.get()))
-        ### *-- position
+        # --- *-- position
         frame_position = Frame(general_settings)
         self.position = StringVar(self, CONFIG.get("General", "position"))
         Label(frame_position,
@@ -98,16 +100,16 @@ class Config(Toplevel):
                                                             sticky="w",
                                                             padx=4, pady=4)
         Radiobutton(frame_position, text=_("Always above"), value="above",
-                    variable=self.position).grid(row=1,column=0)
+                    variable=self.position).grid(row=1, column=0)
         Radiobutton(frame_position, text=_("Always below"), value="below",
-                    variable=self.position).grid(row=1,column=1)
+                    variable=self.position).grid(row=1, column=1)
         Radiobutton(frame_position, text=_("Normal"), value="normal",
-                    variable=self.position).grid(row=1,column=2)
-        ### *-- titlebar
+                    variable=self.position).grid(row=1, column=2)
+        # --- *-- titlebar
         self.titlebar_disposition = StringVar(self, CONFIG.get("General",
                                                                "buttons_position"))
-        font_title = "%s %s" %(CONFIG.get("Font", "title_family").replace(" ", "\ "),
-                               CONFIG.get("Font", "title_size"))
+        font_title = "%s %s" % (CONFIG.get("Font", "title_family").replace(" ", "\ "),
+                                CONFIG.get("Font", "title_size"))
         style = CONFIG.get("Font", "title_style").split(",")
         if style:
             font_title += " "
@@ -123,8 +125,10 @@ class Config(Toplevel):
                     variable=self.titlebar_disposition).grid(row=1, column=0)
         right = Frame(frame_titlebar, style="titlebar.TFrame")
         right.grid(row=1, column=1, sticky="ew")
+
         def select_right(event):
             self.titlebar_disposition.set("right")
+
         Label(right, text=_("Title"), style="titlebar.TLabel", anchor="center",
               font=font_title).pack(side="left", fill="x", expand=True)
         Label(right, image="img_close", style="titlebar.TLabel").pack(side="right")
@@ -135,21 +139,23 @@ class Config(Toplevel):
                     variable=self.titlebar_disposition).grid(row=1, column=2)
         left = Frame(frame_titlebar, style="titlebar.TFrame")
         left.grid(row=1, column=3, sticky="ew")
+
         def select_left(event):
             self.titlebar_disposition.set("left")
+
         Label(left, image="img_close", style="titlebar.TLabel").pack(side="left")
         Label(left, image="img_roll", style="titlebar.TLabel").pack(side="left")
         Label(left, text=_("Title"), style="titlebar.TLabel", anchor="center",
               font=font_title).pack(side="right", fill="x", expand=True)
         for ch in left.children.values():
             ch.bind("<Button-1>", select_left)
-        ### *-- placement
+        # --- *-- placement
         lang_frame.grid(sticky="w")
         Separator(general_settings,
                   orient="horizontal").grid(sticky="ew", pady=10)
         Label(general_settings,
               text=_("Opacity")).grid(sticky="w", padx=4, pady=4)
-        self.opacity_scale.grid(padx=4, pady=(4,10))
+        self.opacity_scale.grid(padx=4, pady=(4, 10))
         self.opacity_label.place(in_=self.opacity_scale, relx=1, rely=0.5,
                                  anchor="w", bordermode="outside")
         Separator(general_settings,
@@ -165,19 +171,20 @@ class Config(Toplevel):
                    text=_('Delete unused LaTex data'),
                    command=self.cleanup).grid(padx=4, pady=4, sticky='w')
 
-        ### * Font settings
+        # --- * Font settings
         font_settings = Frame(self.notebook)
         font_settings.columnconfigure(0, weight=1)
         self.notebook.add(font_settings, text=_("Font"),
                           sticky="ewsn", padding=4)
 
-        ### *-- title
+        # --- *-- title
         fonttitle_frame = Frame(font_settings)
 
         title_size = CONFIG.get("Font", "title_size")
         title_family = CONFIG.get("Font", "title_family")
 
-        self.sampletitle = Label(fonttitle_frame, text = _("Sample text"), anchor="center",
+        self.sampletitle = Label(fonttitle_frame, text=_("Sample text"),
+                                 anchor="center",
                                  style="prev.TLabel", relief="groove")
 
         self.sampletitle.grid(row=2, columnspan=2, padx=4, pady=6,
@@ -186,15 +193,16 @@ class Config(Toplevel):
         self.fonts.append("TkDefaultFont")
         self.fonts.sort()
         w = max([len(f) for f in self.fonts])
-        self.sizes = ["%i" % i for i in (list(range(6,17)) + list(range(18,32,2)))]
+        self.sizes = ["%i" % i for i in (list(range(6, 17)) + list(range(18, 32, 2)))]
 
-        self.fonttitle_family = Combobox(fonttitle_frame, values=self.fonts, width=(w*2)//3,
+        self.fonttitle_family = Combobox(fonttitle_frame, values=self.fonts,
+                                         width=(w * 2) // 3,
                                          exportselection=False,
                                          validate="key")
         self._validate_title_size = self.register(lambda *args: self.validate_font_size(self.fonttitle_size, *args))
         self._validate_title_family = self.register(lambda *args: self.validate_font_family(self.fonttitle_family, *args))
         self.fonttitle_family.configure(validatecommand=(self._validate_title_family,
-                                                         "%d", "%S","%i", "%s", "%V"))
+                                                         "%d", "%S", "%i", "%s", "%V"))
         self.fonttitle_family.current(self.fonts.index(title_family))
         self.fonttitle_family.grid(row=0, column=0, padx=4, pady=4)
         self.fonttitle_size = Combobox(fonttitle_frame, values=self.sizes, width=5,
@@ -224,22 +232,22 @@ class Config(Toplevel):
         self.is_underlined.pack(side="left")
 
         self.update_preview_title()
-        ### *-- text
+        # --- *-- text
         size = CONFIG.get("Font", "text_size")
         family = CONFIG.get("Font", "text_family")
 
         font_frame = Frame(font_settings)
-        self.sample = Label(font_frame, text = _("Sample text"), anchor="center",
+        self.sample = Label(font_frame, text=_("Sample text"), anchor="center",
                             style="prev.TLabel", relief="groove")
         self.sample.grid(row=1, columnspan=2, padx=4, pady=6,
                          ipadx=4, ipady=4, sticky="eswn")
 
-        self.font_family = Combobox(font_frame, values=self.fonts, width=(w*2)//3,
+        self.font_family = Combobox(font_frame, values=self.fonts, width=(w * 2) // 3,
                                     exportselection=False, validate="key")
         self._validate_family = self.register(lambda *args: self.validate_font_family(self.font_family, *args))
         self._validate_size = self.register(lambda *args: self.validate_font_size(self.font_size, *args))
         self.font_family.configure(validatecommand=(self._validate_family,
-                                                    "%d", "%S","%i", "%s", "%V"))
+                                                    "%d", "%S", "%i", "%s", "%V"))
         self.font_family.current(self.fonts.index(family))
         self.font_family.grid(row=0, column=0, padx=4, pady=4)
         self.font_size = Combobox(font_frame, values=self.sizes, width=5,
@@ -251,7 +259,7 @@ class Config(Toplevel):
 
         self.update_preview()
 
-        ### *-- placement
+        # --- *-- placement
         Label(font_settings,
               text=_("Title")).grid(row=0, padx=4, pady=4, sticky="w")
         fonttitle_frame.grid(row=1)
@@ -260,11 +268,11 @@ class Config(Toplevel):
               text=_("Text")).grid(row=3, padx=4, pady=4, sticky="w")
         font_frame.grid(row=4)
 
-        ### * Categories
+        # --- * Categories
         self.category_settings = CategoryManager(self.notebook, master)
         self.notebook.add(self.category_settings, text=_("Categories"),
                           sticky="ewsn", padding=4)
-        ### * Symbols
+        # --- * Symbols
         symbols_settings = Frame(self.notebook)
         self.notebook.add(symbols_settings, text=_("Symbols"),
                           sticky="ewsn", padding=4)
@@ -280,12 +288,12 @@ class Config(Toplevel):
         Button(symbols_settings, text=_('Reset'),
                command=self.reset_symbols).pack(padx=4, pady=4)
 
-        ### Ok/Cancel buttons
+        # --- Ok/Cancel buttons
         Button(okcancel_frame, text="Ok",
                command=self.ok).grid(row=1, column=0, padx=4, pady=10, sticky="e")
         Button(okcancel_frame, text=_("Cancel"),
                command=self.destroy).grid(row=1, column=1, padx=4, pady=10, sticky="w")
-        ### bindings
+        # --- bindings
         self.font_family.bind('<<ComboboxSelected>>', self.update_preview)
         self.font_family.bind('<Return>', self.update_preview)
         self.font_size.bind('<<ComboboxSelected>>', self.update_preview, add=True)
@@ -326,7 +334,7 @@ class Config(Toplevel):
         except TclError:
             txt = prev_txt
         if action == "0":
-            txt = txt[:int(pos)] + txt[int(pos)+1:]
+            txt = txt[:int(pos)] + txt[int(pos) + 1:]
             return True
         else:
             txt = txt[:int(pos)] + modif + txt[int(pos):]
@@ -345,7 +353,7 @@ class Config(Toplevel):
 
     def ok(self):
         family = self.font_family.get()
-        if not family in self.fonts:
+        if family not in self.fonts:
             l = [i for i in self.fonts if i[:len(family)] == family]
             if l:
                 family = l[0]
@@ -353,7 +361,7 @@ class Config(Toplevel):
                 family = 'TkDefaultFont'
         size = self.font_size.get()
         familytitle = self.fonttitle_family.get()
-        if not familytitle in self.fonts:
+        if familytitle not in self.fonts:
             l = [i for i in self.fonts if i[:len(familytitle)] == familytitle]
             if l:
                 familytitle = l[0]
@@ -383,7 +391,7 @@ class Config(Toplevel):
         CONFIG.set("General", "symbols", "".join(symbols))
         CONFIG.set("Font", "text_size", size)
         CONFIG.set("Font", "text_family", family)
-        CONFIG.set("Font", "title_family",familytitle)
+        CONFIG.set("Font", "title_family", familytitle)
         CONFIG.set("Font", "title_size", sizetitle)
         CONFIG.set("Font", "title_style", style)
 
@@ -415,12 +423,12 @@ class Config(Toplevel):
     def translate(self):
         showinfo("Information",
                  _("The language setting will take effect after restarting the application"),
-                parent=self)
+                 parent=self)
 
     def update_preview(self, event=None):
         family = self.font_family.get()
         size = self.font_size.get()
-        self.sample.configure(font= "%s %s" % (family.replace(" ", "\ "), size))
+        self.sample.configure(font="%s %s" % (family.replace(" ", "\ "), size))
 
     def update_preview_title(self, event=None):
         family = self.fonttitle_family.get()
@@ -435,7 +443,7 @@ class Config(Toplevel):
         self.sampletitle.configure(font=config)
 
     def display_label(self, value):
-        self.opacity_label.configure(text= " {val} %".format(val=int(float(value))))
+        self.opacity_label.configure(text=" {val} %".format(val=int(float(value))))
 
     def quit(self):
         self.destroy()

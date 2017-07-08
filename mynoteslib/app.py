@@ -21,9 +21,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Main class
 """
 
-from tkinter import Tk, PhotoImage, Menu, Toplevel, TclError
-from tkinter.ttk import Style, Label, Checkbutton, Button, Entry
-import os, re, traceback
+from tkinter import Tk, PhotoImage, Menu, TclError
+from tkinter.ttk import Style, Checkbutton
+import os
+import re
+import traceback
 from shutil import copy
 import pickle
 from mynoteslib import tktray
@@ -36,13 +38,17 @@ from mynoteslib.sticky import Sticky
 from mynoteslib.about import About
 from mynoteslib.notemanager import Manager
 from mynoteslib.version_check import UpdateChecker
-from mynoteslib.messagebox import showerror, showinfo, askokcancel
+from mynoteslib.messagebox import showerror, askokcancel
 import ewmh
 
 
 class App(Tk):
-    """ Main app: put an icon in the system tray with a right click menu to
-        create notes ... """
+    """
+    Main app.
+
+    Put an icon in the system tray with a right click menu to
+    create notes.
+    """
     def __init__(self):
         Tk.__init__(self)
         self.withdraw()
@@ -64,7 +70,7 @@ class App(Tk):
         self.protocol("WM_DELETE_WINDOW", self.quit)
         self.icon = tktray.Icon(self, docked=True)
 
-        ### Menu
+        # --- Menu
         self.menu_notes = Menu(self.icon.menu, tearoff=False)
         self.hidden_notes = {cat: {} for cat in CONFIG.options("Categories")}
         self.menu_show_cat = Menu(self.icon.menu, tearoff=False)
@@ -99,7 +105,7 @@ class App(Tk):
         self.icon.menu.add_command(label=_('About'), command=lambda: About(self))
         self.icon.menu.add_command(label=_('Quit'), command=self.quit)
 
-        ### Restore notes
+        # --- Restore notes
         self.note_data = {}
         if os.path.exists(PATH_DATA):
             with open(PATH_DATA, "rb") as fich:
@@ -122,11 +128,11 @@ class App(Tk):
         self.update_notes()
         self.make_notes_sticky()
 
-        ### class bindings
+        # --- class bindings
         # newline depending on mode
-        self.bind_class("Text", "<Return>",  self.insert_newline)
+        self.bind_class("Text", "<Return>", self.insert_newline)
         # char deletion taking into account list type
-        self.bind_class("Text", "<BackSpace>",  self.delete_char)
+        self.bind_class("Text", "<BackSpace>", self.delete_char)
         # change Ctrl+A to select all instead of go to the beginning of the line
         self.bind_class('Text', '<Control-a>', self.select_all_text)
         self.bind_class('TEntry', '<Control-a>', self.select_all_entry)
@@ -142,7 +148,7 @@ class App(Tk):
         evs = ['<<SelectAll>>', '<<SelectLineEnd>>', '<<SelectLineStart>>',
                '<<SelectNextChar>>', '<<SelectNextLine>>', '<<SelectNextPara>>',
                '<<SelectNextWord>>', '<<SelectNone>>', '<<SelectPrevChar>>',
-               '<<SelectPrevLine>>','<<SelectPrevPara>>','<<SelectPrevWord>>']
+               '<<SelectPrevLine>>', '<<SelectPrevPara>>', '<<SelectPrevWord>>']
         for ev in evs:
             self.bind_class("Text", ev, self.highlight_checkboxes, True)
 
@@ -150,7 +156,7 @@ class App(Tk):
         if CONFIG.getboolean("General", "check_update"):
             UpdateChecker(self)
 
-    ### class bindings methods
+    # --- class bindings methods
     def highlight_checkboxes(self, event):
         txt = event.widget
         try:
@@ -248,7 +254,7 @@ class App(Tk):
         self.ewmh.display.flush()
 
     def add_note_to_menu(self, nb, note_title, category):
-        """ add note to 'show notes' menu. """
+        """add note to 'show notes' menu. """
 
         try:
             name = self.menu_notes.entrycget(category.capitalize(), 'menu')
@@ -276,7 +282,7 @@ class App(Tk):
         self.hidden_notes[category][nb] = title
 
     def backup(self):
-        """ create a backup at the location indicated by user """
+        """Create a backup at the location indicated by user."""
         initialdir, initialfile = os.path.split(PATH_DATA_BACKUP % 0)
         fichier = asksaveasfilename(defaultextension=".backup",
                                     filetypes=[],
@@ -294,7 +300,7 @@ class App(Tk):
                           traceback.format_exc(), report_msg)
 
     def restore(self, fichier=None, confirmation=True):
-        """ restore notes from backup """
+        """Restore notes from backup."""
         if confirmation:
             rep = askokcancel(_("Warning"),
                               _("Restoring a backup will erase the current notes."),
@@ -336,44 +342,44 @@ class App(Tk):
                     showerror(_("Error"), str(e), traceback.format_exc(), True)
 
     def show_all(self):
-        """ Show all notes """
+        """Show all notes."""
         for cat in self.hidden_notes.keys():
             keys = list(self.hidden_notes[cat].keys())
             for key in keys:
                 self.show_note(key)
 
     def show_cat(self, category):
-        """ Show all notes belonging to category """
+        """Show all notes belonging to category."""
         keys = list(self.hidden_notes[category].keys())
         for key in keys:
             self.show_note(key)
 
     def hide_all(self):
-        """ Hide all notes """
+        """Hide all notes."""
         keys = list(self.notes.keys())
         for key in keys:
             self.notes[key].hide()
 
     def hide_cat(self, category):
-        """ Hide all notes belonging to category """
+        """Hide all notes belonging to category."""
         keys = list(self.notes.keys())
         for key in keys:
             if self.note_data[key]["category"] == category:
                 self.notes[key].hide()
 
     def manage(self):
-        """ Launch note manager """
+        """Launch note manager."""
         Manager(self)
 
     def config(self):
-        """ Launch the setting manager """
+        """Launch the setting manager."""
         conf = Config(self)
         self.wait_window(conf)
         col_changes, name_changes = conf.get_changes()
         if col_changes or name_changes:
             self.update_notes(col_changes, name_changes)
             self.update_menu()
-            alpha = CONFIG.getint("General", "opacity")/100
+            alpha = CONFIG.getint("General", "opacity") / 100
             for note in self.notes.values():
                 note.attributes("-alpha", alpha)
                 note.update_title_font()
@@ -381,7 +387,7 @@ class App(Tk):
                 note.update_titlebar()
 
     def delete_cat(self, category):
-        """ Delete all notes belonging to category """
+        """Delete all notes belonging to category."""
         keys = list(self.notes.keys())
         for key in keys:
             if self.note_data[key]["category"] == category:
@@ -402,13 +408,13 @@ class App(Tk):
                 # the menu is empty
                 self.menu_notes.delete(cat.capitalize())
                 if self.menu_notes.index('end') is None:
-                   self.icon.menu.entryconfigure(4, state="disabled")
+                    self.icon.menu.entryconfigure(4, state="disabled")
             del(self.hidden_notes[cat][nb])
             del(self.note_data[nb])
             self.save()
 
     def show_note(self, nb):
-        """ Display the note corresponding to the 'nb' key in self.note_data """
+        """Display the note corresponding to the 'nb' key in self.note_data."""
         self.note_data[nb]["visible"] = True
         cat = self.note_data[nb]["category"]
         name = self.menu_notes.entrycget(cat.capitalize(), 'menu')
@@ -423,11 +429,11 @@ class App(Tk):
             # the menu is empty
             self.menu_notes.delete(cat.capitalize())
             if self.menu_notes.index('end') is None:
-               self.icon.menu.entryconfigure(4, state="disabled")
+                self.icon.menu.entryconfigure(4, state="disabled")
         self.make_notes_sticky()
 
     def update_notes(self, col_changes={}, name_changes={}):
-        """ Update the notes after changes in the categories """
+        """Update the notes after changes in the categories."""
         categories = CONFIG.options("Categories")
         categories.sort()
         self.menu_notes.delete(0, "end")
@@ -439,7 +445,7 @@ class App(Tk):
                 self.note_data[key]["category"] = cat
                 if self.note_data[key]["visible"]:
                     self.notes[key].change_category(cat)
-            elif not cat in categories:
+            elif cat not in categories:
                 default = CONFIG.get("General", "default_category")
                 default_color = CONFIG.get("Categories", default)
                 if self.note_data[key]["visible"]:
@@ -465,7 +471,7 @@ class App(Tk):
             self.icon.menu.entryconfigure(4, state="disabled")
 
     def update_menu(self):
-        """ Populate self.menu_show_cat and self.menu_hide_cat with the categories """
+        """Populate self.menu_show_cat and self.menu_hide_cat with the categories."""
         self.menu_hide_cat.delete(0, "end")
         self.menu_show_cat.delete(0, "end")
         categories = CONFIG.options("Categories")
@@ -477,13 +483,13 @@ class App(Tk):
                                            command=lambda c=cat: self.hide_cat(c))
 
     def save(self):
-        """ Save the data """
+        """Save the data."""
         with open(PATH_DATA, "wb") as fich:
             dp = pickle.Pickler(fich)
             dp.dump(self.note_data)
 
     def new(self):
-        """ Create a new note """
+        """Create a new note."""
         key = "%i" % self.nb
         self.notes[key] = Sticky(self, key)
         data = self.notes[key].save_info()
@@ -508,7 +514,7 @@ class App(Tk):
             if fichier:
                 try:
                     if os.path.splitext(fichier)[-1] == ".html":
-        ### html export
+        # --- html export
                         cats = {cat: [] for cat in categories_to_export}
                         for key in self.note_data:
                             cat = self.note_data[key]["category"]
@@ -534,7 +540,7 @@ class App(Tk):
                             fich.write("\n</body>")
 #                if os.path.splitext(fichier)[-1] == ".txt":
                     else:
-        ### txt export
+        # --- txt export
                         # export notes to .txt: all formatting is lost
                         cats = {cat: [] for cat in categories_to_export}
                         for key in self.note_data:
@@ -546,23 +552,23 @@ class App(Tk):
                         for cat in cats:
                             cat_txt = _("Category: {category}").format(category=cat) + "\n"
                             text += cat_txt
-                            text += "="*len(cat_txt)
+                            text += "=" * len(cat_txt)
                             text += "\n\n"
                             for title, txt in cats[cat]:
                                 text += title
                                 text += "\n"
-                                text += "-"*len(title)
+                                text += "-" * len(title)
                                 text += "\n\n"
                                 text += txt
                                 text += "\n\n"
-                                text += "-"*30
+                                text += "-" * 30
                                 text += "\n\n"
-                            text += "#"*30
+                            text += "#" * 30
                             text += "\n\n"
                         with open(fichier, "w") as fich:
                             fich.write(text)
 #                    else:
-#        ### pickle export
+#        # --- pickle export
 #                        note_data = {}
 #                        for key in self.note_data:
 #                            if self.note_data[key]["category"] in categories_to_export:
@@ -607,13 +613,13 @@ class App(Tk):
                 showerror(_("Error"), message, traceback.format_exc())
 
     def cleanup(self):
-        """ Remove unused latex images """
+        """Remove unused latex images."""
         img_stored = os.listdir(cst.PATH_LATEX)
         img_used = []
         for data in self.note_data.values():
             img_used.extend(list(data.get("latex", {}).keys()))
         for img in img_stored:
-            if not img in img_used:
+            if img not in img_used:
                 os.remove(os.path.join(cst.PATH_LATEX, img))
 
     def quit(self):

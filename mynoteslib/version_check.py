@@ -32,6 +32,7 @@ from tkinter.ttk import Label, Button, Frame, Checkbutton
 from mynoteslib.constantes import VERSION, CONFIG, save_config
 from mynoteslib.messagebox import IM_QUESTION_DATA
 
+
 class VersionParser(HTMLParser):
     def __init__(self, *args, **kwargs):
         HTMLParser.__init__(self, *args, **kwargs)
@@ -52,6 +53,7 @@ class VersionParser(HTMLParser):
         self.version = ""
         HTMLParser.feed(self, data)
         return self.version
+
 
 class UpdateChecker(Toplevel):
 
@@ -80,8 +82,8 @@ class UpdateChecker(Toplevel):
         self.b1 = Button(self, text=_("Yes"), command=self.download)
         self.b1.grid(row=1, column=0, padx=10, pady=10, sticky="e")
         Button(self, text=_("No"), command=self.quit).grid(row=1, column=1,
-                                                              padx=10, pady=10,
-                                                              sticky="w")
+                                                           padx=10, pady=10,
+                                                           sticky="w")
         self.ch = Checkbutton(self, text=_("Check for updates on startup."))
         if CONFIG.getboolean("General", "check_update"):
             self.ch.state(("selected", ))
@@ -113,8 +115,12 @@ class UpdateChecker(Toplevel):
         self.quit()
 
     def update_available(self):
-        """ check for updates online, return True if an update is available, False
-            otherwise (and if there is no Internet connection) """
+        """
+        Check for updates online.
+
+        Return True if an update is available, False
+        otherwise (and if there is no Internet connection).
+        """
         try:
             with request.urlopen('https://sourceforge.net/projects/my-notes') as page:
                 latest_version = self.version_parser.feed(page.read().decode())
@@ -125,6 +131,6 @@ class UpdateChecker(Toplevel):
                 self.update = False
             elif e.reason.errno == 104:
                 # connection timed out
-               self.update_available()
+                self.update_available()
             else:
                 raise e

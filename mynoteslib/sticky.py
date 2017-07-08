@@ -45,7 +45,7 @@ class Sticky(Toplevel):
              images, rolled)
         """
         Toplevel.__init__(self, master)
-        ### window properties
+        # --- window properties
         self.id = key
         self.is_locked = not (kwargs.get("locked", False))
         self.images = []
@@ -65,7 +65,7 @@ class Sticky(Toplevel):
         self.minsize(10,10)
         self.protocol("WM_DELETE_WINDOW", self.hide)
 
-        ### style
+        # --- style
         self.style = Style(self)
         self.style.configure(self.id + ".TCheckbutton", selectbackground="red")
         self.style.map('TEntry', selectbackground=[('!focus', '#c3c3c3')])
@@ -73,7 +73,7 @@ class Sticky(Toplevel):
         self.style.configure("sel.TCheckbutton", background=selectbg)
         self.style.map("sel.TCheckbutton", background=[("active", selectbg)])
 
-        ### note elements
+        # --- note elements
         # title
         font_title = "%s %s" %(CONFIG.get("Font", "title_family").replace(" ", "\ "),
                                CONFIG.get("Font", "title_size"))
@@ -137,8 +137,8 @@ class Sticky(Toplevel):
                                    selectforeground="white", underline=True)
             self.txt.tag_configure(coul + "-overstrike", foreground=coul,
                                    overstrike=True, selectforeground="white")
-        ### menus
-        ### * menu on title
+        # --- menus
+        # --- * menu on title
         self.menu = Menu(self, tearoff=False)
         # note color
         menu_note_color = Menu(self.menu, tearoff=False)
@@ -199,7 +199,7 @@ class Sticky(Toplevel):
         self.menu.add_cascade(label=_("Position"), menu=menu_position)
         self.menu.add_cascade(label=_("Mode"), menu=menu_mode)
 
-        ### * menu on main text
+        # --- * menu on main text
         self.menu_txt = Menu(self.txt, tearoff=False)
         # style
         menu_style = Menu(self.menu_txt, tearoff=False)
@@ -235,7 +235,7 @@ class Sticky(Toplevel):
         self.menu_txt.add_cascade(label=_("Color"), menu=menu_colors)
         self.menu_txt.add_cascade(label=_("Insert"), menu=menu_insert)
 
-        ### restore note content/appearence
+        # --- restore note content/appearence
         self.color = kwargs.get("color",
                                 CONFIG.get("Categories", self.category.get()))
         self.txt.insert('1.0', kwargs.get("txt",""))
@@ -286,7 +286,7 @@ class Sticky(Toplevel):
         elif self.position.get() == "below":
             self.set_position_below()
 
-        ### placement
+        # --- placement
         # titlebar
         if CONFIG.get("General", "buttons_position") == "right":
             # right = lock icon - title - roll - close
@@ -308,7 +308,7 @@ class Sticky(Toplevel):
         self.corner.lift(self.txt)
         self.corner.place(relx=1.0, rely=1.0, anchor="se")
 
-        ### bindings
+        # --- bindings
         self.bind("<FocusOut>", self.save_note)
         self.bind('<Configure>', self.bouge)
         self.bind('<Button-1>', self.change_focus, True)
@@ -337,7 +337,7 @@ class Sticky(Toplevel):
         self.txt.bind("<Control-v>", self.paste)
         self.corner.bind('<ButtonRelease-1>', self.resize)
 
-        ### keyboard shortcuts
+        # --- keyboard shortcuts
         self.txt.bind('<Control-b>', lambda e: self.toggle_text_style('bold'))
         self.txt.bind('<Control-i>', lambda e: self.toggle_text_style('italic'))
         self.txt.bind('<Control-u>', lambda e: self.toggle_underline())
@@ -565,7 +565,7 @@ class Sticky(Toplevel):
         self.txt.tag_add("todolist", "1.0", "end")
         self.save_note()
 
-    ### bindings
+    # --- bindings
     def enter_roll(self, event):
         """ mouse is over the roll icon """
         self.roll.configure(image="img_rollactive")
@@ -653,7 +653,7 @@ class Sticky(Toplevel):
         self.master.save()
         self.destroy()
 
-    ### Settings update
+    # --- Settings update
     def update_title_font(self):
         font = "%s %s" %(CONFIG.get("Font", "title_family").replace(" ", "\ "),
                          CONFIG.get("Font", "title_size"))
@@ -699,7 +699,7 @@ class Sticky(Toplevel):
             self.cadenas.grid_configure(row=0,column=3, sticky="e")
             self.title_label.grid_configure(row=0, column=2, sticky="ew", pady=(1,0))
 
-    ### Text edition
+    # --- Text edition
     def add_link(self):
         def ok(eveny=None):
             lien = link.get()

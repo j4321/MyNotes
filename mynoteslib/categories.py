@@ -27,8 +27,9 @@ from mynoteslib.constantes import save_config, fill, optionmenu_patch
 from tkinter.ttk import Label, Button, OptionMenu, Style, Separator, Entry, Frame
 from mynoteslib.messagebox import askyesnocancel
 
+
 class CategoryManager(Frame):
-    """ Category manager for the sticky notes """
+    """Category manager for the sticky notes."""
 
     def __init__(self, master, app, **kwargs):
         Frame.__init__(self, master, **kwargs)
@@ -42,14 +43,14 @@ class CategoryManager(Frame):
         self.im_plus = PhotoImage(file=IM_PLUS)
         self.im_moins = PhotoImage(file=IM_MOINS)
 
-        ### Default category
+        # --- Default category
         self.frame_def_cat = Frame(self)
         self.default_category = StringVar(self.frame_def_cat,
                                           CONFIG.get("General",
                                                      "default_category").capitalize())
         Label(self.frame_def_cat, text=_("Default category ")).grid(row=0, column=0,
-                                                                sticky="e",
-                                                                padx=(4, 0))
+                                                                    sticky="e",
+                                                                    padx=(4, 0))
         self.categories = CONFIG.options("Categories")
         self.categories.sort()
         categories = [cat.capitalize() for cat in self.categories]
@@ -60,7 +61,7 @@ class CategoryManager(Frame):
         optionmenu_patch(self.def_cat_menu, self.default_category)
         self.def_cat_menu.grid(row=0, column=1, sticky="w", padx=4, pady=4)
 
-        ### Category colors, names ...
+        # --- Category colors, names ...
         self.frame_cat = Frame(self)
         self.colors = list(COLORS.keys())
         self.colors.sort()
@@ -72,11 +73,11 @@ class CategoryManager(Frame):
         self.cat_labels = {}
         self.cat_menus = {}
         self.cat_buttons = {}
-        for i,cat in enumerate(self.categories):
+        for i, cat in enumerate(self.categories):
             self.cat_labels[cat] = Label(self.frame_cat,
                                          text="%s" % cat.capitalize(),
                                          anchor='e')
-            self.cat_labels[cat].grid(row=i+2, column=0, sticky="ew", padx=2)
+            self.cat_labels[cat].grid(row=i + 2, column=0, sticky="ew", padx=2)
             self.cat_labels[cat].bind('<Double-Button-1>', self.change_name)
             self.cat_colors[cat] = StringVar(self)
             color = CONFIG.get("Categories", cat)
@@ -86,19 +87,19 @@ class CategoryManager(Frame):
                                              style="%s.TMenubutton" % cat)
             optionmenu_patch(self.cat_menus[cat], self.cat_colors[cat])
             self.style.configure("%s.TMenubutton" % cat, background=color)
-            self.cat_menus[cat].grid(row=i+2, column=1, sticky="w", padx=4, pady=4)
+            self.cat_menus[cat].grid(row=i + 2, column=1, sticky="w", padx=4, pady=4)
             self.cat_buttons[cat] = Button(self.frame_cat, image=self.im_moins,
                                            command=lambda c=cat: self.del_cat(c))
-            self.cat_buttons[cat].grid(row=i+2, column=2, padx=4, pady=4)
+            self.cat_buttons[cat].grid(row=i + 2, column=2, padx=4, pady=4)
 
         self.add_cat_button = Button(self.frame_cat, image=self.im_plus,
                                      command=self.add_cat)
-        self.add_cat_button.grid(row=i+3, column=0, pady=(0,4))
+        self.add_cat_button.grid(row=i + 3, column=0, pady=(0, 4))
 
         if len(self.categories) == 1:
             self.cat_buttons[self.categories[0]].configure(state="disabled")
 
-        ### placement
+        # --- placement
         self.frame_def_cat.grid(row=0, column=0, sticky="eswn")
         Separator(self, orient="horizontal").grid(row=1, columnspan=3,
                                                   pady=10, sticky="ew")
@@ -183,30 +184,30 @@ effect immediately and cannot be undone." % {"category": category}))
         top.title(_("New Category"))
 
         def valide(event=None):
-           cats = [l.cget('text').lower() for l in self.cat_labels.values()]
-           cat = name.get().strip().lower()
-           if cat and not cat in cats:
-               i = self.add_cat_button.grid_info()['row']
-               self.add_cat_button.grid_configure(row=i+1)
-               self.cat_labels[cat] = Label(self.frame_cat,
-                                            text="%s " % cat.capitalize())
-               self.cat_labels[cat].grid(row=i, column=0, sticky="e")
-               self.cat_colors[cat] = StringVar(self, _("Yellow"))
-               self.cat_menus[cat] = OptionMenu(self.frame_cat, self.cat_colors[cat],
+            cats = [l.cget('text').lower() for l in self.cat_labels.values()]
+            cat = name.get().strip().lower()
+            if cat and cat not in cats:
+                i = self.add_cat_button.grid_info()['row']
+                self.add_cat_button.grid_configure(row=i + 1)
+                self.cat_labels[cat] = Label(self.frame_cat,
+                                             text="%s " % cat.capitalize())
+                self.cat_labels[cat].grid(row=i, column=0, sticky="e")
+                self.cat_colors[cat] = StringVar(self, _("Yellow"))
+                self.cat_menus[cat] = OptionMenu(self.frame_cat, self.cat_colors[cat],
                                                  _("Yellow"), *self.colors,
-                                                command=lambda color, c=cat: self.change_menubutton_color(color, c),
-                                                style="%s.TMenubutton" % cat)
-               self.style.configure("%s.TMenubutton" % cat, background=COLORS[_("Yellow")])
-               optionmenu_patch(self.cat_menus[cat], self.cat_colors[cat])
-               self.cat_menus[cat].grid(row=i, column=1, padx=4, pady=4)
-               self.cat_buttons[cat] = Button(self.frame_cat, image=self.im_moins,
-                                              command=lambda c=cat: self.del_cat(c))
-               self.cat_buttons[cat].grid(row=i, column=2, padx=4, pady=4)
-               self.cat_buttons[self.categories[0]].configure(state="normal")
-               self.categories.append(cat)
-               self.categories.sort()
-               self.update_def_cat_menu()
-               top.destroy()
+                                                 command=lambda color, c=cat: self.change_menubutton_color(color, c),
+                                                 style="%s.TMenubutton" % cat)
+                self.style.configure("%s.TMenubutton" % cat, background=COLORS[_("Yellow")])
+                optionmenu_patch(self.cat_menus[cat], self.cat_colors[cat])
+                self.cat_menus[cat].grid(row=i, column=1, padx=4, pady=4)
+                self.cat_buttons[cat] = Button(self.frame_cat, image=self.im_moins,
+                                               command=lambda c=cat: self.del_cat(c))
+                self.cat_buttons[cat].grid(row=i, column=2, padx=4, pady=4)
+                self.cat_buttons[self.categories[0]].configure(state="normal")
+                self.categories.append(cat)
+                self.categories.sort()
+                self.update_def_cat_menu()
+                top.destroy()
 
         name = Entry(top, justify="center")
         name.grid(row=0, column=0, columnspan=2, sticky="ew")

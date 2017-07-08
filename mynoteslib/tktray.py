@@ -12,7 +12,9 @@ system tray manager. This protocol is supported by modern versions of
 KDE and Gnome panels, and by some other panel-like application.
 """
 
+
 import tkinter
+
 
 class Icon(tkinter.BaseWidget, tkinter.Wm):
     def __init__(self, master=None, cnf={}, **kw):
@@ -113,9 +115,9 @@ class Icon(tkinter.BaseWidget, tkinter.Wm):
                 # TBD: a hack needed because some keys
                 # are not valid as keyword arguments
                 if wmkey[-1] == '_':
-                    opt = '-'+wmkey[:-1]
+                    opt = '-' + wmkey[:-1]
                 else:
-                    opt = '-'+wmkey
+                    opt = '-' + wmkey
                 extra = extra + (opt, val)
                 del cnf[wmkey]
         tkinter.BaseWidget.__init__(self, master, 'tktray::icon', cnf, {}, extra)

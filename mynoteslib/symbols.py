@@ -21,9 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Symbol palette
 """
 
-from tkinter import Tk, Toplevel, Canvas, Menu, TclError
-from tkinter.ttk import Frame, Button, Label, Entry, Scrollbar, Menubutton, Style
-
+from tkinter import Toplevel, Canvas
+from tkinter.ttk import Button, Entry, Style
 
 
 class Palette(Toplevel):
@@ -41,16 +40,16 @@ class Palette(Toplevel):
 
         l = len(symbols)
         self.canvas = Canvas(self, background="white",
-                             width=240, height=(l//12 + 1)*20)
+                             width=240, height=(l // 12 + 1) * 20)
         self.canvas.grid(row=0, column=0, columnspan=2, sticky="eswn")
 
-        for i,s in enumerate(symbols):
+        for i, s in enumerate(symbols):
             x = i % 12
-            y = i//12
-            self.canvas.create_rectangle(x*20, y*20, (x + 1)*20, (y + 1)*20,
+            y = i // 12
+            self.canvas.create_rectangle(x * 20, y * 20, (x + 1) * 20, (y + 1) * 20,
                                          activefill=self.activebg, fill="white",
                                          width=0, tags="square")
-            self.canvas.create_text(x*20 + 10, y*20 + 10, text=s,
+            self.canvas.create_text(x * 20 + 10, y * 20 + 10, text=s,
                                     activefill="white", font="%s 11" % font,
                                     tags="char")
 
@@ -68,7 +67,6 @@ class Palette(Toplevel):
 
         Button(self, text=_("Insert"), width=len(_("Insert")) + 1,
                command=self.ok).grid(row=1, column=1)
-
 
     def enter_square(self, event):
         c = self.canvas.find_withtag("current")

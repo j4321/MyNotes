@@ -23,8 +23,9 @@ Export dialog
 
 
 from tkinter import Toplevel
-from tkinter.ttk import Checkbutton, Label, Frame, Button, Separator
+from tkinter.ttk import Checkbutton, Frame, Button, Separator
 from mynoteslib.constantes import CONFIG
+
 
 class Export(Toplevel):
     """ Category export dialog """

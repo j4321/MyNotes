@@ -27,8 +27,9 @@ from tkinter.ttk import Label, Frame, Button, Notebook
 from mynoteslib.constantes import CONFIG, IM_MOINS
 from mynoteslib.autoscrollbar import AutoScrollbar as Scrollbar
 
+
 class Manager(Toplevel):
-    """ Note manager """
+    """Note manager."""
     def __init__(self, master):
         Toplevel.__init__(self, master)
         self.title(_("Delete"))
@@ -52,7 +53,7 @@ class Manager(Toplevel):
             frame.columnconfigure(0, weight=1)
             frame.rowconfigure(0, weight=1)
 
-            self.texts[cat].grid(row=0, column=0, sticky='ewsn', padx=(0,2))
+            self.texts[cat].grid(row=0, column=0, sticky='ewsn', padx=(0, 2))
             scrolly = Scrollbar(frame, orient='vertical',
                                 command=self.texts[cat].yview)
             scrolly.grid(row=0, column=1, sticky='ns')
@@ -74,7 +75,7 @@ class Manager(Toplevel):
             c, r = frames[cat].grid_size()
             self.notes[key] = []
             title = note_data['title'][:20]
-            title = title.replace('\t', ' ') + ' '*(20 - len(title))
+            title = title.replace('\t', ' ') + ' ' * (20 - len(title))
             self.notes[key].append(Label(frames[cat], text=title,
                                          font='TkDefaultFont 10 bold'))
             txt = note_data['txt'].splitlines()
@@ -82,7 +83,7 @@ class Manager(Toplevel):
                 txt = txt[0][:17] + '...'
             else:
                 txt = ''
-            txt = txt.replace('\t', ' ') + ' '*(20 - len(txt))
+            txt = txt.replace('\t', ' ') + ' ' * (20 - len(txt))
             self.notes[key].append(Label(frames[cat], text=txt))
             self.notes[key].append(Button(frames[cat], image=self.im_moins,
                                           command=lambda iid=key: self.delete_note(iid)))
@@ -103,6 +104,6 @@ class Manager(Toplevel):
     def scroll(self, delta):
         cat = self.notebook.tab("current", "text").lower()
         top, bottom = self.texts[cat].yview()
-        top += delta*0.05
+        top += delta * 0.05
         top = min(max(top, 0), 1)
         self.texts[cat].yview_moveto(top)
