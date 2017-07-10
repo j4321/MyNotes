@@ -26,7 +26,7 @@ from tkinter import Toplevel, StringVar, Menu, TclError, Text
 from mynoteslib.messagebox import showinfo
 from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator
 from tkinter.ttk import Notebook, Combobox, Frame, Menubutton, Checkbutton
-from mynoteslib.constantes import CONFIG, save_config, COLORS, SYMBOLS, LATEX
+from mynoteslib.constantes import CONFIG, save_config, COLORS, SYMBOLS, LATEX, LANGUAGES, REV_LANGUAGES
 from mynoteslib.categories import CategoryManager
 from tkinter import font
 
@@ -72,18 +72,23 @@ class Config(Toplevel):
                           sticky="ewsn", padding=4)
 
         # --- *-- language
-        lang = {"fr": "Français", "en": "English"}
-        self.lang = StringVar(self, lang[CONFIG.get("General", "language")])
+
+        self.lang = StringVar(self, LANGUAGES[CONFIG.get("General", "language")])
         lang_frame = Frame(general_settings)
         Label(lang_frame, text=_("Language")).grid(row=0, sticky="w", padx=4,
                                                    pady=4)
         menu_lang = Menu(lang_frame, tearoff=False)
         Menubutton(lang_frame, menu=menu_lang, width=9,
                    textvariable=self.lang).grid(row=0, column=1, padx=8, pady=4)
-        menu_lang.add_radiobutton(label="English", value="English",
-                                  variable=self.lang, command=self.translate)
-        menu_lang.add_radiobutton(label="Français", value="Français",
-                                  variable=self.lang, command=self.translate)
+        for lang in LANGUAGES.values():
+            menu_lang.add_radiobutton(variable=self.lang, label=lang,
+                                      value=lang, command=self.translate)
+#        menu_lang.add_radiobutton(label="English", value="English",
+#                                  variable=self.lang, command=self.translate)
+#        menu_lang.add_radiobutton(label="Français", value="Français",
+#                                  variable=self.lang, command=self.translate)
+#        menu_lang.add_radiobutton(label="Nederlands", value="Nederlands",
+#                                  variable=self.lang, command=self.translate)
         # --- *-- opacity
         self.opacity_scale = Scale(general_settings, orient="horizontal", length=200,
                                    from_=0, to=100,
@@ -369,7 +374,7 @@ class Config(Toplevel):
                 familytitle = 'TkDefaultFont'
         sizetitle = self.fonttitle_size.get()
         opacity = "%i" % float(self.opacity_scale.get())
-        language = self.lang.get().lower()[:2]
+        language = REV_LANGUAGES[self.lang.get()]
         style = ""
         if self.is_bold.instate(("selected",)):
             style += "bold,"

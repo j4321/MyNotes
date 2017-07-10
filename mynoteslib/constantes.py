@@ -32,7 +32,9 @@ from configparser import ConfigParser
 from locale import getdefaultlocale, setlocale, LC_ALL
 from subprocess import check_output, CalledProcessError
 import pkg_resources
-from tkinter import Text
+from tkinter import Text, PhotoImage
+from tkinter.ttk import Checkbutton
+from webbrowser import open as open_url
 
 
 VERSION = pkg_resources.require("mynotes")[0].version
@@ -118,12 +120,16 @@ setlocale(LC_ALL, '')
 
 APP_NAME = "MyNotes"
 
-if LANGUE not in ["en", "fr"]:
+LANGUAGES = {"fr": "Français", "en": "English", "nl": "Nederlands"}
+REV_LANGUAGES = {val: key for key, val in LANGUAGES.items()}
+
+if LANGUE not in LANGUAGES:
     # Check the default locale
     lc = getdefaultlocale()[0][:2]
     if lc == "fr":
-        # If we have a default, it's the first in the list
         LANGUE = "fr_FR"
+    elif lc == "nl":
+        LANGUE = "nl_NL"
     else:
         LANGUE = "en_US"
     CONFIG.set("General", "language", LANGUE[:2])

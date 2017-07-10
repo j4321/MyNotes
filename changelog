@@ -5,17 +5,20 @@ Copyright 2016 Juliette Monsel <j_4321@protonmail.com>
 Changelog
 ---------
 
+- Version 2.2.1
+    * Add Dutch translation
+
 - Version 2.1.1
-    * Added note manager to delete easily notes
-    * Added autoscrollbar to error messagebox
-    * Added category renaming by double click on the category name in Preference dialog
-    * Removed error message when cancel image insertion
-    * Corrected bug: all links in a note open the same url
-    * Added optional and limited latex support to insert one line formulas
+    * Add note manager to delete easily notes
+    * Add autoscrollbar to error messagebox
+    * Add category renaming by double click on the category name in Preference dialog
+    * Remove error message when cancel image insertion
+    * Correct bug: all links in a note open the same url
+    * Add optional and limited latex support to insert one line formulas
       using matplotlib to render them as png images.
       (available only if matplotlib is available on the system)
-    * Improved checkboxex highlighting
-    * Added keyboard shortcuts for text formatting:
+    * Improve checkboxex highlighting
+    * Add keyboard shortcuts for text formatting:
         Ctrl+B toggle bold
         Ctrl+I toggle italic
         Ctrl+U toggle underline
@@ -24,67 +27,67 @@ Changelog
 
 - Version 2.1.0
     * Automatically fetch right version (with pkg_resources)
-    * Corrected bug: overstrike and underline always black
-    * Corrected bug: indentation of multiline list entries sometimes diseapeared
-    * Corrected bug: restore not working if there exist notes (only delete notes)
+    * Correct bug: overstrike and underline always black
+    * Correct bug: indentation of multiline list entries sometimes diseapeared
+    * Correct bug: restore not working if there exist notes (only delete notes)
     * Export:
         + Improved export to .txt: include checkboxes
-        + Corrected bug: "Select All" not unchecked after deselection
+        + Correct bug: "Select All" not unchecked after deselection
         + "Select All" initially selected
-        + Added option: export only visible notes
-        + Added html export
+        + Add option: export only visible notes
+        + Add html export
     * Tabulations don't support right/center alignment so it is no longer
       possible to change alignment of a line containing a tab
-    * Added mode: enumeration
+    * Add mode: enumeration
     * Mode selection puts bullets/checkboxes/numbers in front of each line
-    * Added symbol list edition in Preferences
+    * Add symbol list edition in Preferences
     * Highlight checkboxes when they are inside text selection
-    * Added link (url) insertion
-    * Reorganized rigt-click menu on note txt: created "Insert" sub-menu
-    * Reorganized "Show notes" in main menu: sorted notes by category in sub-menus
-    * Improved error handling
-    * Improved error messagebox: display full traceback + report message
-    * Added links to project pages in About dialog
+    * Add link (url) insertion
+    * Reorganize rigt-click menu on note txt: created "Insert" sub-menu
+    * Reorganize "Show notes" in main menu: sorted notes by category in sub-menus
+    * Improve error handling
+    * Improve error messagebox: display full traceback + report message
+    * Add links to project pages in About dialog
 
 
 - Version 2.0.3
-    * Corrected bug: wrong default category in default config file
-    * Corrected bug: selection of a font not on the system
-    * Corrected bug: bold and italic text was always in Liberation Sans
-    * Corrected bug: Alignement only set for fisrt selected line
-    * Corrected bug: ImportError: No module named 'tktray'
+    * Correct bug: wrong default category in default config file
+    * Correct bug: selection of a font not on the system
+    * Correct bug: bold and italic text was always in Liberation Sans
+    * Correct bug: Alignement only set for fisrt selected line
+    * Correct bug: ImportError: No module named 'tktray'
     * Set colored text selected foreground to white
 
 - Version 2.0.2
-    * Corrected bug: import and restore did not update the categories, which lead
+    * Correct bug: import and restore did not update the categories, which lead
       to incomplete menus and errors
 
 - Version 2.0.1
-    * Corrected bug: fixed modes
+    * Correct bug: fixed modes
 
 - Version 2.0.0
-    * Corrected bug: change from menu on note title not always saved
-    * Corrected bug: restoring backup containing notes from deleted
-    * Corrected bug: font size / font family selection issue
+    * Correct bug: change from menu on note title not always saved
+    * Correct bug: restoring backup containing notes from deleted
+    * Correct bug: font size / font family selection issue
       category triggered an error
-    * Added warning before restoring backup to tell the user that the
+    * Add warning before restoring backup to tell the user that the
       current notes will be erased.
-    * Preferences organized in tabs and category manager became a tab
+    * Organize preferences in tabs and make category manager a tab
       instead of a standalone window
-    * Added possibility to choose the side of the hide and roll note icons
+    * Add possibility to choose the side of the hide and roll note icons
       (in preferences)
-    * Added note position option: normal, always above, always below
+    * Add note position option: normal, always above, always below
       (in the right-click menu on title of each note)
-    * Added mode option:
+    * Add mode option:
         - note: default mode
         - list: insert a bullet point when a newline is added
         - todo list: insert a checkbox when a newline is added
       (in the right-click menu on title of each note)
-    * Changed symbol list in a palette + added more symbols
+    * Change symbol list in a palette + added more symbols
       (greek letters, ..). Symbols are now text and not images, so their
       style follows the one of the text. But this change means that former
       symbols (from v1.0.0) will be lost from the old notes.
-    * Added import/export functions (from system tray menu), export notes to:
+    * Add import/export functions (from system tray menu), export notes to:
         - a ".notes" file that can be imported by MyNotes
         - in ".txt" but then, all formatting/images/checkboxes are lost
           and notes cannot be imported by MyNotes.
