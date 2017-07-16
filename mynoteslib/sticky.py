@@ -72,6 +72,7 @@ class Sticky(Toplevel):
         # --- style
         self.style = Style(self)
         self.style.configure(self.id + ".TCheckbutton", selectbackground="red")
+        selectbg = self.style.lookup('TEntry', 'selectbackground', ('focus',))
 
         # --- note elements
         # title
