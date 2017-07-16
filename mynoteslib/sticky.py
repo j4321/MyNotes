@@ -72,6 +72,7 @@ class Sticky(Toplevel):
         # --- style
         self.style = Style(self)
         self.style.configure(self.id + ".TCheckbutton", selectbackground="red")
+        selectbg = self.style.lookup('TEntry', 'selectbackground', ('focus',))
 
         # --- note elements
         # title
@@ -611,7 +612,6 @@ class Sticky(Toplevel):
 
     def resize(self, event):
         """Save new note geometry after resizing."""
-        print("resize")
         self.save_geometry = self.geometry()
 
     def edit_title(self, event):
@@ -635,7 +635,6 @@ class Sticky(Toplevel):
 
     def move(self, event):
         """Make note follow cursor motion."""
-        print("move")
         if self.x is not None and self.y is not None:
             deltax = event.x - self.x
             deltay = event.y - self.y
@@ -802,10 +801,9 @@ class Sticky(Toplevel):
                     img = "%i.png" % i
                     self.txt.tag_bind(img, '<Double-Button-1>',
                                           lambda e: self.add_latex(img))
-                    self.latex[img] = latex
-
                 else:
                     img = img_name
+                self.latex[img] = latex
                 im = os.path.join(PATH_LATEX, img)
                 try:
                     math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
@@ -815,6 +813,8 @@ class Sticky(Toplevel):
                         self.txt.delete('sel.first', 'sel.last')
                     else:
                         index = self.txt.index("current")
+                        if img_name:
+                            self.txt.delete(index)
                     self.txt.image_create(index,
                                           image=self.images[-1],
                                           name=im)
