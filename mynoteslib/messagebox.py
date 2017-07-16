@@ -222,12 +222,14 @@ class SyncConflict(Toplevel):
 class OneButtonBox(Toplevel):
     def __init__(self, parent=None, title="", message="", button="Ok", image=None):
         """
-            Create a message box with one button:
-                parent: parent of the toplevel window
-                title: message box title
-                message: message box text (that can be selected)
-                button: message displayed on the button
-                image: image displayed at the left of the message, either a PhotoImage or a string
+        Create a message box with one button.
+
+        Arguments:
+            parent: parent of the toplevel window
+            title: message box title
+            message: message box text (that can be selected)
+            button: message displayed on the button
+            image: image displayed at the left of the message, either a PhotoImage or a string
         """
         Toplevel.__init__(self, parent)
         self.transient(parent)
@@ -283,11 +285,15 @@ class ShowError(Toplevel):
     def __init__(self, parent=None, title="", message="", traceback="",
                  report_msg=False, button="Ok", image="error"):
         """
-        Create a message box with one button:
+        Create an error messagebox.
+
+        Arguments:
             parent: parent of the toplevel window
             title: message box title
             message: message box text (that can be selected)
             button: message displayed on the button
+            traceback: error traceback to display below the error message
+            report_msg: if True display a suggestion to report error
             image: image displayed at the left of the message, either a PhotoImage or a string
         """
         Toplevel.__init__(self, parent)
@@ -388,12 +394,14 @@ class ShowError(Toplevel):
 
 
 class TwoButtonBox(Toplevel):
-    """ Messagebox with two buttons """
+    """Messagebox with two buttons."""
 
     def __init__(self, parent, title="", message="", button1=_("Yes"),
                  button2=_("No"), image=None):
         """
-        Create a messagebox with two buttons:
+        Create a messagebox with two buttons.
+
+        Arguments:
             parent: parent of the toplevel window
             title: message box title
             message: message box text
@@ -452,7 +460,9 @@ class AskYesNoCancel(Toplevel):
     def __init__(self, parent, title="", message="", image=None,
                  button1=_("Yes"), button2=_("No"), button3=_("Cancel")):
         """
-        Create a messagebox with three buttons:
+        Create a messagebox with three buttons.
+
+        Arguments:
             parent: parent of the toplevel window
             title: message box title
             message: message box text
@@ -506,25 +516,71 @@ class AskYesNoCancel(Toplevel):
 
 
 def showmessage(title="", message="", parent=None, button="Ok", image=None):
+    """
+    Display a dialog with a single button.
+
+    Return the text of the button ("Ok" by default)
+
+    Arguments:
+        title: dialog title
+        message: message displayed in the dialog
+        parent: parent window
+        button: text displayed on the button
+        image: image to display on the left of the message, either a PhotoImage
+               or a string ('information', 'error', 'question', 'warning' or
+               image path)
+    """
     box = OneButtonBox(parent, title, message, button, image)
     box.wait_window(box)
     return box.get_result()
 
 
 def showerror(title="", message="", traceback="", report_msg=False, parent=None):
+    """
+    Display an error dialog.
+
+    Return "Ok"
+
+    Arguments:
+        title: dialog title
+        message: message displayed in the dialog
+        traceback: error traceback to display below the error message
+        report_msg: if True display a suggestion to report error
+        parent: parent window
+    """
     box = ShowError(parent, title, message, traceback, report_msg)
     box.wait_window(box)
     return box.get_result()
 
 
 def showinfo(title="", message="", parent=None):
+    """
+    Display an information dialog with a single button.
+
+    Return "Ok".
+
+    Arguments:
+        title: dialog title
+        message: message displayed in the dialog
+        parent: parent window
+    """
     return showmessage(title, message, parent, image="information")
 
 
 def askokcancel(title="", message="", parent=None, icon=None):
-    """ Display messagebox with given title and message.
-        If no icon is given, the question icon is used.
-        Return True if the user has selected Ok, False otherwise."""
+    """
+    Display a dialog with buttons "Ok" and "Cancel".
+
+    Return True if "Ok" is selected, False otherwise.
+
+    Arguments:
+        title: dialog title
+        message: message displayed in the dialog
+        parent: parent window
+        icon: icon to display on the left of the message, either a PhotoImage
+              or a string ('information', 'error', 'question', 'warning' or
+               mage path)
+    """
     if icon is None:
         icon = "question"
     box = TwoButtonBox(parent, title, message, "Ok", _("Cancel"), icon)
@@ -533,6 +589,19 @@ def askokcancel(title="", message="", parent=None, icon=None):
 
 
 def askyesnocancel(title="", message="", parent=None, icon=None):
+    """
+    Display a dialog with buttons "Yes","No" and "Cancel".
+
+    Return True if "Ok" is selected, False if "No" is selected, None otherwise.
+
+    Arguments:
+        title: dialog title
+        message: message displayed in the dialog
+        parent: parent window
+        icon: icon to display on the left of the message, either a PhotoImage
+              or a string ('information', 'error', 'question', 'warning' or
+               mage path)
+    """
     if icon is None:
         icon = "question"
     box = AskYesNoCancel(parent, title, message, image=icon)

@@ -32,6 +32,7 @@ class CategoryManager(Frame):
     """Category manager for the sticky notes."""
 
     def __init__(self, master, app, **kwargs):
+        """Create category manager."""
         Frame.__init__(self, master, **kwargs)
         self.columnconfigure(0, weight=1)
 
@@ -106,6 +107,7 @@ class CategoryManager(Frame):
         self.frame_cat.grid(row=2, column=0, sticky="eswn")
 
     def change_name(self, event):
+        """Change category name."""
         def ok(event):
             cats = [l.cget('text').lower() for l in self.cat_labels.values()]
             cat = name.get().strip().lower()
@@ -128,17 +130,21 @@ class CategoryManager(Frame):
         name.focus_set()
 
     def get_color(self, category):
+        """Return color of category."""
         return self.cat_colors[category].get()
 
     def get_name(self, category):
         return self.cat_labels[category].cget('text').lower()
 
     def change_menubutton_color(self, color, cat):
-        """ change the color of the menubutton of the category cat when its
-            default color is changed """
+        """
+        Change the color of the menubutton of the category cat when its
+        default color is changed.
+        """
         self.style.configure("%s.TMenubutton" % cat, background=COLORS[color])
 
     def del_cat(self, category):
+        """Remove category."""
         rep = askyesnocancel(_("Question"),
                              _("Do you want to delete all notes belonging to \
 the category %(category)s? If you answer 'No', the category will be deleted but \
@@ -169,6 +175,7 @@ effect immediately and cannot be undone." % {"category": category}))
             save_config()
 
     def update_def_cat_menu(self):
+        """Update default caregory menu."""
         self.def_cat_menu.destroy()
         categories = [l.cget('text') for l in self.cat_labels.values()]
         self.def_cat_menu = OptionMenu(self.frame_def_cat, self.default_category,
@@ -177,6 +184,7 @@ effect immediately and cannot be undone." % {"category": category}))
         self.def_cat_menu.grid(row=0, column=1, sticky="w", padx=4, pady=4)
 
     def add_cat(self):
+        """Add a category."""
         top = Toplevel(self)
         top.transient(self)
         top.grab_set()

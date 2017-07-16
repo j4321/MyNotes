@@ -46,8 +46,7 @@ class App(Tk):
     """
     Main app.
 
-    Put an icon in the system tray with a right click menu to
-    create notes.
+    Put an icon in the system tray with a right click menu to create notes.
     """
     def __init__(self):
         Tk.__init__(self)
@@ -254,7 +253,7 @@ class App(Tk):
         self.ewmh.display.flush()
 
     def add_note_to_menu(self, nb, note_title, category):
-        """add note to 'show notes' menu. """
+        """Add note to 'show notes' menu."""
 
         try:
             name = self.menu_notes.entrycget(category.capitalize(), 'menu')
@@ -394,6 +393,7 @@ class App(Tk):
                 self.notes[key].delete(confirmation=False)
 
     def delete_note(self, nb):
+        """Delete note with id nb."""
         if self.note_data[nb]["visible"]:
             self.notes[nb].delete(confirmation=False)
         else:
@@ -499,6 +499,7 @@ class App(Tk):
         self.make_notes_sticky()
 
     def export_notes(self):
+        """Note export."""
         export = Export(self)
         self.wait_window(export)
         categories_to_export, only_visible = export.get_export()
@@ -584,6 +585,7 @@ class App(Tk):
                               report_msg)
 
     def import_notes(self):
+        """Import notes."""
         fichier = askopenfilename(defaultextension=".backup",
                                   filetypes=[(_("Notes (.notes)"), "*.notes"),
                                              (_("All files"), "*")],

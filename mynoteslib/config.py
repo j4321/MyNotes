@@ -32,8 +32,9 @@ from tkinter import font
 
 
 class Config(Toplevel):
-
+    """Config dialog."""
     def __init__(self, master):
+        """Create Config dialog."""
         Toplevel.__init__(self, master)
         self.title(_("Preferences"))
         self.grab_set()
@@ -205,7 +206,7 @@ class Config(Toplevel):
                                          exportselection=False,
                                          validate="key")
         self._validate_title_size = self.register(lambda *args: self.validate_font_size(self.fonttitle_size, *args))
-        self._validate_title_family = self.register(lambda *args: self.validate_font_family(self.fonttitle_family, *args))
+        self._validate_title_family = self.register(lambda *args: self._validate_font_family(self.fonttitle_family, *args))
         self.fonttitle_family.configure(validatecommand=(self._validate_title_family,
                                                          "%d", "%S", "%i", "%s", "%V"))
         self.fonttitle_family.current(self.fonts.index(title_family))
@@ -249,7 +250,7 @@ class Config(Toplevel):
 
         self.font_family = Combobox(font_frame, values=self.fonts, width=(w * 2) // 3,
                                     exportselection=False, validate="key")
-        self._validate_family = self.register(lambda *args: self.validate_font_family(self.font_family, *args))
+        self._validate_family = self.register(lambda *args: self._validate_font_family(self.font_family, *args))
         self._validate_size = self.register(lambda *args: self.validate_font_size(self.font_size, *args))
         self.font_family.configure(validatecommand=(self._validate_family,
                                                     "%d", "%S", "%i", "%s", "%V"))
@@ -313,11 +314,11 @@ class Config(Toplevel):
         self.symbols.insert('1.0', SYMBOLS)
 
     def cleanup(self):
-        ''' Remove unused latex images '''
+        """Remove unused latex images."""
         self.master.cleanup()
 
     def validate_font_size(self, combo, d, ch, V):
-        ''' Validation of the size entry content '''
+        """Validation of the size entry content."""
         if d == '1':
             l = [i for i in self.sizes if i[:len(ch)] == ch]
             if l:
@@ -330,9 +331,8 @@ class Config(Toplevel):
         else:
             return True
 
-    def validate_font_family(self, combo, action, modif, pos, prev_txt, V):
-        """ completion of the text in the path entry with existing
-            folder/file names """
+    def _validate_font_family(self, combo, action, modif, pos, prev_txt, V):
+        """Complete the text in the entry with existing font names."""
         try:
             sel = combo.selection_get()
             txt = prev_txt.replace(sel, '')
@@ -357,6 +357,7 @@ class Config(Toplevel):
                 return False
 
     def ok(self):
+        """Validate configuration."""
         family = self.font_family.get()
         if family not in self.fonts:
             l = [i for i in self.fonts if i[:len(family)] == family]
@@ -426,16 +427,19 @@ class Config(Toplevel):
         return self.changes
 
     def translate(self):
+        """Show information dialog about language change."""
         showinfo("Information",
                  _("The language setting will take effect after restarting the application"),
                  parent=self)
 
     def update_preview(self, event=None):
+        """Update font preview."""
         family = self.font_family.get()
         size = self.font_size.get()
         self.sample.configure(font="%s %s" % (family.replace(" ", "\ "), size))
 
     def update_preview_title(self, event=None):
+        """Update title font preview."""
         family = self.fonttitle_family.get()
         size = self.fonttitle_size.get()
         config = "%s %s" % (family.replace(" ", "\ "), size)

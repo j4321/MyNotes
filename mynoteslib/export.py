@@ -28,8 +28,9 @@ from mynoteslib.constantes import CONFIG
 
 
 class Export(Toplevel):
-    """ Category export dialog """
+    """Category export dialog."""
     def __init__(self, master):
+        """Create export dialog."""
         Toplevel.__init__(self, master)
         self.title(_("Export"))
         self.resizable(False, False)
@@ -40,13 +41,16 @@ class Export(Toplevel):
         self.categories_to_export = []
         self.only_visible = False
 
+        # select all checkbutton
         self.ch_all = Checkbutton(self, text=_("Select all"),
                                   command=self.select_all)
+        # export only visible notes checkbutton
         self.ch_only_visible = Checkbutton(self, text=_("Only visible notes"))
         self.ch_all.grid(sticky="w", padx=4, pady=4)
         self.ch_only_visible.grid(sticky="w", padx=4, pady=4)
         Separator(self).grid(sticky="ew", padx=4, pady=4)
         self.checkbuttons = []
+        # one checkbutton by category
         for cat in self.categories:
             self.checkbuttons.append(Checkbutton(self, text=cat.capitalize(),
                                                  command=self.toggle_select_all))
@@ -63,6 +67,7 @@ class Export(Toplevel):
         self.select_all()
 
     def ok(self):
+        """Validate choice."""
         for ch, cat in zip(self.checkbuttons, self.categories):
             if "selected" in ch.state():
                 self.categories_to_export.append(cat)
@@ -70,6 +75,7 @@ class Export(Toplevel):
         self.destroy()
 
     def select_all(self):
+        """Select all categories."""
         if ("selected" in self.ch_all.state()):
             state = "selected"
         else:
@@ -78,6 +84,7 @@ class Export(Toplevel):
             ch.state((state,))
 
     def toggle_select_all(self):
+        """Change select all checkbutton state when another checkbutton is clicked."""
         b = 0
         for ch in self.checkbuttons:
             if "selected" in ch.state():

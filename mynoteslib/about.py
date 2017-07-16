@@ -79,15 +79,16 @@ class About(Toplevel):
         self.wait_window(self)
 
     def exit(self):
-        """ ferme la fenêtre """
+        """Close dialog."""
         if self.master:
             self.master.focus_set()
         self.destroy()
 
     def _license(self):
-        """ affiche la licence dans une nouvelle fenêtre """
+        """Display license information."""
+
         def close():
-            """ ferme la fenêtre """
+            """Close window."""
             self.focus_set()
             fen.destroy()
 

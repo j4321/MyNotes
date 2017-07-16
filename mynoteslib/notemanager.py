@@ -31,6 +31,7 @@ from mynoteslib.autoscrollbar import AutoScrollbar as Scrollbar
 class Manager(Toplevel):
     """Note manager."""
     def __init__(self, master):
+        """Create note manager to easily delete multiple notes."""
         Toplevel.__init__(self, master)
         self.title(_("Delete"))
         self.grab_set()
@@ -45,6 +46,7 @@ class Manager(Toplevel):
         self.texts = {}
         frames = {}
         self.notes = {}
+        # create one tab per category
         for cat in categories:
             frame = Frame(self.notebook)
             self.texts[cat] = Text(frame, width=1, height=1, bg=self.cget('bg'),
@@ -70,6 +72,7 @@ class Manager(Toplevel):
 
             self.notebook.add(frame, text=cat.capitalize(), sticky="ewsn",
                               padding=0)
+        # display notes by category
         for key, note_data in self.master.note_data.items():
             cat = note_data["category"]
             c, r = frames[cat].grid_size()

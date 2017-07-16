@@ -203,10 +203,13 @@ except ImportError:
 def askopenfilename(defaultextension, filetypes, initialdir, initialfile="",
                     title=_('Open'), **options):
     """
-    File browser:
+    Open filebrowser dialog to select file to open.
+
+    Arguments:
         - defaultextension: extension added if none is given
         - initialdir: directory where the filebrowser is opened
-        - filetypes: [('NOM', '*.ext'), ...]
+        - initialfile: initially selected file
+        - filetypes: [('NAME', '*.ext'), ...]
     """
     if tkfb:
         return tkfb.askopenfilename(title=title,
@@ -248,10 +251,13 @@ def askopenfilename(defaultextension, filetypes, initialdir, initialfile="",
 def asksaveasfilename(defaultextension, filetypes, initialdir=".", initialfile="",
                       title=_('Save As'), **options):
     """
-    plateform specific file browser for saving a file:
+    Open filebrowser dialog to select file to save to.
+
+    Arguments:
         - defaultextension: extension added if none is given
         - initialdir: directory where the filebrowser is opened
-        - filetypes: [('NOM', '*.ext'), ...]
+        - initialfile: initially selected file
+        - filetypes: [('NAME', '*.ext'), ...]
     """
     if tkfb:
         return tkfb.asksaveasfilename(title=title,
@@ -304,18 +310,19 @@ def fill(image, color):
 
 
 def sorting(index):
-    """ sorting key for text indexes """
+    """Sorting key for text indexes."""
     line, char = index.split(".")
     return (int(line), int(char))
 
 
 def save_config():
-    """ sauvegarde du dictionnaire contenant la configuration du logiciel (langue ...) """
+    """Save configuration to file."""
     with open(PATH_CONFIG, 'w') as fichier:
         CONFIG.write(fichier)
 
 
 def backup(nb_backup=12):
+    """Backup current note data."""
     backups = [int(f.split(".")[-1][6:])
                for f in os.listdir(os.path.dirname(PATH_DATA_BACKUP))
                if f[:12] == "notes.backup"]
@@ -329,7 +336,7 @@ def backup(nb_backup=12):
 
 
 def optionmenu_patch(om, var):
-    """ variable bug patch + bind menu so that it disapear easily """
+    """Variable bug patch + bind menu so that it disapear easily."""
     menu = om['menu']
     last = menu.index("end")
     for i in range(0, last + 1):
@@ -338,6 +345,15 @@ def optionmenu_patch(om, var):
 
 
 def text_ranges(widget, tag, index1="1.0", index2="end"):
+    """
+    Equivalent of Text.tag_ranges but with an index restriction.
+
+    Arguments:
+        - widget: Text widget
+        - tag: tag to find
+        - index1: start search at this index
+        - index2: end search at this index
+    """
     r = [i.string for i in widget.tag_ranges(tag)]
     i1 = widget.index(index1)
     i2 = widget.index(index2)
@@ -391,6 +407,7 @@ for color in TEXT_COLORS.values():
 
 
 def note_to_html(data, master):
+    """Convert note content to html."""
     txt = Text(master)
     tags = data["tags"]
     obj = data["inserted_objects"]
@@ -522,7 +539,7 @@ def note_to_html(data, master):
 
 
 def note_to_txt(data):
-    """ .txt export"""
+    """Convert note content to .txt"""
     t = data["txt"].splitlines()
     obj = data["inserted_objects"]
     indexes = list(obj.keys())

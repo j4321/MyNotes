@@ -25,7 +25,9 @@ Sticky note class
 from tkinter import Text, Toplevel, PhotoImage, StringVar, Menu, TclError
 from tkinter.ttk import  Style, Sizegrip, Entry, Checkbutton, Label, Button
 from tkinter.font import Font
-import os, re, ewmh
+import os
+import re
+import ewmh
 from time import strftime
 from mynoteslib.constantes import TEXT_COLORS, askopenfilename, open_url
 from mynoteslib.constantes import PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK
@@ -33,11 +35,13 @@ from mynoteslib.constantes import sorting, text_ranges, math_to_image
 from mynoteslib.symbols import pick_symbol
 from mynoteslib.messagebox import showerror, askokcancel
 
+
 class Sticky(Toplevel):
-    """ Sticky note class """
+    """Sticky note class."""
 
     def __init__(self, master, key, **kwargs):
-        """ Create a new sticky note.
+        """
+        Create a new sticky note.
             master: main app
             key: key identifying this note in master.note_data
             kwargs: dictionnary of the other arguments
@@ -310,7 +314,6 @@ class Sticky(Toplevel):
 
         # --- bindings
         self.bind("<FocusOut>", self.save_note)
-        self.bind('<Configure>', self.bouge)
         self.bind('<Button-1>', self.change_focus, True)
         self.close.bind("<Button-1>", self.hide)
         self.close.bind("<Enter>", self.enter_close)
@@ -370,12 +373,12 @@ class Sticky(Toplevel):
             self.txt.configure(bg=self.color)
 
     def paste(self, event):
-        """ delete selected text before pasting """
+        """Delete selected text before pasting."""
         if self.txt.tag_ranges("sel"):
             self.txt.delete("sel.first", "sel.last")
 
     def delete(self, confirmation=True):
-        """ Delete this note """
+        """Delete this note."""
         if confirmation:
             rep = askokcancel(_("Confirmation"), _("Delete the note?"))
         else:
@@ -387,7 +390,7 @@ class Sticky(Toplevel):
             self.destroy()
 
     def lock(self):
-        """ Put note in read-only mode to avoid unwanted text insertion """
+        """Put note in read-only mode to avoid unwanted text insertion."""
         if self.is_locked:
             selectbg = self.style.lookup('TEntry', 'selectbackground', ('focus',))
             self.txt.configure(state="normal",
@@ -422,7 +425,7 @@ class Sticky(Toplevel):
         self.save_note()
 
     def save_info(self):
-        """ Return the dictionnary containing all the note data """
+        """Return the dictionnary containing all the note data."""
         data = {}
         data["txt"] = self.txt.get("1.0","end")[:-1]
         data["tags"] = {}
@@ -455,16 +458,19 @@ class Sticky(Toplevel):
         return data
 
     def change_color(self, key):
+        """Change the color of the note."""
         self.color = COLORS[key]
         self.save_note()
 
     def change_category(self, category=None):
+        """Change the category of the note if provided and update its color."""
         if category:
             self.category.set(category)
         self.color = CONFIG.get("Categories", self.category.get())
         self.save_note()
 
     def set_position_above(self):
+        """Make note always above the other windows."""
         e = ewmh.EWMH()
         for w in e.getClientList():
             if w.get_wm_name() == 'mynotes%s' % self.id:
@@ -474,6 +480,7 @@ class Sticky(Toplevel):
         self.save_note()
 
     def set_position_below(self):
+        """Make note always below the other windows."""
         e = ewmh.EWMH()
         for w in e.getClientList():
             if w.get_wm_name() == 'mynotes%s' % self.id:
@@ -483,6 +490,7 @@ class Sticky(Toplevel):
         self.save_note()
 
     def set_position_normal(self):
+        """Make note be on top if active or behind the active window."""
         e = ewmh.EWMH()
         for w in e.getClientList():
             if w.get_wm_name() == 'mynotes%s' % self.id:
@@ -492,12 +500,14 @@ class Sticky(Toplevel):
         self.save_note()
 
     def set_mode_note(self):
+        """Set mode to note (classic text input)."""
         self.txt.tag_remove("list", "1.0", "end")
         self.txt.tag_remove("todolist", "1.0", "end")
         self.txt.tag_remove("enum", "1.0", "end")
         self.save_note()
 
     def set_mode_list(self):
+        """Set mode to list (bullet point list)."""
         end = int(self.txt.index("end").split(".")[0])
         lines  = self.txt.get("1.0", "end").splitlines()
         for i, l in zip(range(1, end), lines):
@@ -520,6 +530,7 @@ class Sticky(Toplevel):
         self.save_note()
 
     def set_mode_enum(self):
+        """Set mode to enum (enumeration)."""
         self.txt.configure(autoseparators=False)
         self.txt.edit_separator()
         end = int(self.txt.index("end").split(".")[0])
@@ -546,6 +557,7 @@ class Sticky(Toplevel):
         self.save_note()
 
     def set_mode_todolist(self):
+        """Set mode to todolist (checkbox list)."""
         end = int(self.txt.index("end").split(".")[0])
         lines  = self.txt.get("1.0", "end").splitlines()
         for i,l in zip(range(1, end), lines):
@@ -567,70 +579,85 @@ class Sticky(Toplevel):
 
     # --- bindings
     def enter_roll(self, event):
-        """ mouse is over the roll icon """
+        """Mouse is over the roll icon."""
         self.roll.configure(image="img_rollactive")
 
     def leave_roll(self, event):
-        """ mouse leaves the roll icon """
+        """Mouse leaves the roll icon."""
         self.roll.configure(image="img_roll")
 
     def enter_close(self, event):
-        """ mouse is over the close icon """
+        """Mouse is over the close icon."""
         self.close.configure(image="img_closeactive")
 
     def leave_close(self, event):
-        """ mouse leaves the close icon """
+        """Mouse leaves the close icon."""
         self.close.configure(image="img_close")
 
     def change_focus(self, event):
+        """
+        Set focus on note.
+
+        Because of the use of window type "splash" (necessary to remove window
+        decoration), it is necessary to force the focus in order to write inside
+        the Text widget.
+        """
         if not self.is_locked:
             event.widget.focus_force()
 
     def show_menu(self, event):
+        """Show main menu."""
         self.menu.tk_popup(event.x_root, event.y_root)
 
     def show_menu_txt(self, event):
+        """Show text menu."""
         self.menu_txt.tk_popup(event.x_root, event.y_root)
 
     def resize(self, event):
+        """Save new note geometry after resizing."""
+        print("resize")
         self.save_geometry = self.geometry()
 
-    def bouge(self, event):
-        geo = self.geometry().split("+")[1:]
-        self.save_geometry = self.save_geometry.split("+")[0] \
-                             + "+%s+%s" % tuple(geo)
-
     def edit_title(self, event):
+        """Show entry to edit title."""
         self.title_entry.place(x=self.title_label.winfo_x() + 5,
                                y=self.title_label.winfo_y(),
                                anchor="nw",
                                width=self.title_label.winfo_width()-10)
 
     def start_move(self, event):
+        """Start moving the note."""
         self.x = event.x
         self.y = event.y
         self.configure(cursor='fleur')
 
     def stop_move(self, event):
+        """Stop moving the note."""
         self.x = None
         self.y = None
         self.configure(cursor='')
 
     def move(self, event):
+        """Make note follow cursor motion."""
+        print("move")
         if self.x is not None and self.y is not None:
             deltax = event.x - self.x
             deltay = event.y - self.y
             x = self.winfo_x() + deltax
             y = self.winfo_y() + deltay
-            self.geometry("+%s+%s" % (x, y))
+            geo = "+%s+%s" % (x, y)
+            self.geometry(geo)
+            self.save_geometry = self.save_geometry.split("+")[0] + geo
 
     def save_note(self, event=None):
+        """Save note."""
         data = self.save_info()
         data["visible"] = True
         self.master.note_data[self.id] = data
         self.master.save()
 
     def rollnote(self, event=None):
+        """Roll/unroll note."""
         if self.txt.winfo_ismapped():
             self.txt.grid_forget()
             self.corner.place_forget()
@@ -643,7 +670,7 @@ class Sticky(Toplevel):
         self.save_note()
 
     def hide(self, event=None):
-        """ Hide note (can be displayed again via app menu) """
+        """Hide note (can be displayed again via app menu)."""
         cat = self.category.get()
         self.master.add_note_to_menu(self.id, self.title_var.get().strip(), cat)
         data = self.save_info()
@@ -655,6 +682,7 @@ class Sticky(Toplevel):
 
     # --- Settings update
     def update_title_font(self):
+        """Update title font after configuration change."""
         font = "%s %s" %(CONFIG.get("Font", "title_family").replace(" ", "\ "),
                          CONFIG.get("Font", "title_size"))
         style = CONFIG.get("Font", "title_style").split(",")
@@ -664,6 +692,7 @@ class Sticky(Toplevel):
         self.title_label.configure(font=font)
 
     def update_text_font(self):
+        """Update text font after configuration change."""
         font = "%s %s" %(CONFIG.get("Font", "text_family").replace(" ", "\ "),
                          CONFIG.get("Font", "text_size"))
         self.txt.configure(font=font)
@@ -675,13 +704,14 @@ class Sticky(Toplevel):
                                tabs=(margin, 'right', margin + 5, 'left'))
 
     def update_menu_cat(self, categories):
-        """ Update the category submenu """
+        """Update the category submenu."""
         self.menu_categories.delete(0, "end")
         for cat in categories:
             self.menu_categories.add_radiobutton(label=cat.capitalize(), value=cat,
                                                  variable=self.category,
                                                  command=self.change_category)
     def update_titlebar(self):
+        """Update title bar button order."""
         if CONFIG.get("General", "buttons_position") == "right":
             # right = lock icon - title - roll - close
             self.columnconfigure(1, weight=1)
@@ -701,6 +731,7 @@ class Sticky(Toplevel):
 
     # --- Text edition
     def add_link(self):
+        """Insert link in note."""
         def ok(eveny=None):
             lien = link.get()
             txt = text.get()
@@ -750,14 +781,18 @@ class Sticky(Toplevel):
         link.bind("<Return>", ok)
 
     def add_checkbox(self):
+        """Insert checkbox in note."""
         ch = Checkbutton(self.txt, takefocus=False,
                          style=self.id + ".TCheckbutton")
         self.txt.window_create("current", window=ch)
 
     def add_date(self):
+        """Insert today's date in note."""
         self.txt.insert("current", strftime("%x"))
 
     def add_latex(self, img_name=None):
+        """Insert image generated from latex expression given in the entry."""
+
         def ok(event):
             latex = r'%s' % text.get()
             if latex:
@@ -815,6 +850,7 @@ class Sticky(Toplevel):
         text.focus_set()
 
     def add_image(self):
+        """Insert image in note."""
         fichier = askopenfilename(defaultextension=".png",
                                   filetypes=[("PNG", "*.png")],
                                   initialdir="",
@@ -829,28 +865,29 @@ class Sticky(Toplevel):
             showerror("Erreur", "L'image %s n'existe pas" % fichier)
 
     def add_symbols(self):
+        """Insert symbol in note."""
         symbols = pick_symbol(self,
                               CONFIG.get("Font", "text_family").replace(" ", "\ "),
                               CONFIG.get("General", "symbols"))
         self.txt.insert("current", symbols)
 
     def toggle_text_style(self, style):
-        '''Toggle the style of the selected text'''
+        """Toggle the style of the selected text."""
         if self.txt.tag_ranges("sel"):
             current_tags = self.txt.tag_names("sel.first")
             if style in current_tags:
                 # first char is in style so 'unstyle' the range
                 self.txt.tag_remove(style, "sel.first", "sel.last")
-            elif style == "bold" and "bold-italic" in current_tags:
+            elif style is "bold" and "bold-italic" in current_tags:
                 self.txt.tag_remove("bold-italic", "sel.first", "sel.last")
                 self.txt.tag_add("italic", "sel.first", "sel.last")
-            elif style == "italic" and "bold-italic" in current_tags:
+            elif style is "italic" and "bold-italic" in current_tags:
                 self.txt.tag_remove("bold-italic", "sel.first", "sel.last")
                 self.txt.tag_add("bold", "sel.first", "sel.last")
-            elif style == "bold" and "italic" in current_tags:
+            elif style is "bold" and "italic" in current_tags:
                 self.txt.tag_remove("italic", "sel.first", "sel.last")
                 self.txt.tag_add("bold-italic", "sel.first", "sel.last")
-            elif style == "italic" and "bold" in current_tags:
+            elif style is "italic" and "bold" in current_tags:
                 self.txt.tag_remove("bold", "sel.first", "sel.last")
                 self.txt.tag_add("bold-italic", "sel.first", "sel.last")
             else:
@@ -858,6 +895,7 @@ class Sticky(Toplevel):
                 self.txt.tag_add(style, "sel.first", "sel.last")
 
     def toggle_underline(self):
+        """Toggle underline property of the selected text."""
         if self.txt.tag_ranges("sel"):
             current_tags = self.txt.tag_names("sel.first")
             if "underline" in current_tags:
@@ -874,6 +912,7 @@ class Sticky(Toplevel):
                             self.txt.tag_add(coul + "-underline", "sel.first", "sel.last")
 
     def toggle_overstrike(self):
+        """Toggle overstrike property of the selected text."""
         if self.txt.tag_ranges("sel"):
             current_tags = self.txt.tag_names("sel.first")
             if "overstrike" in current_tags:
@@ -890,7 +929,7 @@ class Sticky(Toplevel):
                             self.txt.tag_add(coul + "-overstrike", "sel.first", "sel.last")
 
     def change_sel_color(self, color):
-        """ change the color of the selection """
+        """Change the color of the selection."""
         if self.txt.tag_ranges("sel"):
             for coul in TEXT_COLORS.values():
                 self.txt.tag_remove(coul, "sel.first", "sel.last")
@@ -908,7 +947,7 @@ class Sticky(Toplevel):
 
 
     def set_align(self, alignment):
-        """ Align the text according to alignment (left, right, center) """
+        """Align the text according to alignment (left, right, center)."""
         if self.txt.tag_ranges("sel"):
             line = self.txt.index("sel.first").split(".")[0]
             line2 = self.txt.index("sel.last").split(".")[0]
@@ -923,7 +962,7 @@ class Sticky(Toplevel):
                 self.txt.tag_add(alignment, deb, fin)
 
     def update_enum(self):
-        """ update enumeration numbers """
+        """Update enumeration numbers."""
         lines  = self.txt.get("1.0", "end").splitlines()
         indexes = []
         for i,l in enumerate(lines):
