@@ -54,6 +54,7 @@ class Sticky(Toplevel):
         self.is_locked = not (kwargs.get("locked", False))
         self.images = []
         self.links = {}
+        self.links_click_id = {}  # delay click effect to avoid triggering <1> with <Double-1>
         self.latex = {}
         self.nb_links = 0
         self.title('mynotes%s' % key)
@@ -266,9 +267,14 @@ class Sticky(Toplevel):
         for link in kwargs.get("links", {}).values():
             self.nb_links += 1
             self.links[self.nb_links] = link
-            self.txt.tag_bind("link#%i" % self.nb_links,
+            self.links_click_id[self.nb_links] = ""
+            lid = "link#%i" % self.nb_links
+            self.txt.tag_bind(lid,
                               "<Button-1>",
-                              lambda e, l=link: open_url(l))
+                              lambda e, lnb=self.nb_links: self.open_link(lnb))
+            self.txt.tag_bind(lid,
+                              "<Double-Button-1>",
+                              lambda e, lnb=self.nb_links: self.edit_link(lnb))
 
         for img, latex in kwargs.get("latex", {}).items():
             self.latex[img] = latex
@@ -725,29 +731,50 @@ class Sticky(Toplevel):
             self.title_label.grid_configure(row=0, column=2, sticky="ew", pady=(1,0))
 
     # --- Text edition
-    def add_link(self):
+    def add_link(self, link_nb=None):
         """Insert link in note."""
+
         def ok(eveny=None):
             lien = link.get()
             txt = text.get()
             if lien:
                 if not txt:
                     txt = lien
-                self.nb_links += 1
-                if self.txt.tag_ranges("sel"):
-                    index = self.txt.index("sel.first")
-                    self.txt.delete('sel.first', 'sel.last')
+                if link_nb is None:
+                    self.nb_links += 1
+                    lnb = self.nb_links
+                    lid = "link#%i" % lnb
+                else:
+                    lnb = link_nb
+                    lid = "link#%i" % lnb
+                if sel:
+                    index = sel[0]
+                    self.txt.delete(*sel)
                 else:
                     index = "current"
-                tags = self.txt.tag_names(index) + ("link", "link#%i" % self.nb_links)
-                self.txt.insert("current", txt, tags)
+
+                tags = self.txt.tag_names(index) + ("link", lid)
+                self.txt.insert(index, txt, tags)
                 if not lien[:4] == "http":
                     lien = "http://" + lien
-                self.links[self.nb_links] = lien
-                self.txt.tag_bind("link#%i" % self.nb_links,
-                                  "<Button-1>",
-                                  lambda e: open_url(lien))
+                self.links[lnb] = lien
+                self.txt.tag_bind(lid, "<Button-1>", lambda e: self.open_link(lnb))
+                self.txt.tag_bind(lid, "<Double-Button-1>", lambda e: self.edit_link(lnb))
             top.destroy()
+
+        if link_nb is None:
+            if self.txt.tag_ranges('sel'):
+                txt = self.txt.get('sel.first', 'sel.last')
+                sel = self.txt.index("sel.first"), self.txt.index("sel.last")
+            else:
+                txt = ''
+                sel = ()
+            link_txt = txt
+        else:
+            lid = "link#%i" % link_nb
+            txt = self.txt.get('%s.first' % lid, '%s.last' % lid)
+            link_txt = self.links[link_nb]
+            sel = self.txt.index('%s.first' % lid), self.txt.index('%s.last' % lid)
 
         top = Toplevel(self)
         top.transient(self)
@@ -759,12 +786,10 @@ class Sticky(Toplevel):
         top.columnconfigure(1, weight=1)
         text = Entry(top)
         link = Entry(top)
-        if self.txt.tag_ranges('sel'):
-            txt = self.txt.get('sel.first', 'sel.last')
-        else:
-            txt = ''
         text.insert(0, txt)
         text.icursor("end")
+        link.insert(0, link_txt)
+        link.icursor("end")
         Label(top, text=_("Text")).grid(row=0, column=0, sticky="e", padx=4, pady=4)
         Label(top, text=_("Link")).grid(row=1, column=0, sticky="e", padx=4, pady=4)
         text.grid(row=0, column=1, sticky="ew", padx=4, pady=4)
@@ -774,6 +799,16 @@ class Sticky(Toplevel):
         text.focus_set()
         text.bind("<Return>", ok)
         link.bind("<Return>", ok)
+
+    def open_link(self, link_nb):
+        """Open link after small delay to avoid opening link on double click."""
+        lien = self.links[link_nb]
+        self.links_click_id[link_nb] = self.after(500, lambda: open_url(lien))
+
+    def edit_link(self, link_nb):
+        # cancel link opening
+        self.after_cancel(self.links_click_id[link_nb])
+        self.add_link(link_nb)
 
     def add_checkbox(self):
         """Insert checkbox in note."""
