@@ -60,6 +60,10 @@ class App(Tk):
 
         style = Style(self)
         style.theme_use("clam")
+        style.map('TEntry', selectbackground=[('!focus', '#c3c3c3')])
+        selectbg = style.lookup('TEntry', 'selectbackground', ('focus',))
+        style.configure("sel.TCheckbutton", background=selectbg)
+        style.map("sel.TCheckbutton", background=[("active", selectbg)])
 
         self.close1 = PhotoImage("img_close", file=cst.IM_CLOSE)
         self.close2 = PhotoImage("img_closeactive", file=cst.IM_CLOSE_ACTIVE)

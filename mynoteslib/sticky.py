@@ -72,10 +72,6 @@ class Sticky(Toplevel):
         # --- style
         self.style = Style(self)
         self.style.configure(self.id + ".TCheckbutton", selectbackground="red")
-        self.style.map('TEntry', selectbackground=[('!focus', '#c3c3c3')])
-        selectbg = self.style.lookup('TEntry', 'selectbackground', ('focus',))
-        self.style.configure("sel.TCheckbutton", background=selectbg)
-        self.style.map("sel.TCheckbutton", background=[("active", selectbg)])
 
         # --- note elements
         # title
