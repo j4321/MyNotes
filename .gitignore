@@ -7,3 +7,4 @@ latex/
 *.ini
 mynotes.py
 mynoteslib/notes
+mynotes.egg-info

@@ -42,11 +42,12 @@ class Sticky(Toplevel):
     def __init__(self, master, key, **kwargs):
         """
         Create a new sticky note.
+
+        Arguments:
             master: main app
             key: key identifying this note in master.note_data
             kwargs: dictionnary of the other arguments
-            (title, txt, category, color, tags, geometry, locked, checkboxes,
-             images, rolled)
+            (title, txt, category, color, tags, geometry, locked, checkboxes, images, rolled)
         """
         Toplevel.__init__(self, master)
         # --- window properties
@@ -806,6 +807,7 @@ class Sticky(Toplevel):
         self.links_click_id[link_nb] = self.after(500, lambda: open_url(lien))
 
     def edit_link(self, link_nb):
+        """Edit link number link_nb."""
         # cancel link opening
         self.after_cancel(self.links_click_id[link_nb])
         self.add_link(link_nb)

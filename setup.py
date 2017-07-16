@@ -10,11 +10,12 @@ data_files = [("share/pixmaps", ["mynotes.svg"]),
               ("share/man/man1", ["mynotes.1.gz"]),
               ("share/mynotes/images", images),
               ("share/locale/en_US/LC_MESSAGES/", ["mynoteslib/locale/en_US/LC_MESSAGES/MyNotes.mo"]),
+              ("share/locale/nl_NL/LC_MESSAGES/", ["mynoteslib/locale/nl_NL/LC_MESSAGES/MyNotes.mo"]),
               ("share/locale/fr_FR/LC_MESSAGES/", ["mynoteslib/locale/fr_FR/LC_MESSAGES/MyNotes.mo"]),
               ("share/applications", ["mynotes.desktop"])]
 
 setup(name="mynotes",
-      version="2.1.1b2",
+      version="2.2.0",
       description="Post-it system tray app",
       keywords=["post-it", "sticky", "notes", "tkinter"],
       author="Juliette Monsel",

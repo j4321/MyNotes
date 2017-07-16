@@ -5,19 +5,19 @@ Copyright 2016 Juliette Monsel <j_4321@protonmail.com>
 Changelog
 ---------
 
-- Version 2.2.1
-    * Add Dutch translation
 
-- Version 2.1.1
+- Version 2.2.0
+    * Add Dutch translation
     * Add note manager to delete easily notes
     * Add autoscrollbar to error messagebox
     * Add category renaming by double click on the category name in Preference dialog
     * Remove error message when cancel image insertion
     * Correct bug: all links in a note open the same url
+    * Add link edition on double click
     * Add optional and limited latex support to insert one line formulas
       using matplotlib to render them as png images.
       (available only if matplotlib is available on the system)
-    * Improve checkboxex highlighting
+    * Improve checkboxe highlighting
     * Add keyboard shortcuts for text formatting:
         Ctrl+B toggle bold
         Ctrl+I toggle italic
