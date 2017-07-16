@@ -612,7 +612,6 @@ class Sticky(Toplevel):
 
     def resize(self, event):
         """Save new note geometry after resizing."""
-        print("resize")
         self.save_geometry = self.geometry()
 
     def edit_title(self, event):
@@ -636,7 +635,6 @@ class Sticky(Toplevel):
 
     def move(self, event):
         """Make note follow cursor motion."""
-        print("move")
         if self.x is not None and self.y is not None:
             deltax = event.x - self.x
             deltay = event.y - self.y
