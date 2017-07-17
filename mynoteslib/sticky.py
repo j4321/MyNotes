@@ -206,15 +206,27 @@ class Sticky(Toplevel):
         self.menu_txt = Menu(self.txt, tearoff=False)
         # style
         menu_style = Menu(self.menu_txt, tearoff=False)
-        menu_style.add_command(label=_("Bold"), command=lambda: self.toggle_text_style("bold"))
-        menu_style.add_command(label=_("Italic"), command=lambda: self.toggle_text_style("italic"))
-        menu_style.add_command(label=_("Underline"), command=self.toggle_underline)
-        menu_style.add_command(label=_("Overstrike"), command=self.toggle_overstrike)
+        menu_style.add_command(label=_("Bold"),
+                               command=lambda: self.toggle_text_style("bold"),
+                               accelerator='Ctrl+B')
+        menu_style.add_command(label=_("Italic"),
+                               command=lambda: self.toggle_text_style("italic"),
+                               accelerator='Ctrl+I')
+        menu_style.add_command(label=_("Underline"),
+                               command=self.toggle_underline,
+                               accelerator='Ctrl+U')
+        menu_style.add_command(label=_("Overstrike"),
+                               command=self.toggle_overstrike)
         # text alignment
         menu_align = Menu(self.menu_txt, tearoff=False)
-        menu_align.add_command(label=_("Left"), command=lambda: self.set_align("left"))
-        menu_align.add_command(label=_("Right"), command=lambda: self.set_align("right"))
-        menu_align.add_command(label=_("Center"), command=lambda: self.set_align("center"))
+        menu_align.add_command(label=_("Left"),
+                               command=lambda: self.set_align("left"),
+                               accelerator='Ctrl+L')
+        menu_align.add_command(label=_("Right"),
+                               command=lambda: self.set_align("right"),
+                               accelerator='Ctrl+R')
+        menu_align.add_command(label=_("Center"),
+                               command=lambda: self.set_align("center"))
         # text color
         menu_colors = Menu(self.menu_txt, tearoff=False)
         colors = list(TEXT_COLORS.keys())
@@ -225,13 +237,18 @@ class Sticky(Toplevel):
 
         # insert
         menu_insert = Menu(self.menu_txt, tearoff=False)
-        menu_insert.add_command(label=_("Symbols"), command=self.add_symbols)
-        menu_insert.add_command(label=_("Checkbox"), command=self.add_checkbox)
+        menu_insert.add_command(label=_("Symbols"), command=self.add_symbols,
+                                accelerator='Ctrl+S')
+        menu_insert.add_command(label=_("Checkbox"), command=self.add_checkbox,
+                                accelerator='Ctrl+O')
         menu_insert.add_command(label=_("Image"), command=self.add_image)
-        menu_insert.add_command(label=_("Date"), command=self.add_date)
-        menu_insert.add_command(label=_("Link"), command=self.add_link)
+        menu_insert.add_command(label=_("Date"), command=self.add_date,
+                                accelerator='Ctrl+D')
+        menu_insert.add_command(label=_("Link"), command=self.add_link,
+                                accelerator='Ctrl+H')
         if LATEX:
-            menu_insert.add_command(label="LaTex", command=self.add_latex)
+            menu_insert.add_command(label="LaTex", command=self.add_latex,
+                                    accelerator='Ctrl+T')
 
         self.menu_txt.add_cascade(label=_("Style"), menu=menu_style)
         self.menu_txt.add_cascade(label=_("Alignment"), menu=menu_align)
@@ -319,20 +336,25 @@ class Sticky(Toplevel):
         # --- bindings
         self.bind("<FocusOut>", self.save_note)
         self.bind('<Button-1>', self.change_focus, True)
+
         self.close.bind("<Button-1>", self.hide)
         self.close.bind("<Enter>", self.enter_close)
         self.close.bind("<Leave>", self.leave_close)
+
         self.roll.bind("<Button-1>", self.rollnote)
         self.roll.bind("<Enter>", self.enter_roll)
         self.roll.bind("<Leave >", self.leave_roll)
+
         self.title_label.bind("<Double-Button-1>", self.edit_title)
         self.title_label.bind("<ButtonPress-1>", self.start_move)
         self.title_label.bind("<ButtonRelease-1>", self.stop_move)
         self.title_label.bind("<B1-Motion>", self.move)
         self.title_label.bind('<Button-3>', self.show_menu)
+
         self.title_entry.bind("<Return>", lambda e: self.title_entry.place_forget())
         self.title_entry.bind("<FocusOut>", lambda e: self.title_entry.place_forget())
         self.title_entry.bind("<Escape>", lambda e: self.title_entry.place_forget())
+
         self.txt.tag_bind("link", "<Enter>",
                           lambda event: self.txt.configure(cursor="hand1"))
         self.txt.tag_bind("link", "<Leave>",
@@ -342,6 +364,7 @@ class Sticky(Toplevel):
         # add binding to the existing class binding so that the selected text
         # is erased on pasting
         self.txt.bind("<Control-v>", self.paste)
+
         self.corner.bind('<ButtonRelease-1>', self.resize)
 
         # --- keyboard shortcuts
@@ -350,10 +373,21 @@ class Sticky(Toplevel):
         self.txt.bind('<Control-u>', lambda e: self.toggle_underline())
         self.txt.bind('<Control-r>', lambda e: self.set_align('right'))
         self.txt.bind('<Control-l>', lambda e: self.set_align('left'))
+        self.txt.bind('<Control-s>', lambda e: self.add_symbols())
+        self.txt.bind_class('Text','<Control-d>', lambda e: None)
+        self.txt.bind('<Control-d>', self.add_date)
+        self.txt.bind_class('Text','<Control-o>', lambda e: None)
+        self.txt.bind('<Control-o>', self.add_checkbox)
+        self.txt.bind_class('Text','<Control-h>', lambda e: None)
+        self.txt.bind('<Control-h>', lambda e: self.add_link())
+        if LATEX:
+            self.txt.bind_class('Text', '<Control-t>', lambda e: None)
+            self.txt.bind('<Control-t>', lambda e: self.add_latex())
+#        self.txt.bind('<Control-i>', self.add_image)
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
-        if name == "color":
+        if name is "color":
             self.style.configure(self.id + ".TSizegrip",
                                  background=self.color)
             self.style.configure(self.id +  ".TLabel",
@@ -615,6 +649,7 @@ class Sticky(Toplevel):
 
     def show_menu_txt(self, event):
         """Show text menu."""
+        self.txt.mark_set("insert", "current")  # put insert cursor beneath mouse
         self.menu_txt.tk_popup(event.x_root, event.y_root)
 
     def resize(self, event):
@@ -752,7 +787,7 @@ class Sticky(Toplevel):
                     index = sel[0]
                     self.txt.delete(*sel)
                 else:
-                    index = "current"
+                    index = "insert"
 
                 tags = self.txt.tag_names(index) + ("link", lid)
                 self.txt.insert(index, txt, tags)
@@ -812,15 +847,15 @@ class Sticky(Toplevel):
         self.after_cancel(self.links_click_id[link_nb])
         self.add_link(link_nb)
 
-    def add_checkbox(self):
+    def add_checkbox(self, event=None):
         """Insert checkbox in note."""
         ch = Checkbutton(self.txt, takefocus=False,
                          style=self.id + ".TCheckbutton")
-        self.txt.window_create("current", window=ch)
+        self.txt.window_create("insert", window=ch)
 
-    def add_date(self):
+    def add_date(self, event=None):
         """Insert today's date in note."""
-        self.txt.insert("current", strftime("%x"))
+        self.txt.insert("insert", strftime("%x"))
 
     def add_latex(self, img_name=None):
         """Insert image generated from latex expression given in the entry."""
@@ -849,7 +884,7 @@ class Sticky(Toplevel):
                         index = self.txt.index("sel.first")
                         self.txt.delete('sel.first', 'sel.last')
                     else:
-                        index = self.txt.index("current")
+                        index = self.txt.index("insert")
                         if img_name:
                             self.txt.delete(index)
                     self.txt.image_create(index,
@@ -873,7 +908,10 @@ class Sticky(Toplevel):
             text.insert(0, self.latex[img_name])
         else:
             if self.txt.tag_ranges('sel'):
-                text.insert(0, self.txt.get('sel.first', 'sel.last'))
+                text.insert(0, '$')
+                text.insert('end', self.txt.get('sel.first', 'sel.last'))
+                text.insert('end', '$')
+
             else:
                 text.insert(0, '$$')
                 text.icursor(1)
@@ -882,7 +920,7 @@ class Sticky(Toplevel):
         text.bind('<Return>', ok)
         text.focus_set()
 
-    def add_image(self):
+    def add_image(self, event=None):
         """Insert image in note."""
         fichier = askopenfilename(defaultextension=".png",
                                   filetypes=[("PNG", "*.png")],
@@ -891,7 +929,7 @@ class Sticky(Toplevel):
                                   title=_('Select PNG image'))
         if os.path.exists(fichier):
             self.images.append(PhotoImage(master=self.txt, file=fichier))
-            self.txt.image_create("current",
+            self.txt.image_create("insert",
                                   image=self.images[-1],
                                   name=fichier)
         elif fichier:
@@ -902,7 +940,7 @@ class Sticky(Toplevel):
         symbols = pick_symbol(self,
                               CONFIG.get("Font", "text_family").replace(" ", "\ "),
                               CONFIG.get("General", "symbols"))
-        self.txt.insert("current", symbols)
+        self.txt.insert("insert", symbols)
 
     def toggle_text_style(self, style):
         """Toggle the style of the selected text."""
