@@ -906,6 +906,7 @@ class Sticky(Toplevel):
         text = Entry(top, justify='center')
         if img_name is not None:
             text.insert(0, self.latex[img_name])
+            sel = ()
         else:
             if self.txt.tag_ranges('sel'):
                 sel = self.txt.index("sel.first"), self.txt.index("sel.last")
