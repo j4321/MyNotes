@@ -884,7 +884,7 @@ class Sticky(Toplevel):
                         index = sel[0]
                         self.txt.delete(*sel)
                     else:
-                        index = self.txt.index("insert")
+                        index = self.txt.index("current")
                         if img_name:
                             self.txt.delete(index)
                     self.txt.image_create(index,
