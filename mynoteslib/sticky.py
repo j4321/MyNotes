@@ -880,9 +880,9 @@ class Sticky(Toplevel):
                 try:
                     math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
                     self.images.append(PhotoImage(file=im, master=self))
-                    if self.txt.tag_ranges("sel"):
-                        index = self.txt.index("sel.first")
-                        self.txt.delete('sel.first', 'sel.last')
+                    if sel:
+                        index = sel[0]
+                        self.txt.delete(*sel)
                     else:
                         index = self.txt.index("insert")
                         if img_name:
@@ -908,11 +908,13 @@ class Sticky(Toplevel):
             text.insert(0, self.latex[img_name])
         else:
             if self.txt.tag_ranges('sel'):
+                sel = self.txt.index("sel.first"), self.txt.index("sel.last")
                 text.insert(0, '$')
                 text.insert('end', self.txt.get('sel.first', 'sel.last'))
                 text.insert('end', '$')
 
             else:
+                sel = ()
                 text.insert(0, '$$')
                 text.icursor(1)
 
