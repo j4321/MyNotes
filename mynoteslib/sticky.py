@@ -247,7 +247,7 @@ class Sticky(Toplevel):
         menu_insert.add_command(label=_("Link"), command=self.add_link,
                                 accelerator='Ctrl+H')
         if LATEX:
-            menu_insert.add_command(label="LaTex", command=self.add_latex,
+            menu_insert.add_command(label="LaTeX", command=self.add_latex,
                                     accelerator='Ctrl+T')
 
         self.menu_txt.add_cascade(label=_("Style"), menu=menu_style)
@@ -902,7 +902,7 @@ class Sticky(Toplevel):
         top.geometry("+%i+%i" % top.winfo_pointerxy())
         top.grab_set()
         top.resizable(True, False)
-        top.title("LaTex")
+        top.title("LaTeX")
         text = Entry(top, justify='center')
         if img_name is not None:
             text.insert(0, self.latex[img_name])
