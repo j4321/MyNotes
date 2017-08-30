@@ -62,6 +62,11 @@ class App(Tk):
         style.theme_use("clam")
         style.map('TEntry', selectbackground=[('!focus', '#c3c3c3')])
         selectbg = style.lookup('TEntry', 'selectbackground', ('focus',))
+        style.map('TCheckbutton',
+                  indicatorbackground=[('pressed', '#dcdad5'),
+                                       ('!disabled', 'alternate', '#ffffff'),
+                                       ('disabled', 'alternate', '#dcdad5'),
+                                       ('disabled', '#dcdad5')])
         style.configure("sel.TCheckbutton", background=selectbg)
         style.map("sel.TCheckbutton", background=[("active", selectbg)])
 

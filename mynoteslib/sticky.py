@@ -276,7 +276,10 @@ class Sticky(Toplevel):
             elif kind == "image":
                 if os.path.exists(val):
                     self.images.append(PhotoImage(master=self.txt, file=val))
-                    self.txt.image_create(index, image=self.images[-1], name=val)
+                    self.txt.image_create(index,
+                                          image=self.images[-1],
+                                          align='bottom',
+                                          name=val)
         # restore tags
         for tag, indices in kwargs.get("tags", {}).items():
             if indices:
@@ -888,6 +891,7 @@ class Sticky(Toplevel):
                         if img_name:
                             self.txt.delete(index)
                     self.txt.image_create(index,
+                                          align='bottom',
                                           image=self.images[-1],
                                           name=im)
                     self.txt.tag_add(img, index)
@@ -933,6 +937,7 @@ class Sticky(Toplevel):
         if os.path.exists(fichier):
             self.images.append(PhotoImage(master=self.txt, file=fichier))
             self.txt.image_create("insert",
+                                  align='bottom',
                                   image=self.images[-1],
                                   name=fichier)
         elif fichier:
