@@ -383,8 +383,8 @@ class App(Tk):
         """Launch the setting manager."""
         conf = Config(self)
         self.wait_window(conf)
-        col_changes, name_changes = conf.get_changes()
-        if col_changes or name_changes:
+        col_changes, name_changes, new_cat = conf.get_changes()
+        if new_cat or col_changes or name_changes:
             self.update_notes(col_changes, name_changes)
             self.update_menu()
             alpha = CONFIG.getint("General", "opacity") / 100

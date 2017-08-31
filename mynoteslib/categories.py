@@ -149,7 +149,7 @@ class CategoryManager(Frame):
                              _("Do you want to delete all notes belonging to \
 the category %(category)s? If you answer 'No', the category will be deleted but \
 the notes will belong to the default category. Be careful, the change will take \
-effect immediately and cannot be undone." % {"category": category}))
+effect immediately and cannot be undone.") % {"category": category})
         if rep is not None:
             del(self.cat_colors[category])
             self.cat_buttons[category].grid_forget()

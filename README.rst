@@ -19,7 +19,7 @@ First, install the missing dependencies among:
     - Tktray https://code.google.com/archive/p/tktray/downloads
     - ewmh https://pypi.python.org/pypi/ewmh
 For instance, in Ubuntu/Debian you will need to install the following packages:
-python3-tk, tk-tktray, python3-ewmh (available in zesty only)
+python3-tk, tk-tktray, python3-ewmh (not available for version older than zesty)
 
 For Archlinux users, MyNotes is available in `AUR <https://aur.archlinux.org/packages/mynotes>`__
 
@@ -34,6 +34,7 @@ Then install the application:
 You can now launch it from `Menu > Utility > MyNotes`. You can launch
 it from the command line with `mynotes`.
 
-If you encounter bugs or if you have suggestions, please write me an email
-at <j_4321@protonmail.com>.
+If you encounter bugs or if you have suggestions, please open an issue
+on `GitHub <https://github.com/j4321/MyNotes/issues>`__ or write me 
+an email at <j_4321@protonmail.com>.
 

@@ -478,7 +478,7 @@ class AskYesNoCancel(Toplevel):
         self.rowconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
         self.columnconfigure(2, weight=1)
-        self.result = ""
+        self.result = None
 
         if isinstance(image, str):
             data = ICONS.get(image)

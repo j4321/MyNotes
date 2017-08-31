@@ -6,6 +6,11 @@ Changelog
 ---------
 
 
+- Version 2.2.1
+    * Fix category addition/deletion
+    * Fix latex formula insertion/edition
+    * Add more keyboard shortcuts and display accelerators in menus
+
 - Version 2.2.0
     * Add Dutch translation
     * Add note manager to delete easily notes
