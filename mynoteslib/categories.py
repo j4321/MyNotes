@@ -198,7 +198,7 @@ effect immediately and cannot be undone.") % {"category": category})
                 i = self.add_cat_button.grid_info()['row']
                 self.add_cat_button.grid_configure(row=i + 1)
                 self.cat_labels[cat] = Label(self.frame_cat,
-                                             text="%s " % cat.capitalize())
+                                             text="%s" % cat.capitalize())
                 self.cat_labels[cat].grid(row=i, column=0, sticky="e")
                 self.cat_colors[cat] = StringVar(self, _("Yellow"))
                 self.cat_menus[cat] = OptionMenu(self.frame_cat, self.cat_colors[cat],
