@@ -40,7 +40,7 @@ class Config(Toplevel):
         self.grab_set()
         self.resizable(False, False)
         self.protocol("WM_DELETE_WINDOW", self.quit)
-        self.changes = {}, {}
+        self.changes = {}, {}, False
 
         # --- style
         style = Style(self)
@@ -403,6 +403,7 @@ class Config(Toplevel):
 
         col_changes = {}
         name_changes = {}
+        new_cat = False
         for cat in self.category_settings.categories:
             new_name = self.category_settings.get_name(cat)
             if cat in CONFIG.options("Categories"):
@@ -417,10 +418,11 @@ class Config(Toplevel):
                     CONFIG.set("Categories", new_name, new_color)
 
             else:
+                new_cat = True
                 CONFIG.set("Categories", new_name,
                            COLORS[self.category_settings.get_color(cat)])
         save_config()
-        self.changes = col_changes, name_changes
+        self.changes = col_changes, name_changes, new_cat
         self.destroy()
 
     def get_changes(self):

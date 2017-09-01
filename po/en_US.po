@@ -6,8 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 2.1.1\n"
-"Report-Msgid-Bugs-To: <j_4321@protonmail.com>\n"
-"POT-Creation-Date: 2017-04-20 15:30+0200\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2017-08-31 10:52+0200\n"
 "PO-Revision-Date: 2017-04-20 15:31+0200\n"
 "Last-Translator:  <j_4321@protonmail.com>\n"
 "Language-Team: English\n"
@@ -17,121 +17,121 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: mynoteslib/constantes.py:141 mynoteslib/constantes.py:142
+#: mynoteslib/constantes.py:148 mynoteslib/constantes.py:149
 msgid "home"
 msgstr "home"
 
-#: mynoteslib/constantes.py:143
+#: mynoteslib/constantes.py:150
 msgid "office"
 msgstr "office"
 
-#: mynoteslib/constantes.py:146 mynoteslib/constantes.py:156
+#: mynoteslib/constantes.py:154 mynoteslib/constantes.py:164
 msgid "Blue"
 msgstr "Blue"
 
-#: mynoteslib/constantes.py:146
+#: mynoteslib/constantes.py:154
 msgid "Turquoise"
 msgstr "Turquoise"
 
-#: mynoteslib/constantes.py:147 mynoteslib/constantes.py:159
+#: mynoteslib/constantes.py:155 mynoteslib/constantes.py:167
 msgid "Orange"
 msgstr "Orange"
 
-#: mynoteslib/constantes.py:147 mynoteslib/constantes.py:157
+#: mynoteslib/constantes.py:155 mynoteslib/constantes.py:165
 msgid "Red"
 msgstr "Red"
 
-#: mynoteslib/constantes.py:148 mynoteslib/constantes.py:159
+#: mynoteslib/constantes.py:156 mynoteslib/constantes.py:167
 msgid "Grey"
 msgstr "Grey"
 
-#: mynoteslib/constantes.py:148 mynoteslib/constantes.py:155
+#: mynoteslib/constantes.py:156 mynoteslib/constantes.py:163
 msgid "White"
 msgstr "White"
 
-#: mynoteslib/constantes.py:149 mynoteslib/constantes.py:156
+#: mynoteslib/constantes.py:157 mynoteslib/constantes.py:164
 msgid "Green"
 msgstr "Green"
 
-#: mynoteslib/constantes.py:149 mynoteslib/constantes.py:155
+#: mynoteslib/constantes.py:157 mynoteslib/constantes.py:163
 msgid "Black"
 msgstr "Black"
 
-#: mynoteslib/constantes.py:150
+#: mynoteslib/constantes.py:158
 msgid "Purple"
 msgstr "Purple"
 
-#: mynoteslib/constantes.py:150 mynoteslib/constantes.py:157
-#: mynoteslib/categories.py:194 mynoteslib/categories.py:196
-#: mynoteslib/categories.py:199
+#: mynoteslib/constantes.py:158 mynoteslib/constantes.py:165
+#: mynoteslib/categories.py:203 mynoteslib/categories.py:205
+#: mynoteslib/categories.py:208
 msgid "Yellow"
 msgstr "Yellow"
 
-#: mynoteslib/constantes.py:151
+#: mynoteslib/constantes.py:159
 msgid "Dark Blue"
 msgstr "Dark Blue"
 
-#: mynoteslib/constantes.py:158
+#: mynoteslib/constantes.py:166
 msgid "Cyan"
 msgstr "Cyan"
 
-#: mynoteslib/constantes.py:158
+#: mynoteslib/constantes.py:166
 msgid "Magenta"
 msgstr "Magenta"
 
-#: mynoteslib/constantes.py:192
+#: mynoteslib/constantes.py:204
 msgid "Open"
 msgstr "Open"
 
-#: mynoteslib/constantes.py:235
+#: mynoteslib/constantes.py:252
 msgid "Save As"
 msgstr "Save As"
 
-#: mynoteslib/messagebox.py:188
+#: mynoteslib/messagebox.py:189
 msgid "There is a synchronization conflict. What do you want to do?"
 msgstr "There is a synchronization conflict. What do you want to do?"
 
-#: mynoteslib/messagebox.py:191
+#: mynoteslib/messagebox.py:192
 msgid "Sync Conflict"
 msgstr "Sync Conflict"
 
-#: mynoteslib/messagebox.py:204
+#: mynoteslib/messagebox.py:205
 msgid "Download notes from server"
 msgstr "Download notes from server"
 
-#: mynoteslib/messagebox.py:206
+#: mynoteslib/messagebox.py:207
 msgid "Upload local notes on server"
 msgstr "Upload local notes on server"
 
-#: mynoteslib/messagebox.py:354
+#: mynoteslib/messagebox.py:374
 msgid "Please report this bug on "
 msgstr "Please report this bug on "
 
-#: mynoteslib/messagebox.py:379 mynoteslib/messagebox.py:438
-#: mynoteslib/version_check.py:80
+#: mynoteslib/messagebox.py:399 mynoteslib/messagebox.py:461
+#: mynoteslib/version_check.py:82
 msgid "Yes"
 msgstr "Yes"
 
-#: mynoteslib/messagebox.py:380 mynoteslib/messagebox.py:438
-#: mynoteslib/version_check.py:82
+#: mynoteslib/messagebox.py:400 mynoteslib/messagebox.py:461
+#: mynoteslib/version_check.py:84
 msgid "No"
 msgstr "No"
 
-#: mynoteslib/messagebox.py:438 mynoteslib/messagebox.py:510
-#: mynoteslib/export.py:59 mynoteslib/categories.py:216
-#: mynoteslib/config.py:286
+#: mynoteslib/messagebox.py:461 mynoteslib/messagebox.py:586
+#: mynoteslib/export.py:64 mynoteslib/categories.py:225
+#: mynoteslib/config.py:300
 msgid "Cancel"
 msgstr "Cancel"
 
-#: mynoteslib/export.py:33 mynoteslib/app.py:94
+#: mynoteslib/export.py:35 mynoteslib/app.py:108
 msgid "Export"
 msgstr "Export"
 
-#: mynoteslib/export.py:42
+#: mynoteslib/export.py:45
 msgid "Select all"
 msgstr "Select all"
 
-#: mynoteslib/export.py:44
+#: mynoteslib/export.py:48
 msgid "Only visible notes"
 msgstr "Only visible notes"
 
@@ -144,19 +144,19 @@ msgstr "About MyNotes"
 msgid "MyNotes %(version)s"
 msgstr "MyNotes %(version)s"
 
-#: mynoteslib/about.py:45
+#: mynoteslib/about.py:46
 msgid "Sticky notes/post-it system tray app"
 msgstr "Sticky notes/post-it system tray app"
 
-#: mynoteslib/about.py:59 mynoteslib/about.py:85
+#: mynoteslib/about.py:67 mynoteslib/about.py:96
 msgid "License"
 msgstr "License"
 
-#: mynoteslib/about.py:61 mynoteslib/about.py:111
+#: mynoteslib/about.py:70 mynoteslib/about.py:122
 msgid "Close"
 msgstr "Close"
 
-#: mynoteslib/about.py:94
+#: mynoteslib/about.py:105
 msgid ""
 "MyNotes is free software: you can redistribute it and/or modify it under the "
 "terms of the GNU General Public License as published by the Free Software "
@@ -170,7 +170,7 @@ msgstr ""
 "version.\n"
 "\n"
 
-#: mynoteslib/about.py:96
+#: mynoteslib/about.py:107
 msgid ""
 "MyNotes is distributed in the hope that it will be useful, but WITHOUT ANY "
 "WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
@@ -184,7 +184,7 @@ msgstr ""
 "details.\n"
 "\n"
 
-#: mynoteslib/about.py:98
+#: mynoteslib/about.py:109
 msgid ""
 "You should have received a copy of the GNU General Public License along with "
 "this program. If not, see http://www.gnu.org/licenses/."
@@ -192,15 +192,15 @@ msgstr ""
 "You should have received a copy of the GNU General Public License along with "
 "this program. If not, see http://www.gnu.org/licenses/."
 
-#: mynoteslib/categories.py:50
+#: mynoteslib/categories.py:52
 msgid "Default category "
 msgstr "Default category "
 
-#: mynoteslib/categories.py:141
+#: mynoteslib/categories.py:148
 msgid "Question"
 msgstr "Question"
 
-#: mynoteslib/categories.py:142
+#: mynoteslib/categories.py:149
 #, python-format
 msgid ""
 "Do you want to delete all notes belonging to the category %(category)s? If "
@@ -213,213 +213,213 @@ msgstr ""
 "the default category. Be careful, the change will take effect immediately "
 "and cannot be undone."
 
-#: mynoteslib/categories.py:183
+#: mynoteslib/categories.py:192
 msgid "New Category"
 msgstr "New Category"
 
-#: mynoteslib/config.py:36 mynoteslib/app.py:87
+#: mynoteslib/config.py:39 mynoteslib/app.py:101
 msgid "Preferences"
 msgstr "Preferences"
 
-#: mynoteslib/config.py:69
+#: mynoteslib/config.py:72
 msgid "General"
 msgstr "General"
 
-#: mynoteslib/config.py:76
+#: mynoteslib/config.py:79
 msgid "Language"
 msgstr "Language"
 
-#: mynoteslib/config.py:96
+#: mynoteslib/config.py:104
 msgid "Default position of the notes"
 msgstr "Default position of the notes"
 
-#: mynoteslib/config.py:100 mynoteslib/sticky.py:167
+#: mynoteslib/config.py:108 mynoteslib/sticky.py:170
 msgid "Always above"
 msgstr "Always above"
 
-#: mynoteslib/config.py:102 mynoteslib/sticky.py:171
+#: mynoteslib/config.py:110 mynoteslib/sticky.py:174
 msgid "Always below"
 msgstr "Always below"
 
-#: mynoteslib/config.py:104 mynoteslib/sticky.py:175
+#: mynoteslib/config.py:112 mynoteslib/sticky.py:178
 msgid "Normal"
 msgstr "Normal"
 
-#: mynoteslib/config.py:120
+#: mynoteslib/config.py:128
 msgid "Title bar disposition"
 msgstr "Title bar disposition"
 
-#: mynoteslib/config.py:128 mynoteslib/config.py:142 mynoteslib/config.py:256
-#: mynoteslib/sticky.py:86
+#: mynoteslib/config.py:138 mynoteslib/config.py:154 mynoteslib/config.py:270
+#: mynoteslib/sticky.py:89
 msgid "Title"
 msgstr "Title"
 
-#: mynoteslib/config.py:151
+#: mynoteslib/config.py:163
 msgid "Opacity"
 msgstr "Opacity"
 
-#: mynoteslib/config.py:165
+#: mynoteslib/config.py:177
 msgid "Delete unused LaTex data"
 msgstr "Delete unused LaTex data"
 
-#: mynoteslib/config.py:171
+#: mynoteslib/config.py:183
 msgid "Font"
 msgstr "Font"
 
-#: mynoteslib/config.py:180 mynoteslib/config.py:232
+#: mynoteslib/config.py:192 mynoteslib/config.py:246
 msgid "Sample text"
 msgstr "Sample text"
 
-#: mynoteslib/config.py:209 mynoteslib/sticky.py:206
+#: mynoteslib/config.py:223 mynoteslib/sticky.py:209
 msgid "Bold"
 msgstr "Bold"
 
-#: mynoteslib/config.py:211 mynoteslib/sticky.py:207
+#: mynoteslib/config.py:225 mynoteslib/sticky.py:212
 msgid "Italic"
 msgstr "Italic"
 
-#: mynoteslib/config.py:213 mynoteslib/sticky.py:208
+#: mynoteslib/config.py:227 mynoteslib/sticky.py:215
 msgid "Underline"
 msgstr "Underline"
 
-#: mynoteslib/config.py:260 mynoteslib/sticky.py:731
+#: mynoteslib/config.py:274 mynoteslib/sticky.py:832
 msgid "Text"
 msgstr "Text"
 
-#: mynoteslib/config.py:265
+#: mynoteslib/config.py:279
 msgid "Categories"
 msgstr "Categories"
 
-#: mynoteslib/config.py:269 mynoteslib/sticky.py:225
+#: mynoteslib/config.py:283 mynoteslib/sticky.py:240
 msgid "Symbols"
 msgstr "Symbols"
 
-#: mynoteslib/config.py:277
+#: mynoteslib/config.py:291
 msgid "Available symbols"
 msgstr "Available symbols"
 
-#: mynoteslib/config.py:280
+#: mynoteslib/config.py:294
 msgid "Reset"
 msgstr "Reset"
 
-#: mynoteslib/config.py:417
+#: mynoteslib/config.py:434
 msgid "The language setting will take effect after restarting the application"
 msgstr "The language setting will take effect after restarting the application"
 
-#: mynoteslib/app.py:73
+#: mynoteslib/app.py:87
 msgid "New Note"
 msgstr "New Note"
 
-#: mynoteslib/app.py:75
+#: mynoteslib/app.py:89
 msgid "Show All"
 msgstr "Show All"
 
-#: mynoteslib/app.py:77
+#: mynoteslib/app.py:91
 msgid "Show Category"
 msgstr "Show Category"
 
-#: mynoteslib/app.py:79
+#: mynoteslib/app.py:93
 msgid "Show Note"
 msgstr "Show Note"
 
-#: mynoteslib/app.py:82
+#: mynoteslib/app.py:96
 msgid "Hide All"
 msgstr "Hide All"
 
-#: mynoteslib/app.py:84
+#: mynoteslib/app.py:98
 msgid "Hide Category"
 msgstr "Hide Category"
 
-#: mynoteslib/app.py:89
+#: mynoteslib/app.py:103
 msgid "Note Manager"
 msgstr "Note Manager"
 
-#: mynoteslib/app.py:91 mynoteslib/app.py:277
+#: mynoteslib/app.py:105 mynoteslib/app.py:299
 msgid "Backup Notes"
 msgstr "Backup Notes"
 
-#: mynoteslib/app.py:92 mynoteslib/app.py:302
+#: mynoteslib/app.py:106 mynoteslib/app.py:324
 msgid "Restore Backup"
 msgstr "Restore Backup"
 
-#: mynoteslib/app.py:95 mynoteslib/app.py:581
+#: mynoteslib/app.py:109 mynoteslib/app.py:603
 msgid "Import"
 msgstr "Import"
 
-#: mynoteslib/app.py:97
+#: mynoteslib/app.py:111
 msgid "Check for Updates"
 msgstr "Check for Updates"
 
-#: mynoteslib/app.py:99
+#: mynoteslib/app.py:113
 msgid "About"
 msgstr "About"
 
-#: mynoteslib/app.py:100
+#: mynoteslib/app.py:114
 msgid "Quit"
 msgstr "Quit"
 
-#: mynoteslib/app.py:285 mynoteslib/app.py:326 mynoteslib/app.py:328
-#: mynoteslib/app.py:572 mynoteslib/app.py:602 mynoteslib/sticky.py:774
-#: mynoteslib/sticky.py:788 mynotes.py:45 mynotes.py:55
+#: mynoteslib/app.py:307 mynoteslib/app.py:348 mynoteslib/app.py:350
+#: mynoteslib/app.py:593 mynoteslib/app.py:624 mynoteslib/sticky.py:901
+#: mynotes.py:45 mynotes.py:55
 msgid "Error"
 msgstr "Error"
 
-#: mynoteslib/app.py:285
+#: mynoteslib/app.py:307
 msgid "Backup failed."
 msgstr "Backup failed."
 
-#: mynoteslib/app.py:291
+#: mynoteslib/app.py:313
 msgid "Warning"
 msgstr "Warning"
 
-#: mynoteslib/app.py:292
+#: mynoteslib/app.py:314
 msgid "Restoring a backup will erase the current notes."
 msgstr "Restoring a backup will erase the current notes."
 
-#: mynoteslib/app.py:326
+#: mynoteslib/app.py:348
 #, python-brace-format
 msgid "The file {filename} does not exists."
 msgstr "The file {filename} does not exists."
 
-#: mynoteslib/app.py:495 mynoteslib/app.py:577
-msgid "Notes (.notes)"
-msgstr "Notes (.notes)"
-
-#: mynoteslib/app.py:496
+#: mynoteslib/app.py:518
 msgid "HTML file (.html)"
 msgstr "HTML file (.html)"
 
-#: mynoteslib/app.py:497
+#: mynoteslib/app.py:519
 msgid "Text file (.txt)"
 msgstr "Text file (.txt)"
 
-#: mynoteslib/app.py:498 mynoteslib/app.py:578
+#: mynoteslib/app.py:520 mynoteslib/app.py:600
 msgid "All files"
 msgstr "All files"
 
-#: mynoteslib/app.py:501
+#: mynoteslib/app.py:523
 msgid "Export Notes As"
 msgstr "Export Notes As"
 
-#: mynoteslib/app.py:515 mynoteslib/app.py:543
+#: mynoteslib/app.py:536 mynoteslib/app.py:563
 #, python-brace-format
 msgid "Category: {category}"
 msgstr "Category: {category}"
 
-#: mynoteslib/app.py:601
+#: mynoteslib/app.py:599
+msgid "Notes (.notes)"
+msgstr "Notes (.notes)"
+
+#: mynoteslib/app.py:623
 #, python-brace-format
 msgid "The file {file} is not a valid .notes file."
 msgstr "The file {file} is not a valid .notes file."
 
-#: mynoteslib/notedelete.py:34 mynoteslib/sticky.py:195
+#: mynoteslib/notemanager.py:36 mynoteslib/sticky.py:198
 msgid "Delete"
 msgstr "Delete"
 
-#: mynoteslib/version_check.py:62
+#: mynoteslib/version_check.py:64
 msgid "Update"
 msgstr "Update"
 
-#: mynoteslib/version_check.py:75
+#: mynoteslib/version_check.py:77
 msgid ""
 "A new version of MyNotes is available.\n"
 "Do you want to download it?"
@@ -427,103 +427,103 @@ msgstr ""
 "A new version of MyNotes is available.\n"
 "Do you want to download it?"
 
-#: mynoteslib/version_check.py:85
+#: mynoteslib/version_check.py:87
 msgid "Check for updates on startup."
 msgstr "Check for updates on startup."
 
-#: mynoteslib/sticky.py:182
+#: mynoteslib/sticky.py:185
 msgid "Note"
 msgstr "Note"
 
-#: mynoteslib/sticky.py:185
+#: mynoteslib/sticky.py:188
 msgid "List"
 msgstr "List"
 
-#: mynoteslib/sticky.py:188
+#: mynoteslib/sticky.py:191
 msgid "ToDo List"
 msgstr "ToDo List"
 
-#: mynoteslib/sticky.py:191
+#: mynoteslib/sticky.py:194
 msgid "Enumeration"
 msgstr "Enumeration"
 
-#: mynoteslib/sticky.py:196
+#: mynoteslib/sticky.py:199
 msgid "Category"
 msgstr "Category"
 
-#: mynoteslib/sticky.py:197 mynoteslib/sticky.py:235
+#: mynoteslib/sticky.py:200 mynoteslib/sticky.py:255
 msgid "Color"
 msgstr "Color"
 
-#: mynoteslib/sticky.py:198 mynoteslib/sticky.py:404
+#: mynoteslib/sticky.py:201 mynoteslib/sticky.py:448
 msgid "Lock"
 msgstr "Lock"
 
-#: mynoteslib/sticky.py:199
+#: mynoteslib/sticky.py:202
 msgid "Position"
 msgstr "Position"
 
-#: mynoteslib/sticky.py:200
+#: mynoteslib/sticky.py:203
 msgid "Mode"
 msgstr "Mode"
 
-#: mynoteslib/sticky.py:209
+#: mynoteslib/sticky.py:218
 msgid "Overstrike"
 msgstr "Overstrike"
 
-#: mynoteslib/sticky.py:212
+#: mynoteslib/sticky.py:222
 msgid "Left"
 msgstr "Left"
 
-#: mynoteslib/sticky.py:213
+#: mynoteslib/sticky.py:225
 msgid "Right"
 msgstr "Right"
 
-#: mynoteslib/sticky.py:214
+#: mynoteslib/sticky.py:228
 msgid "Center"
 msgstr "Center"
 
-#: mynoteslib/sticky.py:226
+#: mynoteslib/sticky.py:242
 msgid "Checkbox"
 msgstr "Checkbox"
 
-#: mynoteslib/sticky.py:227
+#: mynoteslib/sticky.py:244
 msgid "Image"
 msgstr "Image"
 
-#: mynoteslib/sticky.py:228
+#: mynoteslib/sticky.py:245
 msgid "Date"
 msgstr "Date"
 
-#: mynoteslib/sticky.py:229 mynoteslib/sticky.py:727 mynoteslib/sticky.py:732
+#: mynoteslib/sticky.py:247 mynoteslib/sticky.py:824 mynoteslib/sticky.py:833
 msgid "Link"
 msgstr "Link"
 
-#: mynoteslib/sticky.py:233
+#: mynoteslib/sticky.py:253
 msgid "Style"
 msgstr "Style"
 
-#: mynoteslib/sticky.py:234
+#: mynoteslib/sticky.py:254
 msgid "Alignment"
 msgstr "Alignment"
 
-#: mynoteslib/sticky.py:236 mynoteslib/symbols.py:69
+#: mynoteslib/sticky.py:256 mynoteslib/symbols.py:68
 msgid "Insert"
 msgstr "Insert"
 
-#: mynoteslib/sticky.py:380
+#: mynoteslib/sticky.py:424
 msgid "Confirmation"
 msgstr "Confirmation"
 
-#: mynoteslib/sticky.py:380
+#: mynoteslib/sticky.py:424
 msgid "Delete the note?"
 msgstr "Delete the note?"
 
-#: mynoteslib/sticky.py:419
+#: mynoteslib/sticky.py:463
 msgid "Unlock"
 msgstr "Unlock"
 
-#: mynoteslib/sticky.py:813
+#: mynoteslib/sticky.py:936
 msgid "Select PNG image"
 msgstr "Select PNG image"
 

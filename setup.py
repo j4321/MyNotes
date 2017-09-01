@@ -15,7 +15,7 @@ data_files = [("share/pixmaps", ["mynotes.svg"]),
               ("share/applications", ["mynotes.desktop"])]
 
 setup(name="mynotes",
-      version="2.2.0",
+      version="2.2.1",
       description="Post-it system tray app",
       keywords=["post-it", "sticky", "notes", "tkinter"],
       author="Juliette Monsel",
