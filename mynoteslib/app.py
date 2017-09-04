@@ -164,6 +164,10 @@ class App(Tk):
         if CONFIG.getboolean("General", "check_update"):
             UpdateChecker(self)
 
+    def report_callback_exception(self, *args):
+        err = "".join(traceback.format_exception(*args))
+        showerror(_("Error"), str(args[1]), err, True)
+
     # --- class bindings methods
     def highlight_checkboxes(self, event):
         txt = event.widget
