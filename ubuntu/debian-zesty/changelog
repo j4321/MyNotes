@@ -1,0 +1,17 @@
+mynotes (2.2.1-1) unstable; urgency=low
+
+  * New upstream version
+
+ -- Juliette Monsel <j_4321@protonmail.com>  Tue, 05 Sep 2017 22:18:15 +0200
+ 
+mynotes (2.2.0-1) unstable; urgency=low
+
+  * New upstream version
+
+ -- Juliette Monsel <j_4321@protonmail.com>  Sun, 16 Jul 2017 19:44:51 +0200
+
+mynotes (2.1.0-1) unstable; urgency=low
+
+  * Initial .deb package
+
+ -- Juliette Monsel <j_4321@protonmail.com>  Tue, 18 Apr 2017 19:41:36 +0200

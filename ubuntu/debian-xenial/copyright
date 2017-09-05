@@ -1,0 +1,46 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: mynotes
+Source: https://sourceforge.net/projects/my-notes
+
+Files: debian/*
+Copyright: 
+ 2016-2017 Juliette Monsel <j_4321@protonmail.com>
+License: GPL-3+
+
+Files: mynoteslib/tktray.py
+Copyright: 
+  2010 Michael Lange <klappnase@web.de>
+  2016 Juliette Monsel <j_4321@protonmail.com>
+License: GPL-3+
+
+Files: mynoteslib/autoscrollbar.py
+Copyright: 
+  1998 Fredrik Lundh copyright <http://effbot.org/zone/tkinter-autoscrollbar.htm>
+  2016 Juliette Monsel <j_4321@protonmail.com>
+License: GPL-3+
+
+Files: mynoteslib/messagebox.py
+Copyright: 
+  2009 Pat Thoyts <patthoyts@users.sourceforge.net>
+  2016 Juliette Monsel <j_4321@protonmail.com>
+License: GPL-3+
+
+Files: mynoteslib/images/*
+Copyright: 
+  2007-2013 elementary LLC <https://github.com/elementary>
+  2016 Juliette Monsel <j_4321@protonmail.com>
+License: GPL-3+
+
+Files: *
+Copyright: 
+ 2016-2017 Juliette Monsel <j_4321@protonmail.com>
+License: GPL-3+
+
+License: GPL-3+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ On Debian systems, the complete text of version 3 of the GNU General
+ Public License can be found in '/usr/share/common-licenses/GPL-3'.
