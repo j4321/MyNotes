@@ -11,6 +11,7 @@ Changelog
     * Fix latex formula insertion/edition
     * Add more keyboard shortcuts and display accelerators in menus
     * Show error message for exceptions caught inside the mainloop
+    * Restore compatibility with tk version <= 8.6.6
 
 - Version 2.2.0
     * Add Dutch translation
