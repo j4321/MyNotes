@@ -116,15 +116,34 @@ class Sticky(Toplevel):
         self.txt.tag_configure("bold", font="%s bold" % font_text)
         self.txt.tag_configure("italic", font="%s italic" % font_text)
         self.txt.tag_configure("bold-italic", font="%s bold italic" % font_text)
-        self.txt.tag_configure("underline", underline=True,
-                               selectforeground="white")
-        self.txt.tag_configure("overstrike", overstrike=True,
-                               selectforeground="white")
+
+        try:    # only >= tk8.6.6 support selectforeground
+            self.txt.tag_configure("underline", underline=True,
+                                   selectforeground="white")
+            self.txt.tag_configure("overstrike", overstrike=True,
+                                   selectforeground="white")
+            self.txt.tag_configure("link", foreground="blue", underline=True,
+                                   selectforeground="white")
+            for coul in TEXT_COLORS.values():
+                self.txt.tag_configure(coul, foreground=coul,
+                                       selectforeground="white")
+                self.txt.tag_configure(coul + "-underline", foreground=coul,
+                                       selectforeground="white", underline=True)
+                self.txt.tag_configure(coul + "-overstrike", foreground=coul,
+                                       overstrike=True, selectforeground="white")
+        except TclError:
+            self.txt.tag_configure("underline", underline=True)
+            self.txt.tag_configure("overstrike", overstrike=True)
+            self.txt.tag_configure("link", foreground="blue", underline=True)
+            for coul in TEXT_COLORS.values():
+                self.txt.tag_configure(coul, foreground=coul)
+                self.txt.tag_configure(coul + "-underline", foreground=coul,
+                                       underline=True)
+                self.txt.tag_configure(coul + "-overstrike", foreground=coul,
+                                       overstrike=True)
         self.txt.tag_configure("center", justify="center")
         self.txt.tag_configure("left", justify="left")
         self.txt.tag_configure("right", justify="right")
-        self.txt.tag_configure("link", foreground="blue", underline=True,
-                               selectforeground="white")
         self.txt.tag_configure("list", lmargin1=0, lmargin2=21,
                                tabs=(10, 'right', 21, 'left'))
         self.txt.tag_configure("todolist", lmargin1=0, lmargin2=21,
@@ -133,13 +152,7 @@ class Sticky(Toplevel):
         self.txt.tag_configure("enum", lmargin1=0, lmargin2=margin + 5,
                                tabs=(margin, 'right', margin + 5, 'left'))
 
-        for coul in TEXT_COLORS.values():
-            self.txt.tag_configure(coul, foreground=coul,
-                                   selectforeground="white")
-            self.txt.tag_configure(coul + "-underline", foreground=coul,
-                                   selectforeground="white", underline=True)
-            self.txt.tag_configure(coul + "-overstrike", foreground=coul,
-                                   overstrike=True, selectforeground="white")
+
         # --- menus
         # --- * menu on title
         self.menu = Menu(self, tearoff=False)
