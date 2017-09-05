@@ -22,7 +22,9 @@ Main
 """
 
 
-import os, sys, traceback
+import os
+import sys
+import traceback
 from tkinter import Tk
 from tkinter.ttk import Style
 from mynoteslib.constantes import save_config
@@ -60,4 +62,3 @@ finally:
         os.unlink(pidfile)
     except Exception:
         pass
-

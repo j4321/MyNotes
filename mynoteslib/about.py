@@ -23,8 +23,8 @@ About dialog
 from webbrowser import open as webOpen
 from tkinter import Text, Toplevel, PhotoImage
 from tkinter.ttk import Button, Label, Style
-from mynoteslib.constantes import IM_ICON_48, VERSION
-
+from mynoteslib.constantes import IM_ICON_48
+from mynoteslib.version import __version__
 
 class About(Toplevel):
     """About dialog."""
@@ -40,7 +40,7 @@ class About(Toplevel):
         Label(self, image=self.image).grid(row=0, columnspan=2, pady=10)
 
         Label(self,
-              text=_("MyNotes %(version)s") % ({"version": VERSION})).grid(row=1,
+              text=_("MyNotes %(version)s") % ({"version": __version__})).grid(row=1,
                                                                            columnspan=2)
         Label(self,
               text=_("Sticky notes/post-it system tray app")).grid(row=2,

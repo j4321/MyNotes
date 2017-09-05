@@ -10,6 +10,7 @@ Changelog
     * Fix category addition/deletion
     * Fix latex formula insertion/edition
     * Add more keyboard shortcuts and display accelerators in menus
+    * Show error message for exceptions caught inside the mainloop
 
 - Version 2.2.0
     * Add Dutch translation

@@ -14,8 +14,11 @@ data_files = [("share/pixmaps", ["mynotes.svg"]),
               ("share/locale/fr_FR/LC_MESSAGES/", ["mynoteslib/locale/fr_FR/LC_MESSAGES/MyNotes.mo"]),
               ("share/applications", ["mynotes.desktop"])]
 
+with open("mynoteslib/version.py") as file:
+    exec(file.read())
+
 setup(name="mynotes",
-      version="2.2.1",
+      version=__version__,
       description="Post-it system tray app",
       keywords=["post-it", "sticky", "notes", "tkinter"],
       author="Juliette Monsel",
