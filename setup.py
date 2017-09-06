@@ -5,14 +5,14 @@ from setuptools import setup
 
 import os
 images = [os.path.join("mynoteslib/images/", img) for img in os.listdir("mynoteslib/images/")]
-data_files = [("share/pixmaps", ["mynotes.svg"]),
-              ("share/doc/mynotes", ["README.rst", "changelog"]),
-              ("share/man/man1", ["mynotes.1.gz"]),
-              ("share/mynotes/images", images),
-              ("share/locale/en_US/LC_MESSAGES/", ["mynoteslib/locale/en_US/LC_MESSAGES/MyNotes.mo"]),
-              ("share/locale/nl_NL/LC_MESSAGES/", ["mynoteslib/locale/nl_NL/LC_MESSAGES/MyNotes.mo"]),
-              ("share/locale/fr_FR/LC_MESSAGES/", ["mynoteslib/locale/fr_FR/LC_MESSAGES/MyNotes.mo"]),
-              ("share/applications", ["mynotes.desktop"])]
+data_files = [("/usr/share/pixmaps", ["mynotes.svg"]),
+              ("/usr/share/doc/mynotes", ["README.rst", "changelog"]),
+              ("/usr/share/man/man1", ["mynotes.1.gz"]),
+              ("/usr/share/mynotes/images", images),
+              ("/usr/share/locale/en_US/LC_MESSAGES/", ["mynoteslib/locale/en_US/LC_MESSAGES/MyNotes.mo"]),
+              ("/usr/share/locale/nl_NL/LC_MESSAGES/", ["mynoteslib/locale/nl_NL/LC_MESSAGES/MyNotes.mo"]),
+              ("/usr/share/locale/fr_FR/LC_MESSAGES/", ["mynoteslib/locale/fr_FR/LC_MESSAGES/MyNotes.mo"]),
+              ("/usr/share/applications", ["mynotes.desktop"])]
 
 with open("mynoteslib/version.py") as file:
     exec(file.read())
