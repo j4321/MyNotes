@@ -30,6 +30,7 @@ from tkinter.ttk import Style
 from mynoteslib.constantes import save_config
 from mynoteslib.app import App
 from mynoteslib.messagebox import showerror
+import logging
 
 # vérifie si mynotes est déjà lancé
 pid = str(os.getpid())
@@ -60,5 +61,6 @@ finally:
         app.save()
         save_config()
         os.unlink(pidfile)
+        logging.shutdown()
     except Exception:
         pass
