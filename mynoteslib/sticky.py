@@ -862,7 +862,7 @@ class Sticky(Toplevel):
         text.grid(row=1, column=1, sticky="ew", padx=4, pady=4)
         Button(top, image=self.im_clip, padding=0,
                command=local_file).grid(row=0, column=2, padx=4, pady=4)
-        Button(top, text="Ok", command=ok).grid(row=2, columnspan=2, padx=4, pady=4)
+        Button(top, text="Ok", command=ok).grid(row=2, columnspan=3, padx=4, pady=4)
 
         link.focus_set()
         text.bind("<Return>", ok)
