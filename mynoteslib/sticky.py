@@ -864,7 +864,7 @@ class Sticky(Toplevel):
                command=local_file).grid(row=0, column=2, padx=4, pady=4)
         Button(top, text="Ok", command=ok).grid(row=2, columnspan=2, padx=4, pady=4)
 
-        text.focus_set()
+        link.focus_set()
         text.bind("<Return>", ok)
         link.bind("<Return>", ok)
 
