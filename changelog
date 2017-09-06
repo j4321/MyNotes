@@ -5,13 +5,13 @@ Copyright 2016 Juliette Monsel <j_4321@protonmail.com>
 Changelog
 ---------
 
-
 - Version 2.2.1
     * Fix category addition/deletion
     * Fix latex formula insertion/edition
     * Add more keyboard shortcuts and display accelerators in menus
     * Show error message for exceptions caught inside the mainloop
     * Restore compatibility with tk version <= 8.6.6
+    * Make it clear that links can point to either a file or an URL
 
 - Version 2.2.0
     * Add Dutch translation
@@ -55,7 +55,6 @@ Changelog
     * Improve error handling
     * Improve error messagebox: display full traceback + report message
     * Add links to project pages in About dialog
-
 
 - Version 2.0.3
     * Correct bug: wrong default category in default config file
