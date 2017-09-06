@@ -28,9 +28,10 @@ from tkinter.font import Font
 import os
 import re
 import ewmh
+from subprocess import run
 from time import strftime
 from mynoteslib.constantes import TEXT_COLORS, askopenfilename, open_url
-from mynoteslib.constantes import PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK
+from mynoteslib.constantes import PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK, IM_CLIP
 from mynoteslib.constantes import sorting, text_ranges, math_to_image
 from mynoteslib.symbols import pick_symbol
 from mynoteslib.messagebox import showerror, askokcancel
@@ -56,8 +57,11 @@ class Sticky(Toplevel):
         self.images = []
         self.links = {}
         self.links_click_id = {}  # delay click effect to avoid triggering <1> with <Double-1>
+        self.files = {}
+        self.files_click_id = {}  # delay click effect to avoid triggering <1> with <Double-1>
         self.latex = {}
         self.nb_links = 0
+        self.nb_files = 0
         self.title('mynotes%s' % key)
         self.attributes("-type", "splash")
         self.attributes("-alpha", CONFIG.getint("General", "opacity")/100)
@@ -99,6 +103,7 @@ class Sticky(Toplevel):
         self.roll = Label(self, image="img_roll", style=self.id + ".TLabel")
         self.close = Label(self, image="img_close", style=self.id + ".TLabel")
         self.im_lock = PhotoImage(master=self, file=IM_LOCK)
+        self.im_clip = PhotoImage(master=self, file=IM_CLIP)
         self.cadenas = Label(self, style=self.id + ".TLabel")
         # corner grip
         self.corner = Sizegrip(self, style=self.id + ".TSizegrip")
@@ -124,6 +129,8 @@ class Sticky(Toplevel):
                                    selectforeground="white")
             self.txt.tag_configure("link", foreground="blue", underline=True,
                                    selectforeground="white")
+            self.txt.tag_configure("file", foreground="blue", underline=True,
+                                   selectforeground="white")
             for coul in TEXT_COLORS.values():
                 self.txt.tag_configure(coul, foreground=coul,
                                        selectforeground="white")
@@ -135,6 +142,7 @@ class Sticky(Toplevel):
             self.txt.tag_configure("underline", underline=True)
             self.txt.tag_configure("overstrike", overstrike=True)
             self.txt.tag_configure("link", foreground="blue", underline=True)
+            self.txt.tag_configure("file", foreground="blue", underline=True)
             for coul in TEXT_COLORS.values():
                 self.txt.tag_configure(coul, foreground=coul)
                 self.txt.tag_configure(coul + "-underline", foreground=coul,
@@ -783,8 +791,16 @@ class Sticky(Toplevel):
             self.title_label.grid_configure(row=0, column=2, sticky="ew", pady=(1,0))
 
     # --- Text edition
+    # ---* --Link
     def add_link(self, link_nb=None):
-        """Insert link in note."""
+        """Insert link (URL or local file) in note."""
+
+        def local_file():
+            d, f = os.path.split(link.get())
+            file = askopenfilename("", [], d, initialfile=f)
+            if file:
+                link.delete(0, 'end')
+                link.insert(0, file)
 
         def ok(eveny=None):
             lien = link.get()
@@ -807,8 +823,6 @@ class Sticky(Toplevel):
 
                 tags = self.txt.tag_names(index) + ("link", lid)
                 self.txt.insert(index, txt, tags)
-                if not lien[:4] == "http":
-                    lien = "http://" + lien
                 self.links[lnb] = lien
                 self.txt.tag_bind(lid, "<Button-1>", lambda e: self.open_link(lnb))
                 self.txt.tag_bind(lid, "<Double-Button-1>", lambda e: self.edit_link(lnb))
@@ -842,10 +856,12 @@ class Sticky(Toplevel):
         text.icursor("end")
         link.insert(0, link_txt)
         link.icursor("end")
-        Label(top, text=_("Text")).grid(row=0, column=0, sticky="e", padx=4, pady=4)
-        Label(top, text=_("Link")).grid(row=1, column=0, sticky="e", padx=4, pady=4)
-        text.grid(row=0, column=1, sticky="ew", padx=4, pady=4)
-        link.grid(row=1, column=1, sticky="ew", padx=4, pady=4)
+        Label(top, text=_("URL or file")).grid(row=0, column=0, sticky="e", padx=4, pady=4)
+        Label(top, text=_("Text")).grid(row=1, column=0, sticky="e", padx=4, pady=4)
+        link.grid(row=0, column=1, sticky="ew", padx=4, pady=4)
+        text.grid(row=1, column=1, sticky="ew", padx=4, pady=4)
+        Button(top, image=self.im_clip, padding=0,
+               command=local_file).grid(row=0, column=2, padx=4, pady=4)
         Button(top, text="Ok", command=ok).grid(row=2, columnspan=2, padx=4, pady=4)
 
         text.focus_set()
@@ -863,6 +879,7 @@ class Sticky(Toplevel):
         self.after_cancel(self.links_click_id[link_nb])
         self.add_link(link_nb)
 
+    # ---* --Add other objects
     def add_checkbox(self, event=None):
         """Insert checkbox in note."""
         ch = Checkbutton(self.txt, takefocus=False,
@@ -963,6 +980,7 @@ class Sticky(Toplevel):
                               CONFIG.get("General", "symbols"))
         self.txt.insert("insert", symbols)
 
+    # ---* --Text style
     def toggle_text_style(self, style):
         """Toggle the style of the selected text."""
         if self.txt.tag_ranges("sel"):
