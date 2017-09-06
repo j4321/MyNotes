@@ -6,6 +6,7 @@ Changelog
 ---------
 
 - Version 2.2.1
+    * Fix setup.py so that install works
     * Fix category addition/deletion
     * Fix latex formula insertion/edition
     * Add more keyboard shortcuts and display accelerators in menus
