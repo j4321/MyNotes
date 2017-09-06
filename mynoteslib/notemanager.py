@@ -96,8 +96,8 @@ class Manager(Toplevel):
         for txt in self.texts.values():
             txt.configure(state='disabled')
         self.geometry('410x450')
-        self.bind_all("<Button-4>", lambda e: self.scroll(-1))
-        self.bind_all("<Button-5>", lambda e: self.scroll(1))
+        self.bind("<Button-4>", lambda e: self.scroll(-1))
+        self.bind("<Button-5>", lambda e: self.scroll(1))
 
     def delete_note(self, note_id):
         self.master.delete_note(note_id)
