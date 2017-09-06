@@ -78,6 +78,7 @@ IM_ROLL_ACTIVE = os.path.join(PATH_IMAGES, "roll_active.png")
 IM_LOCK = os.path.join(PATH_IMAGES, "verr.png")
 IM_PLUS = os.path.join(PATH_IMAGES, "plus.png")
 IM_MOINS = os.path.join(PATH_IMAGES, "moins.png")
+IM_CLIP = os.path.join(PATH_IMAGES, "clip.png")
 
 
 # --- config file
@@ -190,7 +191,7 @@ for path in paths:
         ZENITY = True
 
 try:
-    import tkFileBrowser as tkfb
+    import tkfilebrowser as tkfb
 except ImportError:
     tkfb = False
     from tkinter import filedialog
