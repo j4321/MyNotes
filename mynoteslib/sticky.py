@@ -955,6 +955,26 @@ class Sticky(Toplevel):
         text.bind('<Return>', ok)
         text.focus_set()
 
+    def create_latex(self, latex, index):
+        l = [int(os.path.splitext(f)[0]) for f in os.listdir(PATH_LATEX)]
+        l.sort()
+        if l:
+            i = l[-1] + 1
+        else:
+            i = 0
+        img = "%i.png" % i
+        self.latex[img] = latex
+        self.txt.tag_bind(img, '<Double-Button-1>',
+                          lambda e: self.add_latex(img))
+        im = os.path.join(PATH_LATEX, img)
+        math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
+        self.images.append(PhotoImage(file=im, master=self))
+        self.txt.image_create(index,
+                              align='bottom',
+                              image=self.images[-1],
+                              name=im)
+        self.txt.tag_add(img, index)
+
     def add_image(self, event=None):
         """Insert image in note."""
         fichier = askopenfilename(defaultextension=".png",

@@ -40,8 +40,7 @@ from mynoteslib.notemanager import Manager
 from mynoteslib.version_check import UpdateChecker
 from mynoteslib.messagebox import showerror, askokcancel
 import ewmh
-# TODO: Handle latex formulas copy
-# TODO: Checkboxes copy
+# TODO: Checkbox copy
 
 
 class App(Tk):
@@ -200,11 +199,16 @@ class App(Tk):
                 ind = cst.sorting(i)
                 if ind >= deb and ind < fin:
                     name = n.split('#')[0]
+                    key = os.path.split(name)[1]
+                    latex = txt.master.latex.get(key, '')
                     im = txt.image_cget(i, 'image')
-                    tags = txt.tag_names(i)
-                    img.append((im, name, tags))
+                    tags = list(txt.tag_names(i))
+                    if latex:
+                        tags.remove(key)
+                    img.append((im, name, tags, latex))
                     img_indexes.append(i)
                     obj_indexes.append(i)
+                    obj_indexes.append('%i.%i' % (ind[0], ind[1] + 1))
             for name in txt.window_names():
                 i = str(txt.index(name))
                 ind = cst.sorting(i)
@@ -214,7 +218,6 @@ class App(Tk):
                     chb_indexes.append(i)
                     obj_indexes.append(i)
                     obj_indexes.append('%i.%i' % (ind[0], ind[1] + 1))
-            chb_indexes.sort(key=cst.sorting)
             obj_indexes.sort(key=cst.sorting)
 
             self.clipboard.clear()
@@ -229,7 +232,7 @@ class App(Tk):
                     self.img_clipboard.append(img.pop(0))
                 elif j in chb_indexes:
                     self.clipboard.append(Checkbutton)
-                    self.img_clipboard.append(chb.pop(0))
+                    self.chb_clipboard.append(chb.pop(0))
 
     def cut_text(self, event):
         self.copy_text(event)
@@ -237,32 +240,38 @@ class App(Tk):
 
     def paste_text(self, event):
         txt = event.widget
-        if len(self.clipboard) == 1 and not self.img_clipboard:
+        if len(self.clipboard) == 1 and (not self.img_clipboard or not self.chb_clipboard):
             txt.insert('insert', self.clipboard[0])
-        elif self.clipboard and self.img_clipboard:
+        elif self.chb_clipboard or self.img_clipboard:
             i_img = 0
             i_chb = 0
             for c in self.clipboard:
                 if c is PhotoImage:
                     index = txt.index('insert')
-                    img, name, tags = self.img_clipboard[i_img]
-                    txt.image_create(index,
-                                     align='bottom',
-                                     image=img,
-                                     name=name)
+                    img, name, tags, latex = self.img_clipboard[i_img]
+                    if latex and cst.LATEX:
+                        txt.master.create_latex(latex, index)
+                    else:
+                        txt.image_create(index,
+                                         align='bottom',
+                                         image=img,
+                                         name=name)
                     for tag in tags:
                         txt.tag_add(tag, index)
                     i_img += 1
                 elif c is Checkbutton:
                     index = txt.index('insert')
-                    state, tags = self.img_clipboard[i_chb]
+                    state, tags = self.chb_clipboard[i_chb]
                     ch = Checkbutton(txt, takefocus=False, style='sel.TCheckbutton')
+                    ch.state(state)
                     txt.window_create(index, window=ch)
                     for tag in tags:
                         txt.tag_add(tag, index)
                     i_chb += 1
                 else:
                     txt.insert('insert', c)
+                txt.tag_remove('sel', '1.0', 'end')
+                self.highlight_checkboxes(event)
 
     def highlight_checkboxes(self, event):
         txt = event.widget
