@@ -30,7 +30,7 @@ from shutil import copy
 import pickle
 from mynoteslib import tktray
 from mynoteslib.constantes import CONFIG, PATH_DATA, PATH_DATA_BACKUP, LOCAL_PATH
-from mynoteslib.constantes import backup, asksaveasfilename, askopenfilename
+from mynoteslib.constantes import backup, asksaveasfilename, askopenfilename, text_ranges
 import mynoteslib.constantes as cst
 from mynoteslib.config import Config
 from mynoteslib.export import Export
@@ -40,6 +40,8 @@ from mynoteslib.notemanager import Manager
 from mynoteslib.version_check import UpdateChecker
 from mynoteslib.messagebox import showerror, askokcancel
 import ewmh
+# TODO: Handle latex formulas copy
+# TODO: Checkboxes copy
 
 
 class App(Tk):
@@ -77,6 +79,11 @@ class App(Tk):
 
         self.protocol("WM_DELETE_WINDOW", self.quit)
         self.icon = tktray.Icon(self, docked=True)
+
+        # --- Clipboards
+        self.clipboard = []
+        self.img_clipboard = []
+        self.chb_clipboard = []
 
         # --- Menu
         self.menu_notes = Menu(self.icon.menu, tearoff=False)
@@ -149,6 +156,13 @@ class App(Tk):
         # unbind Ctrl+I and Ctrl+B
         self.bind_class('Text', '<Control-i>', lambda e: None)
         self.bind_class('Text', '<Control-b>', lambda e: None)
+        self.bind_class('Text', '<Control-d>', lambda e: None)
+        self.bind_class('Text', '<Control-o>', lambda e: None)
+        self.bind_class('Text', '<Control-h>', lambda e: None)
+        self.bind_class('Text', '<Control-t>', lambda e: None)
+        self.bind_class('Text', '<Control-x>', self.cut_text)
+        self.bind_class('Text', '<Control-c>', self.copy_text)
+        self.bind_class('Text', '<Control-v>', self.paste_text)
         # highlight checkboxes when inside text selection
         self.bind_class("Text", "<ButtonPress-1>", self.highlight_checkboxes, True)
         self.bind_class("Text", "<ButtonRelease-1>", self.highlight_checkboxes, True)
@@ -169,6 +183,87 @@ class App(Tk):
         showerror(_("Error"), str(args[1]), err, True)
 
     # --- class bindings methods
+    def copy_text(self, event):
+        txt = event.widget
+        sel = txt.tag_ranges('sel')
+        if sel:
+            deb = cst.sorting(str(sel[0]))
+            fin = cst.sorting(str(sel[1]))
+            txt.clipboard_append(txt.get(sel[0], sel[1]))
+            img = []
+            chb = []
+            img_indexes = []
+            chb_indexes = []
+            obj_indexes = []
+            for n in txt.image_names():
+                i = str(txt.index(n))
+                ind = cst.sorting(i)
+                if ind >= deb and ind < fin:
+                    name = n.split('#')[0]
+                    im = txt.image_cget(i, 'image')
+                    tags = txt.tag_names(i)
+                    img.append((im, name, tags))
+                    img_indexes.append(i)
+                    obj_indexes.append(i)
+            for name in txt.window_names():
+                i = str(txt.index(name))
+                ind = cst.sorting(i)
+                if ind >= deb and ind < fin:
+                    ch = txt.children[name.split(".")[-1]]
+                    chb.append((ch.state(), txt.tag_names(i)))
+                    chb_indexes.append(i)
+                    obj_indexes.append(i)
+                    obj_indexes.append('%i.%i' % (ind[0], ind[1] + 1))
+            chb_indexes.sort(key=cst.sorting)
+            obj_indexes.sort(key=cst.sorting)
+
+            self.clipboard.clear()
+            self.img_clipboard.clear()
+            self.chb_clipboard.clear()
+            obj_indexes.insert(0, sel[0])
+            obj_indexes.append(sel[1])
+            for i, j in zip(obj_indexes[::2], obj_indexes[1::2]):
+                self.clipboard.append(txt.get(i, j))
+                if j in img_indexes:
+                    self.clipboard.append(PhotoImage)
+                    self.img_clipboard.append(img.pop(0))
+                elif j in chb_indexes:
+                    self.clipboard.append(Checkbutton)
+                    self.img_clipboard.append(chb.pop(0))
+
+    def cut_text(self, event):
+        self.copy_text(event)
+        event.widget.delete('sel.first', 'sel.last')
+
+    def paste_text(self, event):
+        txt = event.widget
+        if len(self.clipboard) == 1 and not self.img_clipboard:
+            txt.insert('insert', self.clipboard[0])
+        elif self.clipboard and self.img_clipboard:
+            i_img = 0
+            i_chb = 0
+            for c in self.clipboard:
+                if c is PhotoImage:
+                    index = txt.index('insert')
+                    img, name, tags = self.img_clipboard[i_img]
+                    txt.image_create(index,
+                                     align='bottom',
+                                     image=img,
+                                     name=name)
+                    for tag in tags:
+                        txt.tag_add(tag, index)
+                    i_img += 1
+                elif c is Checkbutton:
+                    index = txt.index('insert')
+                    state, tags = self.img_clipboard[i_chb]
+                    ch = Checkbutton(txt, takefocus=False, style='sel.TCheckbutton')
+                    txt.window_create(index, window=ch)
+                    for tag in tags:
+                        txt.tag_add(tag, index)
+                    i_chb += 1
+                else:
+                    txt.insert('insert', c)
+
     def highlight_checkboxes(self, event):
         txt = event.widget
         try:
@@ -259,6 +354,7 @@ class App(Tk):
         else:
             event.widget.insert("insert", "\n")
 
+    # --- Other methods
     def make_notes_sticky(self):
         for w in self.ewmh.getClientList():
             if w.get_wm_name()[:7] == 'mynotes':

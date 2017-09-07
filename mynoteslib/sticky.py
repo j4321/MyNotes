@@ -301,6 +301,7 @@ class Sticky(Toplevel):
                                           image=self.images[-1],
                                           align='bottom',
                                           name=val)
+
         # restore tags
         for tag, indices in kwargs.get("tags", {}).items():
             if indices:
@@ -398,14 +399,10 @@ class Sticky(Toplevel):
         self.txt.bind('<Control-r>', lambda e: self.set_align('right'))
         self.txt.bind('<Control-l>', lambda e: self.set_align('left'))
         self.txt.bind('<Control-s>', lambda e: self.add_symbols())
-        self.txt.bind_class('Text','<Control-d>', lambda e: None)
         self.txt.bind('<Control-d>', self.add_date)
-        self.txt.bind_class('Text','<Control-o>', lambda e: None)
         self.txt.bind('<Control-o>', self.add_checkbox)
-        self.txt.bind_class('Text','<Control-h>', lambda e: None)
         self.txt.bind('<Control-h>', lambda e: self.add_link())
         if LATEX:
-            self.txt.bind_class('Text', '<Control-t>', lambda e: None)
             self.txt.bind('<Control-t>', lambda e: self.add_latex())
 #        self.txt.bind('<Control-i>', self.add_image)
 
@@ -884,7 +881,8 @@ class Sticky(Toplevel):
         """Insert checkbox in note."""
         ch = Checkbutton(self.txt, takefocus=False,
                          style=self.id + ".TCheckbutton")
-        self.txt.window_create("insert", window=ch)
+        index = self.txt.index("insert")
+        self.txt.window_create(index, window=ch)
 
     def add_date(self, event=None):
         """Insert today's date in note."""
@@ -905,7 +903,7 @@ class Sticky(Toplevel):
                         i = 0
                     img = "%i.png" % i
                     self.txt.tag_bind(img, '<Double-Button-1>',
-                                          lambda e: self.add_latex(img))
+                                      lambda e: self.add_latex(img))
                 else:
                     img = img_name
                 self.latex[img] = latex
@@ -966,7 +964,8 @@ class Sticky(Toplevel):
                                   title=_('Select PNG image'))
         if os.path.exists(fichier):
             self.images.append(PhotoImage(master=self.txt, file=fichier))
-            self.txt.image_create("insert",
+            index = self.txt.index("insert")
+            self.txt.image_create(index,
                                   align='bottom',
                                   image=self.images[-1],
                                   name=fichier)
