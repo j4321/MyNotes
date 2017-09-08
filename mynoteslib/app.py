@@ -80,6 +80,7 @@ class App(Tk):
 
         # --- Clipboards
         self.clipboard2 = []  # (type, props)
+        self.link_clipboard = {}
 #        self.clipboard = []
 #        self.img_clipboard = []
 #        self.chb_clipboard = []
@@ -188,6 +189,7 @@ class App(Tk):
         if sel:
             txt.clipboard_append(txt.get(sel[0], sel[1]))
             self.clipboard2.clear()
+            self.link_clipboard.clear()
             deb = cst.sorting(str(sel[0]))
             fin = cst.sorting(str(sel[1]))
             for l in range(deb[0], fin[0] + 1):
@@ -218,6 +220,10 @@ class App(Tk):
                             self.clipboard2.append(('checkbox', (ch.state(), tags)))
                         except TclError:
                             tags = txt.tag_names(index)
+                            link = [t for t in tags if 'link#' in t]
+                            if link:
+                                lnb = int(link[0].split('#')[1])
+                                self.link_clipboard[link[0]] = txt.master.links[lnb]
                             self.clipboard2.append(('char', (txt.get(index), tags)))
 
 #    def copy_text2(self, event):
@@ -279,6 +285,11 @@ class App(Tk):
     def paste_text(self, event):
         txt = event.widget
 
+        links = {}
+        for oldtag, link in self.link_clipboard.items():
+            newtag = txt.master.create_link(link)
+            links[oldtag] = newtag
+
         for c in self.clipboard2:
             index = txt.index('insert')
             if c[0] is 'image':
@@ -294,6 +305,11 @@ class App(Tk):
                 txt.window_create(index, window=ch)
             else:
                 char, tags = c[1]
+                link = [t for t in tags if 'link#' in t]
+                if link:
+                    tags = list(tags)
+                    tags.remove(link[0])
+                    tags.append(links[link[0]])
                 txt.insert('insert', char)
             for tag in tags:
                 txt.tag_add(tag, index)

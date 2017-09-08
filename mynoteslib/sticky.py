@@ -799,7 +799,7 @@ class Sticky(Toplevel):
                 link.delete(0, 'end')
                 link.insert(0, file)
 
-        def ok(eveny=None):
+        def ok(event=None):
             lien = link.get()
             txt = text.get()
             if lien:
@@ -848,6 +848,7 @@ class Sticky(Toplevel):
         top.title(_("Link"))
         top.columnconfigure(1, weight=1)
         text = Entry(top)
+        b_file = Button(top, image=self.im_clip, padding=0, command=local_file)
         link = Entry(top)
         text.insert(0, txt)
         text.icursor("end")
@@ -856,14 +857,21 @@ class Sticky(Toplevel):
         Label(top, text=_("URL or file")).grid(row=0, column=0, sticky="e", padx=4, pady=4)
         Label(top, text=_("Text")).grid(row=1, column=0, sticky="e", padx=4, pady=4)
         link.grid(row=0, column=1, sticky="ew", padx=4, pady=4)
+        b_file.grid(row=0, column=2, padx=4, pady=4)
         text.grid(row=1, column=1, sticky="ew", padx=4, pady=4)
-        Button(top, image=self.im_clip, padding=0,
-               command=local_file).grid(row=0, column=2, padx=4, pady=4)
         Button(top, text="Ok", command=ok).grid(row=2, columnspan=3, padx=4, pady=4)
-
         link.focus_set()
         text.bind("<Return>", ok)
         link.bind("<Return>", ok)
+
+    def create_link(self, link):
+        self.nb_links += 1
+        lnb = self.nb_links
+        lid = "link#%i" % lnb
+        self.links[lnb] = link
+        self.txt.tag_bind(lid, "<Button-1>", lambda e: self.open_link(lnb))
+        self.txt.tag_bind(lid, "<Double-Button-1>", lambda e: self.edit_link(lnb))
+        return lid
 
     def open_link(self, link_nb):
         """Open link after small delay to avoid opening link on double click."""
