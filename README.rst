@@ -14,22 +14,36 @@ Tk GUI toolkit.
 Install
 -------
 
-First, install the missing dependencies among:
-    - Tkinter (Python wrapper for Tk)
-    - Tktray https://code.google.com/archive/p/tktray/downloads
-    - ewmh https://pypi.python.org/pypi/ewmh
-For instance, in Ubuntu/Debian you will need to install the following packages:
-python3-tk, tk-tktray, python3-ewmh (not available for version older than zesty)
+- Archlinux
 
-For Archlinux users, MyNotes is available in `AUR <https://aur.archlinux.org/packages/mynotes>`__
+    MyNotes is available in `AUR <https://aur.archlinux.org/packages/mynotes>`__.
 
-ewmh can be installed with pip:
-::
-    $ sudo pip3 install ewmh
+- Ubuntu
 
-Then install the application:
-::
-    $ sudo python3 setup.py install
+    MyNotes is available in the PPA `ppa:j-4321-i/ppa`.
+    
+    ::
+        
+        $ sudo add-apt-repository ppa:j-4321-i/ppa
+        $ sudo apt-get update
+        $ sudo apt-get install mynotes
+
+- Source code
+
+    First, install the missing dependencies among:
+        - Tkinter (Python wrapper for Tk)
+        - Tktray https://code.google.com/archive/p/tktray/downloads
+        - ewmh https://pypi.python.org/pypi/ewmh
+    For instance, in Ubuntu/Debian you will need to install the following packages:
+    python3-tk, tk-tktray, python3-ewmh (available in zesty only)
+
+    ewmh can be installed with pip:
+    ::
+        $ sudo pip3 install ewmh
+
+    Then install the application:
+    ::
+        $ sudo python3 setup.py install
 
 You can now launch it from `Menu > Utility > MyNotes`. You can launch
 it from the command line with `mynotes`.
