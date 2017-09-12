@@ -28,7 +28,6 @@ from tkinter.font import Font
 import os
 import re
 import ewmh
-from subprocess import run
 from time import strftime
 from mynoteslib.constantes import TEXT_COLORS, askopenfilename, open_url
 from mynoteslib.constantes import PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK, IM_CLIP

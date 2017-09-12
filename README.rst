@@ -11,6 +11,14 @@ environment supports compositing, the opacity of the notes can be modified.
 MyNotes is designed for Linux. It is written in Python 3 and relies on
 Tk GUI toolkit.
 
+Warning
+-------
+
+MyNotes is a system tray application, so it does not work on desktop 
+environments with no system tray (like Unity). Furthermore, it relies
+on tktray which is an old library, so some desktop environment system trays
+are not fully compatible with it (e.g. in KDE/plasma).
+
 Install
 -------
 
