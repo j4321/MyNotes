@@ -34,6 +34,10 @@ from subprocess import check_output, CalledProcessError
 from tkinter import Text, PhotoImage
 from tkinter.ttk import Checkbutton
 from webbrowser import open as open_url
+import ewmh
+
+
+EWMH = ewmh.EWMH()
 
 SYMBOLS = 'ΓΔΘΛΞΠΣΦΨΩαβγδεζηθικλμνξοπρςστυφχψωϐϑϒϕϖæœ«»¡¿£¥$€§ø∞∀∃∄∈∉∫∧∨∩∪÷±√∝∼≃≅≡≤≥≪≫≲≳▪•✭✦➔➢✔▴▸✗✚✳☎✉✎♫⚠⇒⇔'
 
@@ -62,6 +66,7 @@ else:
 
 PATH_CONFIG = os.path.join(LOCAL_PATH, "mynotes.ini")
 PATH_LATEX = os.path.join(LOCAL_PATH, "latex")
+PIDFILE = os.path.join(LOCAL_PATH, "mynotes.pid")
 
 if not os.path.exists(PATH_LATEX):
     os.mkdir(PATH_LATEX)

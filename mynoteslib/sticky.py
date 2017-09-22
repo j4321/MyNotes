@@ -29,9 +29,9 @@ import os
 import re
 import ewmh
 from time import strftime
-from mynoteslib.constantes import TEXT_COLORS, askopenfilename, open_url
-from mynoteslib.constantes import PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK, IM_CLIP
-from mynoteslib.constantes import sorting, text_ranges, math_to_image
+from mynoteslib.constantes import EWMH, TEXT_COLORS, askopenfilename, open_url,\
+ PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK, IM_CLIP, sorting, text_ranges, \
+ math_to_image
 from mynoteslib.symbols import pick_symbol
 from mynoteslib.messagebox import showerror, askokcancel
 
@@ -62,9 +62,9 @@ class Sticky(Toplevel):
         self.nb_links = 0
         self.nb_files = 0
         self.title('mynotes%s' % key)
-        self.attributes("-type", "splash")
-        self.attributes("-alpha", CONFIG.getint("General", "opacity")/100)
-        self.focus_force()
+#        self.attributes("-type", "splash")
+#        self.attributes("-alpha", CONFIG.getint("General", "opacity")/100)
+        # self.focus_force()
         # window geometry
         self.update_idletasks()
         self.geometry(kwargs.get("geometry", '220x235'))
@@ -403,7 +403,17 @@ class Sticky(Toplevel):
         self.txt.bind('<Control-h>', lambda e: self.add_link())
         if LATEX:
             self.txt.bind('<Control-t>', lambda e: self.add_latex())
-#        self.txt.bind('<Control-i>', self.add_image)
+
+        # --- remove decorations, ...
+        self.focus_set()
+        w = EWMH.getActiveWindow()
+        EWMH.setWmState(w, 1, '_NET_WM_STATE_STICKY')
+        EWMH.setWmState(w, 1, '_NET_WM_STATE_SKIP_TASKBAR')
+        w.change_property(404, 404, 32, [2, 0, 0, 0, 0], 0)
+        w.change_property(404, 404, 32, [2, 0, 0, 0, 0], 0)
+        opacity = int(hex(int(255 * CONFIG.getint("General", "opacity") / 100) * 256 ** 3), 16)
+        w.change_property(436, 6, 32, [opacity, 0, 0, 0], 0)
+        w.display.flush()
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -529,32 +539,33 @@ class Sticky(Toplevel):
 
     def set_position_above(self):
         """Make note always above the other windows."""
-        e = ewmh.EWMH()
-        for w in e.getClientList():
-            if w.get_wm_name() == 'mynotes%s' % self.id:
-                e.setWmState(w, 1, '_NET_WM_STATE_ABOVE')
-                e.setWmState(w, 0, '_NET_WM_STATE_BELOW')
-        e.display.flush()
+        w = EWMH.getActiveWindow()
+#        for w in EWMH.getClientList():
+#            if w.get_wm_name() == 'mynotes%s' % self.id:
+        EWMH.setWmState(w, 1, '_NET_WM_STATE_ABOVE')
+        EWMH.setWmState(w, 0, '_NET_WM_STATE_BELOW')
+        EWMH.display.flush()
         self.save_note()
 
     def set_position_below(self):
         """Make note always below the other windows."""
-        e = ewmh.EWMH()
-        for w in e.getClientList():
-            if w.get_wm_name() == 'mynotes%s' % self.id:
-                e.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
-                e.setWmState(w, 1, '_NET_WM_STATE_BELOW')
-        e.display.flush()
+        w = EWMH.getActiveWindow()
+#        for w in EWMH.getClientList():
+#            if w.get_wm_name() == 'mynotes%s' % self.id:
+        EWMH.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
+        EWMH.setWmState(w, 1, '_NET_WM_STATE_BELOW')
+        EWMH.display.flush()
         self.save_note()
 
     def set_position_normal(self):
         """Make note be on top if active or behind the active window."""
         e = ewmh.EWMH()
-        for w in e.getClientList():
-            if w.get_wm_name() == 'mynotes%s' % self.id:
-                e.setWmState(w, 0, '_NET_WM_STATE_BELOW')
-                e.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
-        e.display.flush()
+        w = EWMH.getActiveWindow()
+#        for w in EWMH.getClientList():
+#            if w.get_wm_name() == 'mynotes%s' % self.id:
+        EWMH.setWmState(w, 0, '_NET_WM_STATE_BELOW')
+        EWMH.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
+        EWMH.display.flush()
         self.save_note()
 
     def set_mode_note(self):
@@ -660,8 +671,9 @@ class Sticky(Toplevel):
         decoration), it is necessary to force the focus in order to write inside
         the Text widget.
         """
-        if not self.is_locked:
-            event.widget.focus_force()
+        pass
+#        if not self.is_locked:
+#            event.widget.focus_set()
 
     def show_menu(self, event):
         """Show main menu."""

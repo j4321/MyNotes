@@ -56,7 +56,7 @@ class App(Tk):
         self.icon = PhotoImage(master=self, file=cst.IM_ICON_48)
         self.iconphoto(True, self.icon)
 
-        self.ewmh = ewmh.EWMH()
+#        self.ewmh = ewmh.EWMH()
 
         style = Style(self)
         style.theme_use("clam")
@@ -141,7 +141,7 @@ class App(Tk):
         self.nb = len(self.note_data)
         self.update_menu()
         self.update_notes()
-        self.make_notes_sticky()
+#        self.make_notes_sticky()
 
         # --- class bindings
         # newline depending on mode
@@ -442,11 +442,18 @@ class App(Tk):
             event.widget.insert("insert", "\n")
 
     # --- Other methods
-    def make_notes_sticky(self):
-        for w in self.ewmh.getClientList():
+    def change_opacity(self, alpha):
+        opacity = int(hex(int(255 * alpha) * 256 ** 3), 16)
+        for w in cst.EWMH.getClientList():
             if w.get_wm_name()[:7] == 'mynotes':
-                self.ewmh.setWmState(w, 1, '_NET_WM_STATE_STICKY')
-        self.ewmh.display.flush()
+                w.change_property(436, 6, 32, [opacity, 0, 0, 0], 0)
+        cst.EWMH.display.flush()
+
+#    def make_notes_sticky(self):
+#        for w in self.ewmh.getClientList():
+#            if w.get_wm_name()[:7] == 'mynotes':
+#                self.ewmh.setWmState(w, 1, '_NET_WM_STATE_STICKY')
+#        self.ewmh.display.flush()
 
     def add_note_to_menu(self, nb, note_title, category):
         """Add note to 'show notes' menu."""
@@ -576,7 +583,7 @@ class App(Tk):
             self.update_menu()
             alpha = CONFIG.getint("General", "opacity") / 100
             for note in self.notes.values():
-                note.attributes("-alpha", alpha)
+                self.change_opacity(alpha)
                 note.update_title_font()
                 note.update_text_font()
                 note.update_titlebar()
@@ -626,7 +633,7 @@ class App(Tk):
             self.menu_notes.delete(cat.capitalize())
             if self.menu_notes.index('end') is None:
                 self.icon.menu.entryconfigure(4, state="disabled")
-        self.make_notes_sticky()
+#        self.make_notes_sticky()
 
     def update_notes(self, col_changes={}, name_changes={}):
         """Update the notes after changes in the categories."""
@@ -692,7 +699,7 @@ class App(Tk):
         data["visible"] = True
         self.note_data[key] = data
         self.nb += 1
-        self.make_notes_sticky()
+#        self.make_notes_sticky()
 
     def export_notes(self):
         """Note export."""
