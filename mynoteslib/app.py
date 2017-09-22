@@ -30,7 +30,7 @@ from shutil import copy
 import pickle
 from mynoteslib import tktray
 from mynoteslib.constantes import CONFIG, PATH_DATA, PATH_DATA_BACKUP, LOCAL_PATH
-from mynoteslib.constantes import backup, asksaveasfilename, askopenfilename, text_ranges
+from mynoteslib.constantes import backup, asksaveasfilename, askopenfilename
 import mynoteslib.constantes as cst
 from mynoteslib.config import Config
 from mynoteslib.export import Export
@@ -39,8 +39,8 @@ from mynoteslib.about import About
 from mynoteslib.notemanager import Manager
 from mynoteslib.version_check import UpdateChecker
 from mynoteslib.messagebox import showerror, askokcancel
-import ewmh
 # TODO: fix link copy
+
 
 class App(Tk):
     """
@@ -55,8 +55,6 @@ class App(Tk):
         self.img = PhotoImage(file=cst.IM_ICON)
         self.icon = PhotoImage(master=self, file=cst.IM_ICON_48)
         self.iconphoto(True, self.icon)
-
-#        self.ewmh = ewmh.EWMH()
 
         style = Style(self)
         style.theme_use("clam")
@@ -81,9 +79,6 @@ class App(Tk):
         # --- Clipboards
         self.clipboard2 = []  # (type, props)
         self.link_clipboard = {}
-#        self.clipboard = []
-#        self.img_clipboard = []
-#        self.chb_clipboard = []
 
         # --- Menu
         self.menu_notes = Menu(self.icon.menu, tearoff=False)
@@ -449,12 +444,6 @@ class App(Tk):
                 w.change_property(436, 6, 32, [opacity, 0, 0, 0], 0)
         cst.EWMH.display.flush()
 
-#    def make_notes_sticky(self):
-#        for w in self.ewmh.getClientList():
-#            if w.get_wm_name()[:7] == 'mynotes':
-#                self.ewmh.setWmState(w, 1, '_NET_WM_STATE_STICKY')
-#        self.ewmh.display.flush()
-
     def add_note_to_menu(self, nb, note_title, category):
         """Add note to 'show notes' menu."""
 
@@ -742,7 +731,6 @@ class App(Tk):
                             fich.write('<body style="max-width:30em">\n')
                             fich.write(text.encode('ascii', 'xmlcharrefreplace').decode("utf-8"))
                             fich.write("\n</body>")
-#                if os.path.splitext(fichier)[-1] == ".txt":
                     else:
         # --- txt export
                         # export notes to .txt: all formatting is lost
@@ -771,17 +759,6 @@ class App(Tk):
                             text += "\n\n"
                         with open(fichier, "w") as fich:
                             fich.write(text)
-#                    else:
-#        # --- pickle export
-#                        note_data = {}
-#                        for key in self.note_data:
-#                            if self.note_data[key]["category"] in categories_to_export:
-#                                if (not only_visible) or self.note_data[key]["visible"]:
-#                                    note_data[key] = self.note_data[key]
-#
-#                        with open(fichier, "wb") as fich:
-#                            dp = pickle.Pickler(fich)
-#                            dp.dump(note_data)
                 except Exception as e:
                     report_msg = e.strerror != 'Permission denied'
                     showerror(_("Error"), str(e), traceback.format_exc(),
