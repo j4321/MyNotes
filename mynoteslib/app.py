@@ -439,9 +439,10 @@ class App(Tk):
     # --- Other methods
     def change_opacity(self, alpha):
         opacity = int(hex(int(255 * alpha) * 256 ** 3), 16)
+        atom_opacity = cst.EWMH.display.get_atom('_NET_WM_WINDOW_OPACITY')
         for w in cst.EWMH.getClientList():
             if w.get_wm_name()[:7] == 'mynotes':
-                w.change_property(436, 6, 32, [opacity, 0, 0, 0], 0)
+                w.change_property(atom_opacity, 6, 32, [opacity, 0, 0, 0], 0)
         cst.EWMH.display.flush()
 
     def add_note_to_menu(self, nb, note_title, category):
