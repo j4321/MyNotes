@@ -286,7 +286,6 @@ class ShowError(Toplevel):
                  report_msg=False, button="Ok", image="error"):
         """
         Create an error messagebox.
-
         Arguments:
             parent: parent of the toplevel window
             title: message box title
@@ -322,20 +321,14 @@ class ShowError(Toplevel):
         l = len(message)
         l2 = len(traceback)
         w = max(1, min(max(l, l2), 50))
+        if not l2 and l // w < 3:
+            w = 35
         h = 0
         for line in message.splitlines():
             h += 1 + len(line) // w
         h2 = 0
         for line in traceback.splitlines():
             h2 += 1 + len(line) // w
-        if h + h2 < 3:
-            w = min(l, 35)
-            h = 0
-            for line in message.splitlines():
-                h += 1 + len(line) // w
-            h2 = 0
-            for line in traceback.splitlines():
-                h2 += 1 + len(line) // w
 
         display = Text(frame, relief='flat', highlightthickness=0,
                        font="TkDefaultFont 10 bold", bg=self.cget('bg'),
@@ -347,12 +340,12 @@ class ShowError(Toplevel):
         display.bind("<Button-1>", lambda event: display.focus_set())
         if image:
             Label(frame, image=image).grid(row=0, column=0, padx=4, pady=(10, 4))
+        frame.pack(fill='x')
 
-        frame2 = Frame(self)
-        frame2.columnconfigure(0, weight=1)
-        frame2.rowconfigure(0, weight=1)
-        report_frame = Frame(self)
         if traceback:
+            frame2 = Frame(self)
+            frame2.columnconfigure(0, weight=1)
+            frame2.rowconfigure(0, weight=1)
             txt_frame = Frame(frame2, style='txt.TFrame', relief='sunken',
                               borderwidth=1)
             error_msg = Text(txt_frame, width=w, wrap='word', font="TkDefaultFont 10",
@@ -370,18 +363,22 @@ class ShowError(Toplevel):
                                 xscrollcommand=scrollx.set)
             error_msg.pack(side='left', fill='both', expand=True)
             txt_frame.grid(row=0, column=0, sticky='ewsn')
+            frame2.pack(fill='both', padx=4, pady=(4, 4))
         if report_msg:
+            report_frame = Frame(self)
             Label(report_frame, text=_("Please report this bug on ")).pack(side="left")
             url = Label(report_frame, style="url.TLabel", cursor="hand1",
                         font="TkDefaultFont 10 underline",
                         text="https://github.com/j4321/MyNotes/issues")
             url.pack(side="left")
             url.bind("<Button-1>", lambda e: url_open("https://github.com/j4321/MyNotes/issues"))
+            report_frame.pack(fill="x", padx=4, pady=(4, 0))
         b = Button(self, text=button, command=self.validate)
-        frame.pack(fill='x')
-        frame2.pack(fill='both', padx=4, pady=(4, 4))
-        report_frame.pack(fill="x", padx=4, pady=(4, 0))
-        b.pack(padx=10, pady=10)
+        b.pack(padx=10, pady=(4, 10))
+        self.update_idletasks()
+        bbox = display.bbox('end - 1c')
+        if display.winfo_height() - bbox[1] - bbox[3] > 10:
+            display.configure(height=h - 1)
         self.grab_set()
         b.focus_set()
 
