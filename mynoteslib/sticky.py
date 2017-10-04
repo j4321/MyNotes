@@ -403,6 +403,7 @@ class Sticky(Toplevel):
 
         # --- remove decorations, ...
         self.deiconify()
+        self.wait_visibility()
         self.focus_set()
         w = EWMH.getActiveWindow()
         EWMH.setWmState(w, 1, '_NET_WM_STATE_STICKY')
