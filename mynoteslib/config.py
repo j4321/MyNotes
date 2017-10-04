@@ -26,7 +26,8 @@ from tkinter import Toplevel, StringVar, Menu, TclError, Text
 from mynoteslib.messagebox import showinfo
 from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator
 from tkinter.ttk import Notebook, Combobox, Frame, Menubutton, Checkbutton
-from mynoteslib.constantes import CONFIG, save_config, COLORS, SYMBOLS, LATEX, LANGUAGES, REV_LANGUAGES
+from mynoteslib.constantes import CONFIG, save_config, COLORS, SYMBOLS, LATEX,\
+    LANGUAGES, REV_LANGUAGES, TOOLKITS
 from mynoteslib.categories import CategoryManager
 from tkinter import font
 
@@ -84,19 +85,37 @@ class Config(Toplevel):
         for lang in LANGUAGES.values():
             menu_lang.add_radiobutton(variable=self.lang, label=lang,
                                       value=lang, command=self.translate)
-#        menu_lang.add_radiobutton(label="English", value="English",
-#                                  variable=self.lang, command=self.translate)
-#        menu_lang.add_radiobutton(label="Français", value="Français",
-#                                  variable=self.lang, command=self.translate)
-#        menu_lang.add_radiobutton(label="Nederlands", value="Nederlands",
-#                                  variable=self.lang, command=self.translate)
+        # --- *-- gui toolkit
+        self.gui = StringVar(self, CONFIG.get("General", "trayicon").capitalize())
+        gui_frame = Frame(general_settings)
+        Label(gui_frame,
+              text=_("GUI Toolkit for the system tray icon")).grid(row=0, column=0,
+                                                                   padx=4, pady=4,
+                                                                   sticky="w")
+        menu_gui = Menu(gui_frame, tearoff=False)
+        Menubutton(gui_frame, menu=menu_gui, width=9,
+                   textvariable=self.gui).grid(row=0, column=1,
+                                               padx=4, pady=4, sticky="w")
+        for toolkit, b in TOOLKITS.items():
+            if b:
+                menu_gui.add_radiobutton(label=toolkit.capitalize(),
+                                         value=toolkit.capitalize(),
+                                         variable=self.gui,
+                                         command=self.change_gui)
         # --- *-- opacity
-        self.opacity_scale = Scale(general_settings, orient="horizontal", length=200,
+        opacity_frame = Frame(general_settings)
+        opacity_frame.columnconfigure(1, weight=1)
+        self.opacity_scale = Scale(opacity_frame, orient="horizontal", length=200,
                                    from_=0, to=100,
                                    value=CONFIG.get("General", "opacity"),
                                    command=self.display_label)
-        self.opacity_label = Label(general_settings,
+        self.opacity_label = Label(opacity_frame,
                                    text="{val}%".format(val=self.opacity_scale.get()))
+        Label(opacity_frame,
+              text=_("Opacity")).grid(row=0, column=0, sticky="w", padx=4, pady=4)
+        self.opacity_scale.grid(row=0, column=1, padx=(4, 50), pady=4)
+        self.opacity_label.place(in_=self.opacity_scale, relx=1, rely=0.5,
+                                 anchor="w", bordermode="outside")
         # --- *-- position
         frame_position = Frame(general_settings)
         self.position = StringVar(self, CONFIG.get("General", "position"))
@@ -159,11 +178,10 @@ class Config(Toplevel):
         lang_frame.grid(sticky="w")
         Separator(general_settings,
                   orient="horizontal").grid(sticky="ew", pady=10)
-        Label(general_settings,
-              text=_("Opacity")).grid(sticky="w", padx=4, pady=4)
-        self.opacity_scale.grid(padx=4, pady=(4, 10))
-        self.opacity_label.place(in_=self.opacity_scale, relx=1, rely=0.5,
-                                 anchor="w", bordermode="outside")
+        gui_frame.grid(sticky="w")
+        Separator(general_settings,
+                  orient="horizontal").grid(sticky="ew", pady=10)
+        opacity_frame.grid(sticky='w')
         Separator(general_settings,
                   orient="horizontal").grid(sticky="ew", pady=10)
         frame_position.grid(sticky="ew")
@@ -395,6 +413,7 @@ class Config(Toplevel):
         CONFIG.set("General", "position", self.position.get())
         CONFIG.set("General", "buttons_position", self.titlebar_disposition.get())
         CONFIG.set("General", "symbols", "".join(symbols))
+        CONFIG.set("General", "trayicon", self.gui.get().lower())
         CONFIG.set("Font", "text_size", size)
         CONFIG.set("Font", "text_family", family)
         CONFIG.set("Font", "title_family", familytitle)
@@ -432,6 +451,12 @@ class Config(Toplevel):
         """Show information dialog about language change."""
         showinfo("Information",
                  _("The language setting will take effect after restarting the application"),
+                 parent=self)
+
+    def change_gui(self):
+        """Show information dialog about gui toolkit change."""
+        showinfo("Information",
+                 _("The GUI Toolkit setting will take effect after restarting the application"),
                  parent=self)
 
     def update_preview(self, event=None):
