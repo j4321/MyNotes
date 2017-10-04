@@ -66,6 +66,16 @@ class App(Tk):
                                        ('disabled', 'alternate', '#dcdad5'),
                                        ('disabled', '#dcdad5')])
         style.configure("sel.TCheckbutton", background=selectbg)
+        bg = self.cget('background')
+        style.configure('TFrame', background=bg)
+        style.configure('TLabel', background=bg)
+        style.configure('TButton', background=bg)
+        style.configure('TMenubutton', background=bg)
+        style.configure('TNotebook', background=bg)
+        style.configure('Vertical.TScrollbar', background=bg)
+        style.configure('Horizontal.TScrollbar', background=bg)
+        style.configure('TCheckbutton', background=bg)
+        style.configure('TSeparator', background=bg)
         style.map("sel.TCheckbutton", background=[("active", selectbg)])
 
         self.close1 = PhotoImage("img_close", file=cst.IM_CLOSE)
