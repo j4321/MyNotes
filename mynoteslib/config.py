@@ -40,7 +40,7 @@ class Config(Toplevel):
         self.grab_set()
         self.resizable(False, False)
         self.protocol("WM_DELETE_WINDOW", self.quit)
-        self.changes = {}, {}, False
+        self.changes = {}, {}, False, False
 
         # --- style
         style = Style(self)
