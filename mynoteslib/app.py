@@ -443,7 +443,7 @@ class App(Tk):
         for w in cst.EWMH.getClientList():
             if w.get_wm_name()[:7] == 'mynotes':
                 w.change_property(atom_opacity, 6, 32, [opacity, 0, 0, 0], 0)
-        cst.EWMH.display.flush()
+                cst.EWMH.display.flush()
 
     def add_note_to_menu(self, nb, note_title, category):
         """Add note to 'show notes' menu."""
@@ -567,13 +567,14 @@ class App(Tk):
         """Launch the setting manager."""
         conf = Config(self)
         self.wait_window(conf)
-        col_changes, name_changes, new_cat = conf.get_changes()
+        col_changes, name_changes, new_cat, opacity_change = conf.get_changes()
+        if opacity_change:
+            alpha = CONFIG.getint("General", "opacity") / 100
+            self.change_opacity(alpha)
         if new_cat or col_changes or name_changes:
             self.update_notes(col_changes, name_changes)
             self.update_menu()
-            alpha = CONFIG.getint("General", "opacity") / 100
             for note in self.notes.values():
-                self.change_opacity(alpha)
                 note.update_title_font()
                 note.update_text_font()
                 note.update_titlebar()
