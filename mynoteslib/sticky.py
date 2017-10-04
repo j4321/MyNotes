@@ -405,6 +405,7 @@ class Sticky(Toplevel):
         self.deiconify()
         self.wait_visibility()
         self.focus_set()
+        self.update_idletasks()
         w = EWMH.getActiveWindow()
         EWMH.setWmState(w, 1, '_NET_WM_STATE_STICKY')
         EWMH.setWmState(w, 1, '_NET_WM_STATE_SKIP_TASKBAR')
