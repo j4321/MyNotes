@@ -403,14 +403,17 @@ class Sticky(Toplevel):
 
         # --- remove decorations, ...
         self.deiconify()
+        self.wait_visibility()
         self.focus_set()
+        self.update_idletasks()
         w = EWMH.getActiveWindow()
         EWMH.setWmState(w, 1, '_NET_WM_STATE_STICKY')
         EWMH.setWmState(w, 1, '_NET_WM_STATE_SKIP_TASKBAR')
-        w.change_property(404, 404, 32, [2, 0, 0, 0, 0], 0)
-        w.change_property(404, 404, 32, [2, 0, 0, 0, 0], 0)
+        atom_deco = w.display.get_atom('_MOTIF_WM_HINTS')
+        w.change_property(atom_deco, atom_deco, 32, [2, 0, 0, 0, 0], 0)
         opacity = int(hex(int(255 * CONFIG.getint("General", "opacity") / 100) * 256 ** 3), 16)
-        w.change_property(436, 6, 32, [opacity, 0, 0, 0], 0)
+        atom_opacity = w.display.get_atom('_NET_WM_WINDOW_OPACITY')
+        w.change_property(atom_opacity, 6, 32, [opacity, 0, 0, 0], 0)
         w.display.flush()
 
     def __setattr__(self, name, value):
