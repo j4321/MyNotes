@@ -79,7 +79,8 @@ class App(Tk):
         self.icon = tktray.Icon(self, docked=True)
 
         # --- Clipboards
-        self.clipboard2 = []  # (type, props)
+        self.clipboard = ''
+        self.clibboard_content = []  # (type, props)
         self.link_clipboard = {}
 #        self.clipboard = []
 #        self.img_clipboard = []
@@ -187,8 +188,11 @@ class App(Tk):
         txt = event.widget
         sel = txt.tag_ranges('sel')
         if sel:
-            txt.clipboard_append(txt.get(sel[0], sel[1]))
-            self.clipboard2.clear()
+            txt.clipboard_clear()
+            txt_copy = txt.get(sel[0], sel[1])
+            self.clipboard = txt_copy
+            txt.clipboard_append(txt_copy)
+            self.clibboard_content.clear()
             self.link_clipboard.clear()
             deb = cst.sorting(str(sel[0]))
             fin = cst.sorting(str(sel[1]))
@@ -200,7 +204,8 @@ class App(Tk):
                 if l == fin[0]:
                     nc = fin[1]
                 else:
-                    nc = cst.sorting(str(txt.index('%i.end' % l)))
+                    nc = cst.sorting(str(txt.index('%i.end' % l)))[1]
+
                 for c in range(dc, nc):
                     index = '%i.%i' % (l, c)
                     try:
@@ -211,21 +216,22 @@ class App(Tk):
                         tags = list(txt.tag_names(index))
                         if latex:
                             tags.remove(key)
-                        self.clipboard2.append(('image', (im, name, tags, latex)))
+                        self.clibboard_content.append(('image', (im, name, tags, latex)))
                     except TclError:
                         try:
                             name = txt.window_cget(index, 'window')
                             ch = txt.children[name.split(".")[-1]]
                             tags = txt.tag_names(index)
-                            self.clipboard2.append(('checkbox', (ch.state(), tags)))
+                            self.clibboard_content.append(('checkbox', (ch.state(), tags)))
                         except TclError:
                             tags = txt.tag_names(index)
                             link = [t for t in tags if 'link#' in t]
                             if link:
                                 lnb = int(link[0].split('#')[1])
                                 self.link_clipboard[link[0]] = txt.master.links[lnb]
-                            self.clipboard2.append(('char', (txt.get(index), tags)))
-
+                            self.clibboard_content.append(('char', (txt.get(index), tags)))
+                if l < fin[0]:
+                    self.clibboard_content.append(('char', ('\n', [])))
 #    def copy_text2(self, event):
 #        txt = event.widget
 #        sel = txt.tag_ranges('sel')
@@ -284,37 +290,40 @@ class App(Tk):
 
     def paste_text(self, event):
         txt = event.widget
+        if self.clipboard == txt.clipboard_get():
+            links = {}
+            for oldtag, link in self.link_clipboard.items():
+                newtag = txt.master.create_link(link)
+                links[oldtag] = newtag
 
-        links = {}
-        for oldtag, link in self.link_clipboard.items():
-            newtag = txt.master.create_link(link)
-            links[oldtag] = newtag
-
-        for c in self.clipboard2:
-            index = txt.index('insert')
-            if c[0] is 'image':
-                img, name, tags, latex = c[1]
-                if latex and cst.LATEX:
-                    txt.master.create_latex(latex, index)
+            for c in self.clibboard_content:
+                index = txt.index('insert')
+                if c[0] is 'image':
+                    img, name, tags, latex = c[1]
+                    if latex and cst.LATEX:
+                        txt.master.create_latex(latex, index)
+                    else:
+                        txt.image_create(index, align='bottom', image=img, name=name)
+                elif c[0] is 'checkbox':
+                    state, tags = c[1]
+                    ch = Checkbutton(txt, takefocus=False, style='sel.TCheckbutton')
+                    ch.state(state)
+                    txt.window_create(index, window=ch)
                 else:
-                    txt.image_create(index, align='bottom', image=img, name=name)
-            elif c[0] is 'checkbox':
-                state, tags = c[1]
-                ch = Checkbutton(txt, takefocus=False, style='sel.TCheckbutton')
-                ch.state(state)
-                txt.window_create(index, window=ch)
-            else:
-                char, tags = c[1]
-                link = [t for t in tags if 'link#' in t]
-                if link:
-                    tags = list(tags)
-                    tags.remove(link[0])
-                    tags.append(links[link[0]])
-                txt.insert('insert', char)
-            for tag in tags:
-                txt.tag_add(tag, index)
-        txt.tag_remove('sel', '1.0', 'end')
-        self.highlight_checkboxes(event)
+                    char, tags = c[1]
+                    link = [t for t in tags if 'link#' in t]
+                    if link:
+                        tags = list(tags)
+                        tags.remove(link[0])
+                        tags.append(links[link[0]])
+                    txt.insert('insert', char)
+                for tag in tags:
+                    txt.tag_add(tag, index)
+            txt.tag_remove('sel', '1.0', 'end')
+            self.highlight_checkboxes(event)
+        else:
+            self.clipboard = ""
+            txt.insert('insert', txt.clipboard_get())
 
 #    def paste_text2(self, event):
 #        txt = event.widget
