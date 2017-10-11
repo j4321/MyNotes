@@ -286,7 +286,6 @@ class ShowError(Toplevel):
                  report_msg=False, button="Ok", image="error"):
         """
         Create an error messagebox.
-
         Arguments:
             parent: parent of the toplevel window
             title: message box title
