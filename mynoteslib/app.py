@@ -49,7 +49,7 @@ class App(Tk):
     Put an icon in the system tray with a right click menu to create notes.
     """
     def __init__(self):
-        Tk.__init__(self)
+        Tk.__init__(self, className='MyNotes')
         self.withdraw()
         self.notes = {}
         self.img = PhotoImage(file=cst.IM_ICON)
