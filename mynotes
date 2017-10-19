@@ -27,16 +27,17 @@ import sys
 import traceback
 from tkinter import Tk
 from tkinter.ttk import Style
-from mynoteslib.constantes import save_config, PIDFILE
+from mynoteslib.constantes import save_config
 from mynoteslib.app import App
 from mynoteslib.messagebox import showerror
 import logging
 
 # vérifie si mynotes est déjà lancé
 pid = str(os.getpid())
+pidfile = "/tmp/mynotes.pid"
 
-if os.path.isfile(PIDFILE):
-    with open(PIDFILE) as fich:
+if os.path.isfile(pidfile):
+    with open(pidfile) as fich:
         old_pid = fich.read().strip()
     if os.path.exists("/proc/%s" % old_pid):
         # MyNotes is already runnning
@@ -44,12 +45,12 @@ if os.path.isfile(PIDFILE):
         root.withdraw()
         s = Style(root)
         s.theme_use("clam")
-        showerror(_("Error"), _("MyNotes is already running, if not delete ~/.mynotes/mynotes.pid."))
+        showerror(_("Error"), _("MyNotes is already running. If not deletes /tmp/mynotes.pid"))
         sys.exit()
     else:
         # it is an old pid file (certainly due to session logout then login)
-        os.remove(PIDFILE)
-open(PIDFILE, 'w').write(pid)
+        os.remove(pidfile)
+open(pidfile, 'w').write(pid)
 try:
     app = App()
     app.mainloop()
@@ -59,7 +60,7 @@ finally:
     try:
         app.save()
         save_config()
-        os.unlink(PIDFILE)
+        os.unlink(pidfile)
         logging.shutdown()
     except Exception:
         pass
