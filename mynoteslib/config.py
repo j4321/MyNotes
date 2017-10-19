@@ -36,7 +36,7 @@ class Config(Toplevel):
     """Config dialog."""
     def __init__(self, master):
         """Create Config dialog."""
-        Toplevel.__init__(self, master)
+        Toplevel.__init__(self, master, class_='MyNotes')
         self.title(_("Preferences"))
         self.grab_set()
         self.resizable(False, False)

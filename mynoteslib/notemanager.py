@@ -32,7 +32,7 @@ class Manager(Toplevel):
     """Note manager."""
     def __init__(self, master):
         """Create note manager to easily delete multiple notes."""
-        Toplevel.__init__(self, master)
+        Toplevel.__init__(self, master, class_='MyNotes')
         self.title(_("Delete"))
         self.grab_set()
         categories = CONFIG.options("Categories")

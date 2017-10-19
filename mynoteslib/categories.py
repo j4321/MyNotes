@@ -185,7 +185,7 @@ effect immediately and cannot be undone.") % {"category": category})
 
     def add_cat(self):
         """Add a category."""
-        top = Toplevel(self)
+        top = Toplevel(self, class_='MyNotes')
         top.transient(self)
         top.grab_set()
         top.resizable(False, False)
