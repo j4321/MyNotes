@@ -34,6 +34,7 @@ from subprocess import check_output, CalledProcessError
 from tkinter import Text, PhotoImage
 from tkinter.ttk import Checkbutton
 from webbrowser import open as open_url
+import warnings
 
 SYMBOLS = 'ΓΔΘΛΞΠΣΦΨΩαβγδεζηθικλμνξοπρςστυφχψωϐϑϒϕϖæœ«»¡¿£¥$€§ø∞∀∃∄∈∉∫∧∨∩∪÷±√∝∼≃≅≡≤≥≪≫≲≳▪•✭✦➔➢✔▴▸✗✚✳☎✉✎♫⚠⇒⇔'
 
@@ -94,6 +95,8 @@ if os.path.exists(PATH_CONFIG):
         CONFIG.set("General", "buttons_position", "right")
     if not CONFIG.has_option("General", "symbols"):
         CONFIG.set("General", "symbols", SYMBOLS)
+    if not CONFIG.has_option("General", "trayicon"):
+        CONFIG.set("General", "trayicon", "")
 else:
     LANGUE = ""
     CONFIG.add_section("General")
@@ -103,6 +106,7 @@ else:
     CONFIG.set("General", "buttons_position", "right")
     CONFIG.set("General", "check_update", "True")
     CONFIG.set("General", "symbols", SYMBOLS)
+    CONFIG.set("General", "trayicon", "")
     CONFIG.add_section("Font")
     CONFIG.set("Font", "text_family", "TkDefaultFont")
     CONFIG.set("Font", "text_size", "12")
@@ -111,6 +115,65 @@ else:
     CONFIG.set("Font", "title_style", "bold")
     CONFIG.add_section("Categories")
 
+# --- system tray icon
+# --- system tray icon
+def get_available_gui_toolkits():
+    """Check which gui toolkits are available to create a system tray icon."""
+    toolkits = {'gtk': True, 'qt': True, 'tk': True}
+    b = False
+    try:
+        import gi
+        b = True
+    except ImportError:
+        toolkits['gtk'] = False
+
+    try:
+        import PyQt5
+        b = True
+    except ImportError:
+        try:
+            import PyQt4
+            b = True
+        except ImportError:
+            try:
+                import PySide
+                b = True
+            except ImportError:
+                toolkits['qt'] = False
+
+    tcl_packages = check_output(["tclsh",
+                                 os.path.join(PATH, "packages.tcl")]).decode().strip().split()
+    toolkits['tk'] = "tktray" in tcl_packages
+    b = b or toolkits['tk']
+    if not b:
+        raise ImportError("No GUI toolkits available to create the system tray icon.")
+    return toolkits
+
+
+TOOLKITS = get_available_gui_toolkits()
+GUI = CONFIG.get("General", "trayicon").lower()
+
+if not TOOLKITS.get(GUI):
+    DESKTOP = os.environ.get('XDG_CURRENT_DESKTOP')
+    if DESKTOP == 'KDE':
+        if TOOLKITS['qt']:
+            GUI = 'qt'
+        else:
+            warnings.warn("No version of PyQt was found, falling back to another GUI toolkits so the system tray icon might not behave properly in KDE.")
+            GUI = 'gtk' if TOOLKITS['gtk'] else 'tk'
+    else:
+        if TOOLKITS['gtk']:
+            GUI = 'gtk'
+        elif TOOLKITS['qt']:
+            GUI = 'qt'
+        else:
+            GUI = 'tk'
+    CONFIG.set("General", "trayicon", GUI)
+
+if GUI == 'tk':
+    ICON = IM_ICON
+else:
+    ICON = IM_ICON_48
 
 # --- language
 setlocale(LC_ALL, '')
