@@ -34,6 +34,11 @@ from subprocess import check_output, CalledProcessError
 from tkinter import Text, PhotoImage
 from tkinter.ttk import Checkbutton
 from webbrowser import open as open_url
+import ewmh
+
+
+EWMH = ewmh.EWMH()
+
 
 SYMBOLS = 'ΓΔΘΛΞΠΣΦΨΩαβγδεζηθικλμνξοπρςστυφχψωϐϑϒϕϖæœ«»¡¿£¥$€§ø∞∀∃∄∈∉∫∧∨∩∪÷±√∝∼≃≅≡≤≥≪≫≲≳▪•✭✦➔➢✔▴▸✗✚✳☎✉✎♫⚠⇒⇔'
 

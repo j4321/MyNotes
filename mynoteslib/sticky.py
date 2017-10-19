@@ -27,11 +27,10 @@ from tkinter.ttk import  Style, Sizegrip, Entry, Checkbutton, Label, Button
 from tkinter.font import Font
 import os
 import re
-import ewmh
 from time import strftime
 from mynoteslib.constantes import TEXT_COLORS, askopenfilename, open_url
 from mynoteslib.constantes import PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK, IM_CLIP
-from mynoteslib.constantes import sorting, text_ranges, math_to_image
+from mynoteslib.constantes import sorting, text_ranges, math_to_image, EWMH
 from mynoteslib.symbols import pick_symbol
 from mynoteslib.messagebox import showerror, askokcancel
 
@@ -50,6 +49,7 @@ class Sticky(Toplevel):
             (title, txt, category, color, tags, geometry, locked, checkboxes, images, rolled)
         """
         Toplevel.__init__(self, master)
+        self.withdraw()
         # --- window properties
         self.id = key
         self.is_locked = not (kwargs.get("locked", False))
@@ -62,17 +62,11 @@ class Sticky(Toplevel):
         self.nb_links = 0
         self.nb_files = 0
         self.title('mynotes%s' % key)
+        self.protocol("WM_DELETE_WINDOW", self.hide)
         self.attributes("-type", "splash")
         self.attributes("-alpha", CONFIG.getint("General", "opacity")/100)
-        self.focus_force()
-        # window geometry
-        self.update_idletasks()
-        self.geometry(kwargs.get("geometry", '220x235'))
-        self.save_geometry = kwargs.get("geometry", '220x235')
-        self.update()
         self.rowconfigure(1, weight=1)
         self.minsize(10,10)
-        self.protocol("WM_DELETE_WINDOW", self.hide)
 
         # --- style
         self.style = Style(self)
@@ -326,14 +320,6 @@ class Sticky(Toplevel):
         mode = self.mode.get()
         if mode != "note":
             self.txt.tag_add(mode, "1.0", "end")
-        self.txt.focus_set()
-        self.lock()
-        if kwargs.get("rolled", False):
-            self.rollnote()
-        if self.position.get() == "above":
-            self.set_position_above()
-        elif self.position.get() == "below":
-            self.set_position_below()
 
         # --- placement
         # titlebar
@@ -403,6 +389,22 @@ class Sticky(Toplevel):
         self.txt.bind('<Control-h>', lambda e: self.add_link())
         if LATEX:
             self.txt.bind('<Control-t>', lambda e: self.add_latex())
+
+        # window geometry
+        self.update_idletasks()
+        self.geometry(kwargs.get("geometry", '220x235'))
+        self.save_geometry = kwargs.get("geometry", '220x235')
+        self.deiconify()
+        self.update_idletasks()
+        self.focus_force()
+        self.txt.focus_set()
+        self.lock()
+        if kwargs.get("rolled", False):
+            self.rollnote()
+        if self.position.get() == "above":
+            self.set_position_above()
+        elif self.position.get() == "below":
+            self.set_position_below()
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -528,32 +530,29 @@ class Sticky(Toplevel):
 
     def set_position_above(self):
         """Make note always above the other windows."""
-        e = ewmh.EWMH()
-        for w in e.getClientList():
+        for w in EWMH.getClientList():
             if w.get_wm_name() == 'mynotes%s' % self.id:
-                e.setWmState(w, 1, '_NET_WM_STATE_ABOVE')
-                e.setWmState(w, 0, '_NET_WM_STATE_BELOW')
-        e.display.flush()
+                EWMH.setWmState(w, 1, '_NET_WM_STATE_ABOVE')
+                EWMH.setWmState(w, 0, '_NET_WM_STATE_BELOW')
+        EWMH.display.flush()
         self.save_note()
 
     def set_position_below(self):
         """Make note always below the other windows."""
-        e = ewmh.EWMH()
-        for w in e.getClientList():
+        for w in EWMH.getClientList():
             if w.get_wm_name() == 'mynotes%s' % self.id:
-                e.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
-                e.setWmState(w, 1, '_NET_WM_STATE_BELOW')
-        e.display.flush()
+                EWMH.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
+                EWMH.setWmState(w, 1, '_NET_WM_STATE_BELOW')
+        EWMH.display.flush()
         self.save_note()
 
     def set_position_normal(self):
         """Make note be on top if active or behind the active window."""
-        e = ewmh.EWMH()
-        for w in e.getClientList():
+        for w in EWMH.getClientList():
             if w.get_wm_name() == 'mynotes%s' % self.id:
-                e.setWmState(w, 0, '_NET_WM_STATE_BELOW')
-                e.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
-        e.display.flush()
+                EWMH.setWmState(w, 0, '_NET_WM_STATE_BELOW')
+                EWMH.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
+        EWMH.display.flush()
         self.save_note()
 
     def set_mode_note(self):

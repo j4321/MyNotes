@@ -40,7 +40,7 @@ class Config(Toplevel):
         self.grab_set()
         self.resizable(False, False)
         self.protocol("WM_DELETE_WINDOW", self.quit)
-        self.changes = {}, {}, False
+        self.changes = {}, {}, False, False, False
 
         # --- style
         style = Style(self)
@@ -375,6 +375,7 @@ class Config(Toplevel):
                 familytitle = 'TkDefaultFont'
         sizetitle = self.fonttitle_size.get()
         opacity = "%i" % float(self.opacity_scale.get())
+        opacity_change = opacity != CONFIG.getint("General", "opacity")
         language = REV_LANGUAGES[self.lang.get()]
         style = ""
         if self.is_bold.instate(("selected",)):
@@ -393,7 +394,9 @@ class Config(Toplevel):
         CONFIG.set("General", "language", language)
         CONFIG.set("General", "opacity", opacity)
         CONFIG.set("General", "position", self.position.get())
-        CONFIG.set("General", "buttons_position", self.titlebar_disposition.get())
+        disposition = self.titlebar_disposition.get()
+        disposition_change = CONFIG.get("General", "buttons_position") != disposition
+        CONFIG.set("General", "buttons_position", disposition)
         CONFIG.set("General", "symbols", "".join(symbols))
         CONFIG.set("Font", "text_size", size)
         CONFIG.set("Font", "text_family", family)
@@ -422,7 +425,7 @@ class Config(Toplevel):
                 CONFIG.set("Categories", new_name,
                            COLORS[self.category_settings.get_color(cat)])
         save_config()
-        self.changes = col_changes, name_changes, new_cat
+        self.changes = col_changes, name_changes, new_cat, opacity_change, disposition_change
         self.destroy()
 
     def get_changes(self):

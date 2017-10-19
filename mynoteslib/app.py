@@ -39,7 +39,6 @@ from mynoteslib.about import About
 from mynoteslib.notemanager import Manager
 from mynoteslib.version_check import UpdateChecker
 from mynoteslib.messagebox import showerror, askokcancel
-import ewmh
 # TODO: fix link copy
 
 class App(Tk):
@@ -55,8 +54,6 @@ class App(Tk):
         self.img = PhotoImage(file=cst.IM_ICON)
         self.icon = PhotoImage(master=self, file=cst.IM_ICON_48)
         self.iconphoto(True, self.icon)
-
-        self.ewmh = ewmh.EWMH()
 
         style = Style(self)
         style.theme_use("clam")
@@ -453,16 +450,17 @@ class App(Tk):
     # --- Other methods
     def change_opacity(self, alpha):
         opacity = int(hex(int(255 * alpha) * 256 ** 3), 16)
+        atom_opacity = cst.EWMH.display.get_atom('_NET_WM_WINDOW_OPACITY')
         for w in cst.EWMH.getClientList():
             if w.get_wm_name()[:7] == 'mynotes':
-                w.change_property(436, 6, 32, [opacity, 0, 0, 0], 0)
+                w.change_property(atom_opacity, 6, 32, [opacity, 0, 0, 0], 0)
         cst.EWMH.display.flush()
 
     def make_notes_sticky(self):
-        for w in self.ewmh.getClientList():
+        for w in cst.EWMH.getClientList():
             if w.get_wm_name()[:7] == 'mynotes':
-                self.ewmh.setWmState(w, 1, '_NET_WM_STATE_STICKY')
-        self.ewmh.display.flush()
+                cst.EWMH.setWmState(w, 1, '_NET_WM_STATE_STICKY')
+        cst.EWMH.display.flush()
 
     def add_note_to_menu(self, nb, note_title, category):
         """Add note to 'show notes' menu."""
@@ -586,13 +584,14 @@ class App(Tk):
         """Launch the setting manager."""
         conf = Config(self)
         self.wait_window(conf)
-        col_changes, name_changes, new_cat = conf.get_changes()
-        if new_cat or col_changes or name_changes:
+        col_changes, name_changes, new_cat, opacity_change, disposition_change= conf.get_changes()
+        if opacity_change:
+            alpha = CONFIG.getint("General", "opacity") / 100
+            self.change_opacity(alpha)
+        if new_cat or col_changes or name_changes or disposition_change:
             self.update_notes(col_changes, name_changes)
             self.update_menu()
-            alpha = CONFIG.getint("General", "opacity") / 100
             for note in self.notes.values():
-                note.attributes("-alpha", alpha)
                 note.update_title_font()
                 note.update_text_font()
                 note.update_titlebar()
