@@ -21,8 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Main class
 """
 
-from tkinter import Tk, PhotoImage, Menu, TclError
+from tkinter import Tk, PhotoImage, TclError
 from tkinter.ttk import Style, Checkbutton
+from tkinter.font import families
 import os
 import re
 import traceback
@@ -81,6 +82,17 @@ class App(Tk):
 #        self.clipboard = []
 #        self.img_clipboard = []
 #        self.chb_clipboard = []
+
+        # --- Mono font
+        # tkinter.font.families needs a GUI so cannot be run in constantes.py
+        if not CONFIG.get('Font', 'mono'):
+            fonts = [f for f in families() if 'Mono' in f]
+            if 'FreeMono' in fonts:
+                CONFIG.set("Font", "mono", "FreeMono")
+            elif fonts:
+                CONFIG.set("Font", "mono", fonts[0])
+            else:
+                CONFIG.set("Font", "mono", "TkDefaultFont")
 
         # --- Menu
         self.menu_notes = SubMenu(parent=self.icon.menu)
@@ -579,17 +591,17 @@ class App(Tk):
         """Launch the setting manager."""
         conf = Config(self)
         self.wait_window(conf)
-        col_changes, name_changes, new_cat, opacity_change, disposition_change= conf.get_changes()
+        col_changes, name_changes, new_cat, opacity_change = conf.get_changes()
         if opacity_change:
             alpha = CONFIG.getint("General", "opacity") / 100
             self.change_opacity(alpha)
-        if new_cat or col_changes or name_changes or disposition_change:
+        if new_cat or col_changes or name_changes:
             self.update_notes(col_changes, name_changes)
             self.update_menu()
-            for note in self.notes.values():
-                note.update_title_font()
-                note.update_text_font()
-                note.update_titlebar()
+        for note in self.notes.values():
+            note.update_title_font()
+            note.update_text_font()
+            note.update_titlebar()
 
     def delete_cat(self, category):
         """Delete all notes belonging to category."""

@@ -3,21 +3,16 @@
 """
 My Notes - Sticky notes/post-it
 Copyright 2016-2017 Juliette Monsel <j_4321@protonmail.com>
-
 My Notes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
-
 My Notes is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
-
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
 Configuration Window
 """
 
@@ -41,7 +36,7 @@ class Config(Toplevel):
         self.grab_set()
         self.resizable(False, False)
         self.protocol("WM_DELETE_WINDOW", self.quit)
-        self.changes = {}, {}, False, False, False
+        self.changes = {}, {}, False, False
 
         # --- style
         style = Style(self)
@@ -216,6 +211,7 @@ class Config(Toplevel):
         self.fonts = list(set(font.families()))
         self.fonts.append("TkDefaultFont")
         self.fonts.sort()
+
         w = max([len(f) for f in self.fonts])
         self.sizes = ["%i" % i for i in (list(range(6, 17)) + list(range(18, 32, 2)))]
 
@@ -255,7 +251,6 @@ class Config(Toplevel):
         self.is_italic.pack(side="left")
         self.is_underlined.pack(side="left")
 
-        self.update_preview_title()
         # --- *-- text
         size = CONFIG.get("Font", "text_size")
         family = CONFIG.get("Font", "text_family")
@@ -281,16 +276,38 @@ class Config(Toplevel):
         self.font_size.current(self.sizes.index(size))
         self.font_size.grid(row=0, column=1, padx=4, pady=4)
 
-        self.update_preview()
+        # --- *-- mono
+        self.mono_fonts = [f for f in self.fonts if 'Mono' in f]
+        mono_family = CONFIG.get("Font", "mono")
+
+        mono_frame = Frame(font_settings)
+        self.sample_mono = Label(mono_frame, text=_("Mono text"), anchor="center",
+                                 style="prev.TLabel", relief="groove")
+        self.sample_mono.grid(row=1, columnspan=2, padx=4, pady=6,
+                              ipadx=4, ipady=4, sticky="eswn")
+
+        self.mono_family = Combobox(mono_frame, values=self.mono_fonts, width=(w * 2) // 3,
+                                    exportselection=False, validate="key")
+        self._validate_mono = self.register(self._validate_mono_family)
+        self.mono_family.configure(validatecommand=(self._validate_mono,
+                                                    "%d", "%S", "%i", "%s", "%V"))
+        self.mono_family.current(self.mono_fonts.index(mono_family))
+        self.mono_family.grid(row=0, column=0, padx=4, pady=4)
 
         # --- *-- placement
         Label(font_settings,
-              text=_("Title")).grid(row=0, padx=4, pady=4, sticky="w")
-        fonttitle_frame.grid(row=1)
+              text=_("Title")).grid(padx=4, pady=4, sticky="w")
+        fonttitle_frame.grid()
         Separator(font_settings, orient="horizontal").grid(row=2, sticky="ew", pady=10)
         Label(font_settings,
-              text=_("Text")).grid(row=3, padx=4, pady=4, sticky="w")
-        font_frame.grid(row=4)
+              text=_("Text")).grid(padx=4, pady=4, sticky="w")
+        font_frame.grid()
+        Separator(font_settings, orient="horizontal").grid(row=2, sticky="ew", pady=10)
+        Label(font_settings,
+              text=_("Mono")).grid(padx=4, pady=4, sticky="w")
+        mono_frame.grid()
+        self.update_preview()
+        self.update_preview_title()
 
         # --- * Categories
         self.category_settings = CategoryManager(self.notebook, master)
@@ -319,7 +336,9 @@ class Config(Toplevel):
                command=self.destroy).grid(row=1, column=1, padx=4, pady=10, sticky="w")
         # --- bindings
         self.font_family.bind('<<ComboboxSelected>>', self.update_preview)
-        self.font_family.bind('<Return>', self.update_preview)
+        self.font_family.bind('<Return>', self.update_mono_preview)
+        self.mono_family.bind('<<ComboboxSelected>>', self.update_preview)
+        self.mono_family.bind('<Return>', self.update_mono_preview)
         self.font_size.bind('<<ComboboxSelected>>', self.update_preview, add=True)
         self.font_size.bind('<Return>', self.update_preview, add=True)
         self.fonttitle_family.bind('<<ComboboxSelected>>', self.update_preview_title)
@@ -374,8 +393,41 @@ class Config(Toplevel):
             else:
                 return False
 
+    def _validate_mono_family(self, action, modif, pos, prev_txt, V):
+        """Complete the text in the entry with existing font names."""
+        combo = self.mono_family
+        try:
+            sel = combo.selection_get()
+            txt = prev_txt.replace(sel, '')
+        except TclError:
+            txt = prev_txt
+        if action == "0":
+            txt = txt[:int(pos)] + txt[int(pos) + 1:]
+            return True
+        else:
+            txt = txt[:int(pos)] + modif + txt[int(pos):]
+            l = [i for i in self.mono_fonts if i[:len(txt)] == txt]
+            if l:
+                i = self.fonts.index(l[0])
+                combo.current(i)
+                index = combo.index("insert")
+                combo.delete(0, "end")
+                combo.insert(0, l[0].replace("\ ", " "))
+                combo.selection_range(index + 1, "end")
+                combo.icursor(index + 1)
+                return True
+            else:
+                return False
+
     def ok(self):
         """Validate configuration."""
+        mono = self.mono_family.get()
+        if mono not in self.fonts:
+            l = [i for i in self.fonts if i[:len(mono)] == mono]
+            if l:
+                family = l[0]
+            else:
+                family = 'TkDefaultFont'
         family = self.font_family.get()
         if family not in self.fonts:
             l = [i for i in self.fonts if i[:len(family)] == family]
@@ -412,9 +464,7 @@ class Config(Toplevel):
         CONFIG.set("General", "language", language)
         CONFIG.set("General", "opacity", opacity)
         CONFIG.set("General", "position", self.position.get())
-        disposition = self.titlebar_disposition.get()
-        disposition_change = CONFIG.get("General", "buttons_position") != disposition
-        CONFIG.set("General", "buttons_position", disposition)
+        CONFIG.set("General", "buttons_position", self.titlebar_disposition.get())
         CONFIG.set("General", "symbols", "".join(symbols))
         CONFIG.set("General", "trayicon", self.gui.get().lower())
         CONFIG.set("Font", "text_size", size)
@@ -422,6 +472,7 @@ class Config(Toplevel):
         CONFIG.set("Font", "title_family", familytitle)
         CONFIG.set("Font", "title_size", sizetitle)
         CONFIG.set("Font", "title_style", style)
+        CONFIG.set("Font", "mono", mono)
 
         col_changes = {}
         name_changes = {}
@@ -444,7 +495,7 @@ class Config(Toplevel):
                 CONFIG.set("Categories", new_name,
                            COLORS[self.category_settings.get_color(cat)])
         save_config()
-        self.changes = col_changes, name_changes, new_cat, opacity_change, disposition_change
+        self.changes = col_changes, name_changes, new_cat, opacity_change
         self.destroy()
 
     def get_changes(self):
@@ -467,6 +518,13 @@ class Config(Toplevel):
         family = self.font_family.get()
         size = self.font_size.get()
         self.sample.configure(font="%s %s" % (family.replace(" ", "\ "), size))
+        self.update_mono_preview()
+
+    def update_mono_preview(self, event=None):
+        """Update mono font preview."""
+        family = self.mono_family.get()
+        size = self.font_size.get()
+        self.sample_mono.configure(font="%s %s" % (family.replace(" ", "\ "), size))
 
     def update_preview_title(self, event=None):
         """Update title font preview."""

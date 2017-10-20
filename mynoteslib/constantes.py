@@ -101,6 +101,8 @@ if os.path.exists(PATH_CONFIG):
         CONFIG.set("General", "symbols", SYMBOLS)
     if not CONFIG.has_option("General", "trayicon"):
         CONFIG.set("General", "trayicon", "")
+    if not CONFIG.has_option("Font", "mono"):
+        CONFIG.set("Font", "mono", "")
 else:
     LANGUE = ""
     CONFIG.add_section("General")
@@ -117,6 +119,7 @@ else:
     CONFIG.set("Font", "title_family", "TkDefaultFont")
     CONFIG.set("Font", "title_size", "14")
     CONFIG.set("Font", "title_style", "bold")
+    CONFIG.set("Font", "mono", "")
     CONFIG.add_section("Categories")
 
 # --- system tray icon
@@ -445,6 +448,7 @@ BALISES_OPEN = {"bold": "<b>",
                 "italic": "<i>",
                 "underline": "<u>",
                 "overstrike": "<s>",
+                "mono": "<tt>",
                 "list": "",
                 "enum": "",
                 "link": "",
@@ -457,6 +461,7 @@ BALISES_CLOSE = {"bold": "</b>",
                  "italic": "</i>",
                  "underline": "</u>",
                  "overstrike": "</s>",
+                 "mono": "</tt>",
                  "list": "",
                  "enum": "",
                  "todolist": "",
