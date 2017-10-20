@@ -28,7 +28,7 @@ import re
 import traceback
 from shutil import copy
 import pickle
-from mynoteslib import tktray
+from mynoteslib.trayicon import TrayIcon, SubMenu
 from mynoteslib.constantes import CONFIG, PATH_DATA, PATH_DATA_BACKUP, LOCAL_PATH
 from mynoteslib.constantes import backup, asksaveasfilename, askopenfilename, text_ranges
 import mynoteslib.constantes as cst
@@ -48,12 +48,11 @@ class App(Tk):
     Put an icon in the system tray with a right click menu to create notes.
     """
     def __init__(self):
-        Tk.__init__(self)
+        Tk.__init__(self, className='MyNotes')
         self.withdraw()
         self.notes = {}
-        self.img = PhotoImage(file=cst.IM_ICON)
-        self.icon = PhotoImage(master=self, file=cst.IM_ICON_48)
-        self.iconphoto(True, self.icon)
+        self.im_icon = PhotoImage(master=self, file=cst.IM_ICON_48)
+        self.iconphoto(True, self.im_icon)
 
         style = Style(self)
         style.theme_use("clam")
@@ -73,7 +72,7 @@ class App(Tk):
         self.roll2 = PhotoImage("img_rollactive", file=cst.IM_ROLL_ACTIVE)
 
         self.protocol("WM_DELETE_WINDOW", self.quit)
-        self.icon = tktray.Icon(self, docked=True)
+        self.icon = TrayIcon(cst.ICON)
 
         # --- Clipboards
         self.clipboard = ''
@@ -84,19 +83,18 @@ class App(Tk):
 #        self.chb_clipboard = []
 
         # --- Menu
-        self.menu_notes = Menu(self.icon.menu, tearoff=False)
+        self.menu_notes = SubMenu(parent=self.icon.menu)
         self.hidden_notes = {cat: {} for cat in CONFIG.options("Categories")}
-        self.menu_show_cat = Menu(self.icon.menu, tearoff=False)
-        self.menu_hide_cat = Menu(self.icon.menu, tearoff=False)
-        self.icon.configure(image=self.img)
+        self.menu_show_cat = SubMenu(parent=self.icon.menu)
+        self.menu_hide_cat = SubMenu(parent=self.icon.menu)
         self.icon.menu.add_command(label=_("New Note"), command=self.new)
         self.icon.menu.add_separator()
         self.icon.menu.add_command(label=_('Show All'),
                                    command=self.show_all)
         self.icon.menu.add_cascade(label=_('Show Category'),
                                    menu=self.menu_show_cat)
-        self.icon.menu.add_cascade(label=_('Show Note'), menu=self.menu_notes,
-                                   state="disabled")
+        self.icon.menu.add_cascade(label=_('Show Note'), menu=self.menu_notes)
+        self.icon.menu.disable_item(_('Show Note'))
         self.icon.menu.add_separator()
         self.icon.menu.add_command(label=_('Hide All'),
                                    command=self.hide_all)
@@ -117,6 +115,7 @@ class App(Tk):
                                    command=lambda: UpdateChecker(self))
         self.icon.menu.add_command(label=_('About'), command=lambda: About(self))
         self.icon.menu.add_command(label=_('Quit'), command=self.quit)
+        self.icon.loop(self)
 
         # --- Restore notes
         self.note_data = {}
@@ -464,14 +463,10 @@ class App(Tk):
 
     def add_note_to_menu(self, nb, note_title, category):
         """Add note to 'show notes' menu."""
-
         try:
-            name = self.menu_notes.entrycget(category.capitalize(), 'menu')
-            if not isinstance(name, str):
-                name = str(name)
-            menu = self.menu_notes.children[name.split('.')[-1]]
+            menu = self.menu_notes.get_item_menu(category.capitalize())
             end = menu.index("end")
-            if end is not None:
+            if end:
                 # le menu n'est pas vide
                 titles = self.hidden_notes[category].values()
                 titles = [t for t in titles if t.split(" ~#")[0] == note_title]
@@ -481,13 +476,13 @@ class App(Tk):
                     title = note_title
             else:
                 title = note_title
-        except TclError:
+        except ValueError:
             # cat is not in the menu
-            menu = Menu(self.menu_notes, tearoff=False)
+            menu = SubMenu(self.menu_notes)
             self.menu_notes.add_cascade(label=category.capitalize(), menu=menu)
             title = note_title
+        self.icon.menu.enable_item(4)
         menu.add_command(label=title, command=lambda: self.show_note(nb))
-        self.icon.menu.entryconfigure(4, state="normal")
         self.hidden_notes[category][nb] = title
 
     def backup(self):
@@ -609,17 +604,14 @@ class App(Tk):
             self.notes[nb].delete(confirmation=False)
         else:
             cat = self.note_data[nb]["category"]
-            name = self.menu_notes.entrycget(cat.capitalize(), 'menu')
-            if not isinstance(name, str):
-                name = str(name)
-            menu = self.menu_notes.children[name.split('.')[-1]]
+            menu = self.menu_notes.get_item_menu(cat.capitalize())
             index = menu.index(self.hidden_notes[cat][nb])
             menu.delete(index)
-            if menu.index("end") is None:
+            if not menu.index("end"):
                 # the menu is empty
                 self.menu_notes.delete(cat.capitalize())
-                if self.menu_notes.index('end') is None:
-                    self.icon.menu.entryconfigure(4, state="disabled")
+                if not self.menu_notes.index('end'):
+                    self.icon.menu.disable_item(4)
             del(self.hidden_notes[cat][nb])
             del(self.note_data[nb])
             self.save()
@@ -628,19 +620,16 @@ class App(Tk):
         """Display the note corresponding to the 'nb' key in self.note_data."""
         self.note_data[nb]["visible"] = True
         cat = self.note_data[nb]["category"]
-        name = self.menu_notes.entrycget(cat.capitalize(), 'menu')
-        if not isinstance(name, str):
-            name = str(name)
-        menu = self.menu_notes.children[name.split('.')[-1]]
+        menu = self.menu_notes.get_item_menu(cat.capitalize())
         index = menu.index(self.hidden_notes[cat][nb])
         del(self.hidden_notes[cat][nb])
         self.notes[nb] = Sticky(self, nb, **self.note_data[nb])
         menu.delete(index)
-        if menu.index("end") is None:
+        if not menu.index("end"):
             # the menu is empty
             self.menu_notes.delete(cat.capitalize())
-            if self.menu_notes.index('end') is None:
-                self.icon.menu.entryconfigure(4, state="disabled")
+            if not self.menu_notes.index('end'):
+                self.icon.menu.disable_item(4)
         self.make_notes_sticky()
 
     def update_notes(self, col_changes={}, name_changes={}):
@@ -676,10 +665,10 @@ class App(Tk):
             else:
                 self.notes[key].update_menu_cat(categories)
         self.save()
-        if self.menu_notes.index("end")is not None:
-            self.icon.menu.entryconfigure(4, state="normal")
+        if self.menu_notes.index("end"):
+            self.icon.menu.enable_item(4)
         else:
-            self.icon.menu.entryconfigure(4, state="disabled")
+            self.icon.menu.disable_item(4)
 
     def update_menu(self):
         """Populate self.menu_show_cat and self.menu_hide_cat with the categories."""

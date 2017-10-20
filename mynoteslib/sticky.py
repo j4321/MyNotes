@@ -50,6 +50,7 @@ class Sticky(Toplevel):
         """
         Toplevel.__init__(self, master)
         self.withdraw()
+
         # --- window properties
         self.id = key
         self.is_locked = not (kwargs.get("locked", False))
@@ -836,7 +837,7 @@ class Sticky(Toplevel):
             link_txt = self.links[link_nb]
             sel = self.txt.index('%s.first' % lid), self.txt.index('%s.last' % lid)
 
-        top = Toplevel(self)
+        top = Toplevel(self, class_='MyNotes')
         top.transient(self)
         top.update_idletasks()
         top.geometry("+%i+%i" % top.winfo_pointerxy())
@@ -933,7 +934,7 @@ class Sticky(Toplevel):
                 except Exception as e:
                     showerror(_("Error"), str(e))
 
-        top = Toplevel(self)
+        top = Toplevel(self, class_='MyNotes')
         top.transient(self)
         top.update_idletasks()
         top.geometry("+%i+%i" % top.winfo_pointerxy())
@@ -1001,7 +1002,8 @@ class Sticky(Toplevel):
         """Insert symbol in note."""
         symbols = pick_symbol(self,
                               CONFIG.get("Font", "text_family").replace(" ", "\ "),
-                              CONFIG.get("General", "symbols"))
+                              CONFIG.get("General", "symbols"),
+                              class_='MyNotes')
         self.txt.insert("insert", symbols)
 
     # ---* --Text style

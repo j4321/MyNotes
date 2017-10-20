@@ -187,7 +187,7 @@ ICONS = {"information": IM_INFO_DATA, "error": IM_ERROR_DATA,
 class SyncConflict(Toplevel):
     def __init__(self, master=None,
                  text=_("There is a synchronization conflict. What do you want to do?")):
-        Toplevel.__init__(self, master)
+        Toplevel.__init__(self, master, class_='MyNotes')
         self.icon = PhotoImage(data=IM_ERROR_DATA)
         self.title(_("Sync Conflict"))
         self.grab_set()
@@ -231,7 +231,7 @@ class OneButtonBox(Toplevel):
             button: message displayed on the button
             image: image displayed at the left of the message, either a PhotoImage or a string
         """
-        Toplevel.__init__(self, parent)
+        Toplevel.__init__(self, parent, class_='MyNotes')
         self.transient(parent)
         self.resizable(False, False)
         self.title(title)
@@ -295,7 +295,7 @@ class ShowError(Toplevel):
             report_msg: if True display a suggestion to report error
             image: image displayed at the left of the message, either a PhotoImage or a string
         """
-        Toplevel.__init__(self, parent)
+        Toplevel.__init__(self, parent, class_='MyNotes')
         self.transient(parent)
         self.resizable(False, False)
         self.title(title)
@@ -406,7 +406,7 @@ class TwoButtonBox(Toplevel):
             image: image displayed at the left of the message
         """
 
-        Toplevel.__init__(self, parent)
+        Toplevel.__init__(self, parent, class_='MyNotes')
         self.transient(parent)
         self.resizable(False, False)
         self.title(title)
@@ -467,7 +467,7 @@ class AskYesNoCancel(Toplevel):
             image: image displayed at the left of the message
         """
 
-        Toplevel.__init__(self, parent)
+        Toplevel.__init__(self, parent, class_='MyNotes')
         self.transient(parent)
         self.resizable(False, False)
         self.title(title)

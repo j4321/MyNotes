@@ -5,6 +5,13 @@ Copyright 2016 Juliette Monsel <j_4321@protonmail.com>
 Changelog
 ---------
 
+- Version 2.3.0
+    * Add support for several system tray icon gui toolkits:
+      increase the number of compatible desktop environments
+    * Add 'mono' text style
+    * Make copy/paste between notes work with pictures and links
+    * Fix focus navigation order in dialog to add link
+
 - Version 2.2.1
     * Fix setup.py so that install works
     * Fix category addition/deletion

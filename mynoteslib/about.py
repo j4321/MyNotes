@@ -30,7 +30,7 @@ class About(Toplevel):
     """About dialog."""
     def __init__(self, master):
         """Create about dialog."""
-        Toplevel.__init__(self, master)
+        Toplevel.__init__(self, master, class_='MyNotes')
 
         self.title(_("About MyNotes"))
         self.image = PhotoImage(file=IM_ICON_48, master=self)
@@ -92,7 +92,7 @@ class About(Toplevel):
             self.focus_set()
             fen.destroy()
 
-        fen = Toplevel(self)
+        fen = Toplevel(self, class_='MyNotes')
         fen.title(_("License"))
         fen.transient(self)
         fen.protocol("WM_DELETE_WINDOW", close)

@@ -31,7 +31,7 @@ class Export(Toplevel):
     """Category export dialog."""
     def __init__(self, master):
         """Create export dialog."""
-        Toplevel.__init__(self, master)
+        Toplevel.__init__(self, master, class_='MyNotes')
         self.title(_("Export"))
         self.resizable(False, False)
         self.grab_set()
