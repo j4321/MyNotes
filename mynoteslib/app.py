@@ -21,16 +21,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Main class
 """
 
-from tkinter import Tk, PhotoImage, Menu, TclError
+from tkinter import Tk, PhotoImage, TclError
 from tkinter.ttk import Style, Checkbutton
+from tkinter.font import families
 import os
 import re
 import traceback
 from shutil import copy
 import pickle
 from mynoteslib.trayicon import TrayIcon, SubMenu
-from mynoteslib.constantes import CONFIG, PATH_DATA, PATH_DATA_BACKUP, LOCAL_PATH
-from mynoteslib.constantes import backup, asksaveasfilename, askopenfilename
+from mynoteslib.constantes import CONFIG, PATH_DATA, PATH_DATA_BACKUP,\
+    LOCAL_PATH, backup, asksaveasfilename, askopenfilename
 import mynoteslib.constantes as cst
 from mynoteslib.config import Config
 from mynoteslib.export import Export
@@ -39,7 +40,6 @@ from mynoteslib.about import About
 from mynoteslib.notemanager import Manager
 from mynoteslib.version_check import UpdateChecker
 from mynoteslib.messagebox import showerror, askokcancel
-import ewmh
 
 
 class App(Tk):
@@ -55,8 +55,6 @@ class App(Tk):
         self.im_icon = PhotoImage(master=self, file=cst.IM_ICON_48)
         self.iconphoto(True, self.im_icon)
 
-        self.ewmh = ewmh.EWMH()
-
         style = Style(self)
         style.theme_use("clam")
         style.map('TEntry', selectbackground=[('!focus', '#c3c3c3')])
@@ -67,6 +65,16 @@ class App(Tk):
                                        ('disabled', 'alternate', '#dcdad5'),
                                        ('disabled', '#dcdad5')])
         style.configure("sel.TCheckbutton", background=selectbg)
+        bg = self.cget('background')
+        style.configure('TFrame', background=bg)
+        style.configure('TLabel', background=bg)
+        style.configure('TButton', background=bg)
+        style.configure('TMenubutton', background=bg)
+        style.configure('TNotebook', background=bg)
+        style.configure('Vertical.TScrollbar', background=bg)
+        style.configure('Horizontal.TScrollbar', background=bg)
+        style.configure('TCheckbutton', background=bg)
+        style.configure('TSeparator', background=bg)
         style.map("sel.TCheckbutton", background=[("active", selectbg)])
 
         self.close1 = PhotoImage("img_close", file=cst.IM_CLOSE)
@@ -76,6 +84,22 @@ class App(Tk):
 
         self.protocol("WM_DELETE_WINDOW", self.quit)
         self.icon = TrayIcon(cst.ICON)
+
+        # --- Clipboards
+        self.clipboard = ''
+        self.clibboard_content = []  # (type, props)
+        self.link_clipboard = {}
+
+        # --- Mono font
+        # tkinter.font.families needs a GUI so cannot be run in constantes.py
+        if not CONFIG.get('Font', 'mono'):
+            fonts = [f for f in families() if 'Mono' in f]
+            if 'FreeMono' in fonts:
+                CONFIG.set("Font", "mono", "FreeMono")
+            elif fonts:
+                CONFIG.set("Font", "mono", fonts[0])
+            else:
+                CONFIG.set("Font", "mono", "TkDefaultFont")
 
         # --- Menu
         self.menu_notes = SubMenu(parent=self.icon.menu)
@@ -148,6 +172,13 @@ class App(Tk):
         # unbind Ctrl+I and Ctrl+B
         self.bind_class('Text', '<Control-i>', lambda e: None)
         self.bind_class('Text', '<Control-b>', lambda e: None)
+        self.bind_class('Text', '<Control-d>', lambda e: None)
+        self.bind_class('Text', '<Control-o>', lambda e: None)
+        self.bind_class('Text', '<Control-h>', lambda e: None)
+        self.bind_class('Text', '<Control-t>', lambda e: None)
+        self.bind_class('Text', '<Control-x>', self.cut_text)
+        self.bind_class('Text', '<Control-c>', self.copy_text)
+        self.bind_class('Text', '<Control-v>', self.paste_text)
         # highlight checkboxes when inside text selection
         self.bind_class("Text", "<ButtonPress-1>", self.highlight_checkboxes, True)
         self.bind_class("Text", "<ButtonRelease-1>", self.highlight_checkboxes, True)
@@ -168,6 +199,96 @@ class App(Tk):
         showerror(_("Error"), str(args[1]), err, True)
 
     # --- class bindings methods
+    def copy_text(self, event):
+        txt = event.widget
+        sel = txt.tag_ranges('sel')
+        if sel:
+            txt.clipboard_clear()
+            txt_copy = txt.get(sel[0], sel[1])
+            self.clipboard = txt_copy
+            txt.clipboard_append(txt_copy)
+            self.clibboard_content.clear()
+            self.link_clipboard.clear()
+            deb = cst.sorting(str(sel[0]))
+            fin = cst.sorting(str(sel[1]))
+            for l in range(deb[0], fin[0] + 1):
+                if l == deb[0]:
+                    dc = deb[1]
+                else:
+                    dc = 0
+                if l == fin[0]:
+                    nc = fin[1]
+                else:
+                    nc = cst.sorting(str(txt.index('%i.end' % l)))[1]
+
+                for c in range(dc, nc):
+                    index = '%i.%i' % (l, c)
+                    try:
+                        im = txt.image_cget(index, 'image')
+                        name = txt.image_cget(index, 'name').split('#')[0]
+                        key = os.path.split(name)[1]
+                        latex = txt.master.latex.get(key, '')
+                        tags = list(txt.tag_names(index))
+                        if latex:
+                            tags.remove(key)
+                        self.clibboard_content.append(('image', (im, name, tags, latex)))
+                    except TclError:
+                        try:
+                            name = txt.window_cget(index, 'window')
+                            ch = txt.children[name.split(".")[-1]]
+                            tags = txt.tag_names(index)
+                            self.clibboard_content.append(('checkbox', (ch.state(), tags)))
+                        except TclError:
+                            tags = txt.tag_names(index)
+                            link = [t for t in tags if 'link#' in t]
+                            if link:
+                                lnb = int(link[0].split('#')[1])
+                                self.link_clipboard[link[0]] = txt.master.links[lnb]
+                            self.clibboard_content.append(('char', (txt.get(index), tags)))
+                if l < fin[0]:
+                    self.clibboard_content.append(('char', ('\n', [])))
+
+    def cut_text(self, event):
+        self.copy_text(event)
+        event.widget.delete('sel.first', 'sel.last')
+
+    def paste_text(self, event):
+        txt = event.widget
+        if self.clipboard == txt.clipboard_get():
+            links = {}
+            for oldtag, link in self.link_clipboard.items():
+                newtag = txt.master.create_link(link)
+                links[oldtag] = newtag
+
+            for c in self.clibboard_content:
+                index = txt.index('insert')
+                if c[0] is 'image':
+                    img, name, tags, latex = c[1]
+                    if latex and cst.LATEX:
+                        txt.master.create_latex(latex, index)
+                    else:
+                        txt.image_create(index, align='bottom', image=img, name=name)
+                elif c[0] is 'checkbox':
+                    state, tags = c[1]
+                    ch = Checkbutton(txt, takefocus=False, style='sel.TCheckbutton')
+                    ch.state(state)
+                    txt.window_create(index, window=ch)
+                else:
+                    char, tags = c[1]
+                    link = [t for t in tags if 'link#' in t]
+                    if link:
+                        tags = list(tags)
+                        tags.remove(link[0])
+                        tags.append(links[link[0]])
+                    txt.insert('insert', char)
+                for tag in tags:
+                    txt.tag_add(tag, index)
+            txt.tag_remove('sel', '1.0', 'end')
+            self.highlight_checkboxes(event)
+        else:
+            self.clipboard = ""
+            txt.insert('insert', txt.clipboard_get())
+
     def highlight_checkboxes(self, event):
         txt = event.widget
         try:
@@ -258,11 +379,20 @@ class App(Tk):
         else:
             event.widget.insert("insert", "\n")
 
-    def make_notes_sticky(self):
-        for w in self.ewmh.getClientList():
+    # --- Other methods
+    def change_opacity(self, alpha):
+        opacity = int(hex(int(255 * alpha) * 256 ** 3), 16)
+        atom_opacity = cst.EWMH.display.get_atom('_NET_WM_WINDOW_OPACITY')
+        for w in cst.EWMH.getClientList():
             if w.get_wm_name()[:7] == 'mynotes':
-                self.ewmh.setWmState(w, 1, '_NET_WM_STATE_STICKY')
-        self.ewmh.display.flush()
+                w.change_property(atom_opacity, 6, 32, [opacity, 0, 0, 0], 0)
+        cst.EWMH.display.flush()
+
+    def make_notes_sticky(self):
+        for w in cst.EWMH.getClientList():
+            if w.get_wm_name()[:7] == 'mynotes':
+                cst.EWMH.setWmState(w, 1, '_NET_WM_STATE_STICKY')
+        cst.EWMH.display.flush()
 
     def add_note_to_menu(self, nb, note_title, category):
         """Add note to 'show notes' menu."""
@@ -382,16 +512,17 @@ class App(Tk):
         """Launch the setting manager."""
         conf = Config(self)
         self.wait_window(conf)
-        col_changes, name_changes, new_cat = conf.get_changes()
+        col_changes, name_changes, new_cat, opacity_change = conf.get_changes()
+        if opacity_change:
+            alpha = CONFIG.getint("General", "opacity") / 100
+            self.change_opacity(alpha)
         if new_cat or col_changes or name_changes:
             self.update_notes(col_changes, name_changes)
             self.update_menu()
-            alpha = CONFIG.getint("General", "opacity") / 100
-            for note in self.notes.values():
-                note.attributes("-alpha", alpha)
-                note.update_title_font()
-                note.update_text_font()
-                note.update_titlebar()
+        for note in self.notes.values():
+            note.update_title_font()
+            note.update_text_font()
+            note.update_titlebar()
 
     def delete_cat(self, category):
         """Delete all notes belonging to category."""
@@ -570,17 +701,7 @@ class App(Tk):
                             text += "\n\n"
                         with open(fichier, "w") as fich:
                             fich.write(text)
-#                    else:
-#        # --- pickle export
-#                        note_data = {}
-#                        for key in self.note_data:
-#                            if self.note_data[key]["category"] in categories_to_export:
-#                                if (not only_visible) or self.note_data[key]["visible"]:
-#                                    note_data[key] = self.note_data[key]
-#
-#                        with open(fichier, "wb") as fich:
-#                            dp = pickle.Pickler(fich)
-#                            dp.dump(note_data)
+
                 except Exception as e:
                     report_msg = e.strerror != 'Permission denied'
                     showerror(_("Error"), str(e), traceback.format_exc(),

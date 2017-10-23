@@ -34,7 +34,11 @@ from subprocess import check_output, CalledProcessError
 from tkinter import Text, PhotoImage
 from tkinter.ttk import Checkbutton
 from webbrowser import open as open_url
+import ewmh
 import warnings
+
+
+EWMH = ewmh.EWMH()
 
 SYMBOLS = 'ΓΔΘΛΞΠΣΦΨΩαβγδεζηθικλμνξοπρςστυφχψωϐϑϒϕϖæœ«»¡¿£¥$€§ø∞∀∃∄∈∉∫∧∨∩∪÷±√∝∼≃≅≡≤≥≪≫≲≳▪•✭✦➔➢✔▴▸✗✚✳☎✉✎♫⚠⇒⇔'
 
@@ -63,6 +67,7 @@ else:
 
 PATH_CONFIG = os.path.join(LOCAL_PATH, "mynotes.ini")
 PATH_LATEX = os.path.join(LOCAL_PATH, "latex")
+PIDFILE = os.path.join(LOCAL_PATH, "mynotes.pid")
 
 if not os.path.exists(PATH_LATEX):
     os.mkdir(PATH_LATEX)
@@ -97,6 +102,8 @@ if os.path.exists(PATH_CONFIG):
         CONFIG.set("General", "symbols", SYMBOLS)
     if not CONFIG.has_option("General", "trayicon"):
         CONFIG.set("General", "trayicon", "")
+    if not CONFIG.has_option("Font", "mono"):
+        CONFIG.set("Font", "mono", "")
 else:
     LANGUE = ""
     CONFIG.add_section("General")
@@ -113,9 +120,10 @@ else:
     CONFIG.set("Font", "title_family", "TkDefaultFont")
     CONFIG.set("Font", "title_size", "14")
     CONFIG.set("Font", "title_style", "bold")
+    CONFIG.set("Font", "mono", "")
     CONFIG.add_section("Categories")
 
-# --- system tray icon
+
 # --- system tray icon
 def get_available_gui_toolkits():
     """Check which gui toolkits are available to create a system tray icon."""
@@ -441,6 +449,7 @@ BALISES_OPEN = {"bold": "<b>",
                 "italic": "<i>",
                 "underline": "<u>",
                 "overstrike": "<s>",
+                "mono": "<tt>",
                 "list": "",
                 "enum": "",
                 "link": "",
@@ -453,6 +462,7 @@ BALISES_CLOSE = {"bold": "</b>",
                  "italic": "</i>",
                  "underline": "</u>",
                  "overstrike": "</s>",
+                 "mono": "</tt>",
                  "list": "",
                  "enum": "",
                  "todolist": "",

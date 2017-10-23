@@ -8,8 +8,9 @@ organized in categories and you can set a default color for each category.
 Checkboxes and images can be incorporated in the notes. If your desktop
 environment supports compositing, the opacity of the notes can be modified.
 
-MyNotes is designed for Linux. It is written in Python 3 and relies on
-Tk GUI toolkit.
+MyNotes is designed for Linux. It is written in Python 3 and relies 
+mostly on the Tk GUI toolkit.
+
 
 Install
 -------
@@ -47,6 +48,15 @@ Install
 
 You can now launch it from `Menu > Utility > MyNotes`. You can launch
 it from the command line with `mynotes`.
+
+
+Troubleshooting
+---------------
+
+Several gui toolkits are available to display the system tray icon, so if the
+icon does not behave properly, try to change toolkit, they are not all fully
+compatible with every desktop environment.
+
 
 If you encounter bugs or if you have suggestions, please open an issue
 on `GitHub <https://github.com/j4321/MyNotes/issues>`__ or write me 

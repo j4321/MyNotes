@@ -27,12 +27,10 @@ from tkinter.ttk import  Style, Sizegrip, Entry, Checkbutton, Label, Button
 from tkinter.font import Font
 import os
 import re
-import ewmh
-from subprocess import run
 from time import strftime
-from mynoteslib.constantes import TEXT_COLORS, askopenfilename, open_url
-from mynoteslib.constantes import PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK, IM_CLIP
-from mynoteslib.constantes import sorting, text_ranges, math_to_image
+from mynoteslib.constantes import TEXT_COLORS, askopenfilename, open_url,\
+    PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK, IM_CLIP, sorting, text_ranges,\
+    math_to_image, EWMH
 from mynoteslib.symbols import pick_symbol
 from mynoteslib.messagebox import showerror, askokcancel
 
@@ -51,6 +49,8 @@ class Sticky(Toplevel):
             (title, txt, category, color, tags, geometry, locked, checkboxes, images, rolled)
         """
         Toplevel.__init__(self, master, class_='MyNotes')
+        self.withdraw()
+
         # --- window properties
         self.id = key
         self.is_locked = not (kwargs.get("locked", False))
@@ -63,17 +63,11 @@ class Sticky(Toplevel):
         self.nb_links = 0
         self.nb_files = 0
         self.title('mynotes%s' % key)
+        self.protocol("WM_DELETE_WINDOW", self.hide)
         self.attributes("-type", "splash")
         self.attributes("-alpha", CONFIG.getint("General", "opacity")/100)
-        self.focus_force()
-        # window geometry
-        self.update_idletasks()
-        self.geometry(kwargs.get("geometry", '220x235'))
-        self.save_geometry = kwargs.get("geometry", '220x235')
-        self.update()
         self.rowconfigure(1, weight=1)
         self.minsize(10,10)
-        self.protocol("WM_DELETE_WINDOW", self.hide)
 
         # --- style
         self.style = Style(self)
@@ -108,8 +102,10 @@ class Sticky(Toplevel):
         # corner grip
         self.corner = Sizegrip(self, style=self.id + ".TSizegrip")
         # texte
+        size = CONFIG.get("Font", "text_size")
         font_text = "%s %s" %(CONFIG.get("Font", "text_family").replace(" ", "\ "),
-                              CONFIG.get("Font", "text_size"))
+                              size)
+        mono = "%s %s" % (CONFIG.get("Font", "mono").replace(" ", "\ "), size)
         self.txt = Text(self, wrap='word', undo=True,
                         selectforeground='white',
                         inactiveselectbackground=selectbg,
@@ -118,6 +114,7 @@ class Sticky(Toplevel):
                         relief="flat", borderwidth=0,
                         highlightthickness=0, font=font_text)
         # tags
+        self.txt.tag_configure("mono", font=mono)
         self.txt.tag_configure("bold", font="%s bold" % font_text)
         self.txt.tag_configure("italic", font="%s italic" % font_text)
         self.txt.tag_configure("bold-italic", font="%s bold italic" % font_text)
@@ -238,6 +235,8 @@ class Sticky(Toplevel):
                                accelerator='Ctrl+U')
         menu_style.add_command(label=_("Overstrike"),
                                command=self.toggle_overstrike)
+        menu_style.add_command(label=_("Mono"),
+                               command=lambda: self.toggle_text_style("mono"))
         # text alignment
         menu_align = Menu(self.menu_txt, tearoff=False)
         menu_align.add_command(label=_("Left"),
@@ -301,6 +300,7 @@ class Sticky(Toplevel):
                                           image=self.images[-1],
                                           align='bottom',
                                           name=val)
+
         # restore tags
         for tag, indices in kwargs.get("tags", {}).items():
             if indices:
@@ -326,14 +326,6 @@ class Sticky(Toplevel):
         mode = self.mode.get()
         if mode != "note":
             self.txt.tag_add(mode, "1.0", "end")
-        self.txt.focus_set()
-        self.lock()
-        if kwargs.get("rolled", False):
-            self.rollnote()
-        if self.position.get() == "above":
-            self.set_position_above()
-        elif self.position.get() == "below":
-            self.set_position_below()
 
         # --- placement
         # titlebar
@@ -398,16 +390,27 @@ class Sticky(Toplevel):
         self.txt.bind('<Control-r>', lambda e: self.set_align('right'))
         self.txt.bind('<Control-l>', lambda e: self.set_align('left'))
         self.txt.bind('<Control-s>', lambda e: self.add_symbols())
-        self.txt.bind_class('Text','<Control-d>', lambda e: None)
         self.txt.bind('<Control-d>', self.add_date)
-        self.txt.bind_class('Text','<Control-o>', lambda e: None)
         self.txt.bind('<Control-o>', self.add_checkbox)
-        self.txt.bind_class('Text','<Control-h>', lambda e: None)
         self.txt.bind('<Control-h>', lambda e: self.add_link())
         if LATEX:
-            self.txt.bind_class('Text', '<Control-t>', lambda e: None)
             self.txt.bind('<Control-t>', lambda e: self.add_latex())
-#        self.txt.bind('<Control-i>', self.add_image)
+
+        # window geometry
+        self.update_idletasks()
+        self.geometry(kwargs.get("geometry", '220x235'))
+        self.save_geometry = kwargs.get("geometry", '220x235')
+        self.deiconify()
+        self.update_idletasks()
+        self.focus_force()
+        self.txt.focus_set()
+        self.lock()
+        if kwargs.get("rolled", False):
+            self.rollnote()
+        if self.position.get() == "above":
+            self.set_position_above()
+        elif self.position.get() == "below":
+            self.set_position_below()
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -533,32 +536,26 @@ class Sticky(Toplevel):
 
     def set_position_above(self):
         """Make note always above the other windows."""
-        e = ewmh.EWMH()
-        for w in e.getClientList():
-            if w.get_wm_name() == 'mynotes%s' % self.id:
-                e.setWmState(w, 1, '_NET_WM_STATE_ABOVE')
-                e.setWmState(w, 0, '_NET_WM_STATE_BELOW')
-        e.display.flush()
+        w = EWMH.getActiveWindow()
+        EWMH.setWmState(w, 1, '_NET_WM_STATE_ABOVE')
+        EWMH.setWmState(w, 0, '_NET_WM_STATE_BELOW')
+        EWMH.display.flush()
         self.save_note()
 
     def set_position_below(self):
         """Make note always below the other windows."""
-        e = ewmh.EWMH()
-        for w in e.getClientList():
-            if w.get_wm_name() == 'mynotes%s' % self.id:
-                e.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
-                e.setWmState(w, 1, '_NET_WM_STATE_BELOW')
-        e.display.flush()
+        w = EWMH.getActiveWindow()
+        EWMH.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
+        EWMH.setWmState(w, 1, '_NET_WM_STATE_BELOW')
+        EWMH.display.flush()
         self.save_note()
 
     def set_position_normal(self):
         """Make note be on top if active or behind the active window."""
-        e = ewmh.EWMH()
-        for w in e.getClientList():
-            if w.get_wm_name() == 'mynotes%s' % self.id:
-                e.setWmState(w, 0, '_NET_WM_STATE_BELOW')
-                e.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
-        e.display.flush()
+        w = EWMH.getActiveWindow()
+        EWMH.setWmState(w, 0, '_NET_WM_STATE_BELOW')
+        EWMH.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
+        EWMH.display.flush()
         self.save_note()
 
     def set_mode_note(self):
@@ -754,9 +751,12 @@ class Sticky(Toplevel):
 
     def update_text_font(self):
         """Update text font after configuration change."""
+        size = CONFIG.get("Font", "text_size")
         font = "%s %s" %(CONFIG.get("Font", "text_family").replace(" ", "\ "),
-                         CONFIG.get("Font", "text_size"))
+                         size)
+        mono = "%s %s" % (CONFIG.get("Font", "mono").replace(" ", "\ "), size)
         self.txt.configure(font=font)
+        self.txt.tag_configure("mono", font=mono)
         self.txt.tag_configure("bold", font="%s bold" % font)
         self.txt.tag_configure("italic", font="%s italic" % font)
         self.txt.tag_configure("bold-italic", font="%s bold italic" % font)
@@ -802,7 +802,7 @@ class Sticky(Toplevel):
                 link.delete(0, 'end')
                 link.insert(0, file)
 
-        def ok(eveny=None):
+        def ok(event=None):
             lien = link.get()
             txt = text.get()
             if lien:
@@ -850,8 +850,9 @@ class Sticky(Toplevel):
         top.resizable(True, False)
         top.title(_("Link"))
         top.columnconfigure(1, weight=1)
-        text = Entry(top)
         link = Entry(top)
+        b_file = Button(top, image=self.im_clip, padding=0, command=local_file)
+        text = Entry(top)
         text.insert(0, txt)
         text.icursor("end")
         link.insert(0, link_txt)
@@ -859,14 +860,21 @@ class Sticky(Toplevel):
         Label(top, text=_("URL or file")).grid(row=0, column=0, sticky="e", padx=4, pady=4)
         Label(top, text=_("Text")).grid(row=1, column=0, sticky="e", padx=4, pady=4)
         link.grid(row=0, column=1, sticky="ew", padx=4, pady=4)
+        b_file.grid(row=0, column=2, padx=4, pady=4)
         text.grid(row=1, column=1, sticky="ew", padx=4, pady=4)
-        Button(top, image=self.im_clip, padding=0,
-               command=local_file).grid(row=0, column=2, padx=4, pady=4)
         Button(top, text="Ok", command=ok).grid(row=2, columnspan=3, padx=4, pady=4)
-
         link.focus_set()
         text.bind("<Return>", ok)
         link.bind("<Return>", ok)
+
+    def create_link(self, link):
+        self.nb_links += 1
+        lnb = self.nb_links
+        lid = "link#%i" % lnb
+        self.links[lnb] = link
+        self.txt.tag_bind(lid, "<Button-1>", lambda e: self.open_link(lnb))
+        self.txt.tag_bind(lid, "<Double-Button-1>", lambda e: self.edit_link(lnb))
+        return lid
 
     def open_link(self, link_nb):
         """Open link after small delay to avoid opening link on double click."""
@@ -884,7 +892,8 @@ class Sticky(Toplevel):
         """Insert checkbox in note."""
         ch = Checkbutton(self.txt, takefocus=False,
                          style=self.id + ".TCheckbutton")
-        self.txt.window_create("insert", window=ch)
+        index = self.txt.index("insert")
+        self.txt.window_create(index, window=ch)
 
     def add_date(self, event=None):
         """Insert today's date in note."""
@@ -905,7 +914,7 @@ class Sticky(Toplevel):
                         i = 0
                     img = "%i.png" % i
                     self.txt.tag_bind(img, '<Double-Button-1>',
-                                          lambda e: self.add_latex(img))
+                                      lambda e: self.add_latex(img))
                 else:
                     img = img_name
                 self.latex[img] = latex
@@ -957,6 +966,26 @@ class Sticky(Toplevel):
         text.bind('<Return>', ok)
         text.focus_set()
 
+    def create_latex(self, latex, index):
+        l = [int(os.path.splitext(f)[0]) for f in os.listdir(PATH_LATEX)]
+        l.sort()
+        if l:
+            i = l[-1] + 1
+        else:
+            i = 0
+        img = "%i.png" % i
+        self.latex[img] = latex
+        self.txt.tag_bind(img, '<Double-Button-1>',
+                          lambda e: self.add_latex(img))
+        im = os.path.join(PATH_LATEX, img)
+        math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
+        self.images.append(PhotoImage(file=im, master=self))
+        self.txt.image_create(index,
+                              align='bottom',
+                              image=self.images[-1],
+                              name=im)
+        self.txt.tag_add(img, index)
+
     def add_image(self, event=None):
         """Insert image in note."""
         fichier = askopenfilename(defaultextension=".png",
@@ -966,7 +995,8 @@ class Sticky(Toplevel):
                                   title=_('Select PNG image'))
         if os.path.exists(fichier):
             self.images.append(PhotoImage(master=self.txt, file=fichier))
-            self.txt.image_create("insert",
+            index = self.txt.index("insert")
+            self.txt.image_create(index,
                                   align='bottom',
                                   image=self.images[-1],
                                   name=fichier)
@@ -977,7 +1007,7 @@ class Sticky(Toplevel):
         """Insert symbol in note."""
         symbols = pick_symbol(self,
                               CONFIG.get("Font", "text_family").replace(" ", "\ "),
-                              CONFIG.get("General", "symbols"), 
+                              CONFIG.get("General", "symbols"),
                               class_='MyNotes')
         self.txt.insert("insert", symbols)
 

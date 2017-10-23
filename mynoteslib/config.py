@@ -24,6 +24,7 @@ Configuration Window
 
 from tkinter import Toplevel, StringVar, Menu, TclError, Text
 from mynoteslib.messagebox import showinfo
+from mynoteslib.autocomplete import AutoCompleteCombobox
 from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator
 from tkinter.ttk import Notebook, Combobox, Frame, Menubutton, Checkbutton
 from mynoteslib.constantes import CONFIG, save_config, COLORS, SYMBOLS, LATEX,\
@@ -41,7 +42,7 @@ class Config(Toplevel):
         self.grab_set()
         self.resizable(False, False)
         self.protocol("WM_DELETE_WINDOW", self.quit)
-        self.changes = {}, {}, False
+        self.changes = {}, {}, False, False
 
         # --- style
         style = Style(self)
@@ -216,17 +217,14 @@ class Config(Toplevel):
         self.fonts = list(set(font.families()))
         self.fonts.append("TkDefaultFont")
         self.fonts.sort()
+
         w = max([len(f) for f in self.fonts])
         self.sizes = ["%i" % i for i in (list(range(6, 17)) + list(range(18, 32, 2)))]
 
-        self.fonttitle_family = Combobox(fonttitle_frame, values=self.fonts,
-                                         width=(w * 2) // 3,
-                                         exportselection=False,
-                                         validate="key")
+        self.fonttitle_family = AutoCompleteCombobox(fonttitle_frame, values=self.fonts,
+                                                     width=(w * 2) // 3,
+                                                     exportselection=False)
         self._validate_title_size = self.register(lambda *args: self.validate_font_size(self.fonttitle_size, *args))
-        self._validate_title_family = self.register(lambda *args: self._validate_font_family(self.fonttitle_family, *args))
-        self.fonttitle_family.configure(validatecommand=(self._validate_title_family,
-                                                         "%d", "%S", "%i", "%s", "%V"))
         self.fonttitle_family.current(self.fonts.index(title_family))
         self.fonttitle_family.grid(row=0, column=0, padx=4, pady=4)
         self.fonttitle_size = Combobox(fonttitle_frame, values=self.sizes, width=5,
@@ -255,7 +253,6 @@ class Config(Toplevel):
         self.is_italic.pack(side="left")
         self.is_underlined.pack(side="left")
 
-        self.update_preview_title()
         # --- *-- text
         size = CONFIG.get("Font", "text_size")
         family = CONFIG.get("Font", "text_family")
@@ -266,12 +263,10 @@ class Config(Toplevel):
         self.sample.grid(row=1, columnspan=2, padx=4, pady=6,
                          ipadx=4, ipady=4, sticky="eswn")
 
-        self.font_family = Combobox(font_frame, values=self.fonts, width=(w * 2) // 3,
-                                    exportselection=False, validate="key")
-        self._validate_family = self.register(lambda *args: self._validate_font_family(self.font_family, *args))
+        self.font_family = AutoCompleteCombobox(font_frame, values=self.fonts,
+                                                width=(w * 2) // 3,
+                                                exportselection=False)
         self._validate_size = self.register(lambda *args: self.validate_font_size(self.font_size, *args))
-        self.font_family.configure(validatecommand=(self._validate_family,
-                                                    "%d", "%S", "%i", "%s", "%V"))
         self.font_family.current(self.fonts.index(family))
         self.font_family.grid(row=0, column=0, padx=4, pady=4)
         self.font_size = Combobox(font_frame, values=self.sizes, width=5,
@@ -281,16 +276,36 @@ class Config(Toplevel):
         self.font_size.current(self.sizes.index(size))
         self.font_size.grid(row=0, column=1, padx=4, pady=4)
 
-        self.update_preview()
+        # --- *-- mono
+        self.mono_fonts = [f for f in self.fonts if 'Mono' in f]
+        mono_family = CONFIG.get("Font", "mono")
+
+        mono_frame = Frame(font_settings)
+        self.sample_mono = Label(mono_frame, text=_("Mono text"), anchor="center",
+                                 style="prev.TLabel", relief="groove")
+        self.sample_mono.grid(row=1, columnspan=2, padx=4, pady=6,
+                              ipadx=4, ipady=4, sticky="eswn")
+
+        self.mono_family = AutoCompleteCombobox(mono_frame, values=self.mono_fonts,
+                                                width=(w * 2) // 3,
+                                                exportselection=False)
+        self.mono_family.current(self.mono_fonts.index(mono_family))
+        self.mono_family.grid(row=0, column=0, padx=4, pady=4)
 
         # --- *-- placement
         Label(font_settings,
-              text=_("Title")).grid(row=0, padx=4, pady=4, sticky="w")
-        fonttitle_frame.grid(row=1)
+              text=_("Title")).grid(padx=4, pady=4, sticky="w")
+        fonttitle_frame.grid()
         Separator(font_settings, orient="horizontal").grid(row=2, sticky="ew", pady=10)
         Label(font_settings,
-              text=_("Text")).grid(row=3, padx=4, pady=4, sticky="w")
-        font_frame.grid(row=4)
+              text=_("Text")).grid(padx=4, pady=4, sticky="w")
+        font_frame.grid()
+        Separator(font_settings, orient="horizontal").grid(row=2, sticky="ew", pady=10)
+        Label(font_settings,
+              text=_("Mono")).grid(padx=4, pady=4, sticky="w")
+        mono_frame.grid()
+        self.update_preview()
+        self.update_preview_title()
 
         # --- * Categories
         self.category_settings = CategoryManager(self.notebook, master)
@@ -319,7 +334,9 @@ class Config(Toplevel):
                command=self.destroy).grid(row=1, column=1, padx=4, pady=10, sticky="w")
         # --- bindings
         self.font_family.bind('<<ComboboxSelected>>', self.update_preview)
-        self.font_family.bind('<Return>', self.update_preview)
+        self.font_family.bind('<Return>', self.update_mono_preview)
+        self.mono_family.bind('<<ComboboxSelected>>', self.update_preview)
+        self.mono_family.bind('<Return>', self.update_mono_preview)
         self.font_size.bind('<<ComboboxSelected>>', self.update_preview, add=True)
         self.font_size.bind('<Return>', self.update_preview, add=True)
         self.fonttitle_family.bind('<<ComboboxSelected>>', self.update_preview_title)
@@ -349,33 +366,18 @@ class Config(Toplevel):
         else:
             return True
 
-    def _validate_font_family(self, combo, action, modif, pos, prev_txt, V):
-        """Complete the text in the entry with existing font names."""
-        try:
-            sel = combo.selection_get()
-            txt = prev_txt.replace(sel, '')
-        except TclError:
-            txt = prev_txt
-        if action == "0":
-            txt = txt[:int(pos)] + txt[int(pos) + 1:]
-            return True
-        else:
-            txt = txt[:int(pos)] + modif + txt[int(pos):]
-            l = [i for i in self.fonts if i[:len(txt)] == txt]
-            if l:
-                i = self.fonts.index(l[0])
-                combo.current(i)
-                index = combo.index("insert")
-                combo.delete(0, "end")
-                combo.insert(0, l[0].replace("\ ", " "))
-                combo.selection_range(index + 1, "end")
-                combo.icursor(index + 1)
-                return True
-            else:
-                return False
-
     def ok(self):
         """Validate configuration."""
+        # --- font
+        # mono
+        mono = self.mono_family.get()
+        if mono not in self.fonts:
+            l = [i for i in self.fonts if i[:len(mono)] == mono]
+            if l:
+                family = l[0]
+            else:
+                family = 'TkDefaultFont'
+        # text family
         family = self.font_family.get()
         if family not in self.fonts:
             l = [i for i in self.fonts if i[:len(family)] == family]
@@ -383,7 +385,13 @@ class Config(Toplevel):
                 family = l[0]
             else:
                 family = 'TkDefaultFont'
+        # text size
         size = self.font_size.get()
+        try:
+            int(size)
+        except ValueError:
+            size = CONFIG.get("Font", "text_size")
+        # title family
         familytitle = self.fonttitle_family.get()
         if familytitle not in self.fonts:
             l = [i for i in self.fonts if i[:len(familytitle)] == familytitle]
@@ -391,9 +399,13 @@ class Config(Toplevel):
                 familytitle = l[0]
             else:
                 familytitle = 'TkDefaultFont'
+        # title size
         sizetitle = self.fonttitle_size.get()
-        opacity = "%i" % float(self.opacity_scale.get())
-        language = REV_LANGUAGES[self.lang.get()]
+        try:
+            int(sizetitle)
+        except ValueError:
+            sizetitle = CONFIG.get("Font", "title_size")
+        # title style
         style = ""
         if self.is_bold.instate(("selected",)):
             style += "bold,"
@@ -404,8 +416,17 @@ class Config(Toplevel):
         if style:
             style = style[:-1]
 
+        # --- opacity
+        opacity = "%i" % float(self.opacity_scale.get())
+        opacity_change = opacity != CONFIG.getint("General", "opacity")
+
+        # --- language
+        language = REV_LANGUAGES[self.lang.get()]
+
+        # --- symbols
         symbols = [l.strip() for l in self.symbols.get("1.0", "end").splitlines()]
 
+        # --- update CONFIG
         CONFIG.set("General", "default_category",
                    self.category_settings.default_category.get().lower())
         CONFIG.set("General", "language", language)
@@ -419,7 +440,9 @@ class Config(Toplevel):
         CONFIG.set("Font", "title_family", familytitle)
         CONFIG.set("Font", "title_size", sizetitle)
         CONFIG.set("Font", "title_style", style)
+        CONFIG.set("Font", "mono", mono)
 
+        # --- notes config
         col_changes = {}
         name_changes = {}
         new_cat = False
@@ -441,7 +464,7 @@ class Config(Toplevel):
                 CONFIG.set("Categories", new_name,
                            COLORS[self.category_settings.get_color(cat)])
         save_config()
-        self.changes = col_changes, name_changes, new_cat
+        self.changes = col_changes, name_changes, new_cat, opacity_change
         self.destroy()
 
     def get_changes(self):
@@ -464,6 +487,13 @@ class Config(Toplevel):
         family = self.font_family.get()
         size = self.font_size.get()
         self.sample.configure(font="%s %s" % (family.replace(" ", "\ "), size))
+        self.update_mono_preview()
+
+    def update_mono_preview(self, event=None):
+        """Update mono font preview."""
+        family = self.mono_family.get()
+        size = self.font_size.get()
+        self.sample_mono.configure(font="%s %s" % (family.replace(" ", "\ "), size))
 
     def update_preview_title(self, event=None):
         """Update title font preview."""
