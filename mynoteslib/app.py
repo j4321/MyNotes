@@ -30,8 +30,8 @@ import traceback
 from shutil import copy
 import pickle
 from mynoteslib.trayicon import TrayIcon, SubMenu
-from mynoteslib.constantes import CONFIG, PATH_DATA, PATH_DATA_BACKUP, LOCAL_PATH
-from mynoteslib.constantes import backup, asksaveasfilename, askopenfilename, text_ranges
+from mynoteslib.constantes import CONFIG, PATH_DATA, PATH_DATA_BACKUP,\
+    LOCAL_PATH, backup, asksaveasfilename, askopenfilename
 import mynoteslib.constantes as cst
 from mynoteslib.config import Config
 from mynoteslib.export import Export
@@ -40,7 +40,7 @@ from mynoteslib.about import About
 from mynoteslib.notemanager import Manager
 from mynoteslib.version_check import UpdateChecker
 from mynoteslib.messagebox import showerror, askokcancel
-# TODO: fix link copy
+
 
 class App(Tk):
     """
@@ -65,6 +65,16 @@ class App(Tk):
                                        ('disabled', 'alternate', '#dcdad5'),
                                        ('disabled', '#dcdad5')])
         style.configure("sel.TCheckbutton", background=selectbg)
+        bg = self.cget('background')
+        style.configure('TFrame', background=bg)
+        style.configure('TLabel', background=bg)
+        style.configure('TButton', background=bg)
+        style.configure('TMenubutton', background=bg)
+        style.configure('TNotebook', background=bg)
+        style.configure('Vertical.TScrollbar', background=bg)
+        style.configure('Horizontal.TScrollbar', background=bg)
+        style.configure('TCheckbutton', background=bg)
+        style.configure('TSeparator', background=bg)
         style.map("sel.TCheckbutton", background=[("active", selectbg)])
 
         self.close1 = PhotoImage("img_close", file=cst.IM_CLOSE)
@@ -79,9 +89,6 @@ class App(Tk):
         self.clipboard = ''
         self.clibboard_content = []  # (type, props)
         self.link_clipboard = {}
-#        self.clipboard = []
-#        self.img_clipboard = []
-#        self.chb_clipboard = []
 
         # --- Mono font
         # tkinter.font.families needs a GUI so cannot be run in constantes.py
@@ -240,57 +247,6 @@ class App(Tk):
                             self.clibboard_content.append(('char', (txt.get(index), tags)))
                 if l < fin[0]:
                     self.clibboard_content.append(('char', ('\n', [])))
-#    def copy_text2(self, event):
-#        txt = event.widget
-#        sel = txt.tag_ranges('sel')
-#        if sel:
-#            deb = cst.sorting(str(sel[0]))
-#            fin = cst.sorting(str(sel[1]))
-#            txt.clipboard_append(txt.get(sel[0], sel[1]))
-#            img = []
-#            chb = []
-#            img_indexes = []
-#            chb_indexes = []
-#            obj_indexes = []
-#            for n in txt.image_names():
-#                i = str(txt.index(n))
-#                ind = cst.sorting(i)
-#                if ind >= deb and ind < fin:
-#                    name = n.split('#')[0]
-#                    key = os.path.split(name)[1]
-#                    latex = txt.master.latex.get(key, '')
-#                    im = txt.image_cget(i, 'image')
-#                    tags = list(txt.tag_names(i))
-#                    if latex:
-#                        tags.remove(key)
-#                    img.append((im, name, tags, latex))
-#                    img_indexes.append(i)
-#                    obj_indexes.append(i)
-#                    obj_indexes.append('%i.%i' % (ind[0], ind[1] + 1))
-#            for name in txt.window_names():
-#                i = str(txt.index(name))
-#                ind = cst.sorting(i)
-#                if ind >= deb and ind < fin:
-#                    ch = txt.children[name.split(".")[-1]]
-#                    chb.append((ch.state(), txt.tag_names(i)))
-#                    chb_indexes.append(i)
-#                    obj_indexes.append(i)
-#                    obj_indexes.append('%i.%i' % (ind[0], ind[1] + 1))
-#            obj_indexes.sort(key=cst.sorting)
-#
-#            self.clipboard.clear()
-#            self.img_clipboard.clear()
-#            self.chb_clipboard.clear()
-#            obj_indexes.insert(0, sel[0])
-#            obj_indexes.append(sel[1])
-#            for i, j in zip(obj_indexes[::2], obj_indexes[1::2]):
-#                self.clipboard.append(txt.get(i, j))
-#                if j in img_indexes:
-#                    self.clipboard.append(PhotoImage)
-#                    self.img_clipboard.append(img.pop(0))
-#                elif j in chb_indexes:
-#                    self.clipboard.append(Checkbutton)
-#                    self.chb_clipboard.append(chb.pop(0))
 
     def cut_text(self, event):
         self.copy_text(event)
@@ -332,41 +288,6 @@ class App(Tk):
         else:
             self.clipboard = ""
             txt.insert('insert', txt.clipboard_get())
-
-#    def paste_text2(self, event):
-#        txt = event.widget
-#        if len(self.clipboard) == 1 and (not self.img_clipboard or not self.chb_clipboard):
-#            txt.insert('insert', self.clipboard[0])
-#        elif self.chb_clipboard or self.img_clipboard:
-#            i_img = 0
-#            i_chb = 0
-#            for c in self.clipboard:
-#                if c is PhotoImage:
-#                    index = txt.index('insert')
-#                    img, name, tags, latex = self.img_clipboard[i_img]
-#                    if latex and cst.LATEX:
-#                        txt.master.create_latex(latex, index)
-#                    else:
-#                        txt.image_create(index,
-#                                         align='bottom',
-#                                         image=img,
-#                                         name=name)
-#                    for tag in tags:
-#                        txt.tag_add(tag, index)
-#                    i_img += 1
-#                elif c is Checkbutton:
-#                    index = txt.index('insert')
-#                    state, tags = self.chb_clipboard[i_chb]
-#                    ch = Checkbutton(txt, takefocus=False, style='sel.TCheckbutton')
-#                    ch.state(state)
-#                    txt.window_create(index, window=ch)
-#                    for tag in tags:
-#                        txt.tag_add(tag, index)
-#                    i_chb += 1
-#                else:
-#                    txt.insert('insert', c)
-#                txt.tag_remove('sel', '1.0', 'end')
-#                self.highlight_checkboxes(event)
 
     def highlight_checkboxes(self, event):
         txt = event.widget
@@ -780,17 +701,7 @@ class App(Tk):
                             text += "\n\n"
                         with open(fichier, "w") as fich:
                             fich.write(text)
-#                    else:
-#        # --- pickle export
-#                        note_data = {}
-#                        for key in self.note_data:
-#                            if self.note_data[key]["category"] in categories_to_export:
-#                                if (not only_visible) or self.note_data[key]["visible"]:
-#                                    note_data[key] = self.note_data[key]
-#
-#                        with open(fichier, "wb") as fich:
-#                            dp = pickle.Pickler(fich)
-#                            dp.dump(note_data)
+
                 except Exception as e:
                     report_msg = e.strerror != 'Permission denied'
                     showerror(_("Error"), str(e), traceback.format_exc(),

@@ -9,8 +9,9 @@ Changelog
     * Add support for several system tray icon gui toolkits:
       increase the number of compatible desktop environments
     * Add 'mono' text style
-    * Make copy/paste between notes work with pictures and links
+    * Make copy/paste between notes work with checkboxes, pictures and links
     * Fix focus navigation order in dialog to add link
+    * Improve font selection in settings dialog
 
 - Version 2.2.1
     * Fix setup.py so that install works

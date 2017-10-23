@@ -28,9 +28,9 @@ from tkinter.font import Font
 import os
 import re
 from time import strftime
-from mynoteslib.constantes import TEXT_COLORS, askopenfilename, open_url
-from mynoteslib.constantes import PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK, IM_CLIP
-from mynoteslib.constantes import sorting, text_ranges, math_to_image, EWMH
+from mynoteslib.constantes import TEXT_COLORS, askopenfilename, open_url,\
+    PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK, IM_CLIP, sorting, text_ranges,\
+    math_to_image, EWMH
 from mynoteslib.symbols import pick_symbol
 from mynoteslib.messagebox import showerror, askokcancel
 
@@ -48,7 +48,7 @@ class Sticky(Toplevel):
             kwargs: dictionnary of the other arguments
             (title, txt, category, color, tags, geometry, locked, checkboxes, images, rolled)
         """
-        Toplevel.__init__(self, master)
+        Toplevel.__init__(self, master, class_='MyNotes')
         self.withdraw()
 
         # --- window properties
@@ -102,8 +102,10 @@ class Sticky(Toplevel):
         # corner grip
         self.corner = Sizegrip(self, style=self.id + ".TSizegrip")
         # texte
+        size = CONFIG.get("Font", "text_size")
         font_text = "%s %s" %(CONFIG.get("Font", "text_family").replace(" ", "\ "),
-                              CONFIG.get("Font", "text_size"))
+                              size)
+        mono = "%s %s" % (CONFIG.get("Font", "mono").replace(" ", "\ "), size)
         self.txt = Text(self, wrap='word', undo=True,
                         selectforeground='white',
                         inactiveselectbackground=selectbg,
@@ -112,6 +114,7 @@ class Sticky(Toplevel):
                         relief="flat", borderwidth=0,
                         highlightthickness=0, font=font_text)
         # tags
+        self.txt.tag_configure("mono", font=mono)
         self.txt.tag_configure("bold", font="%s bold" % font_text)
         self.txt.tag_configure("italic", font="%s italic" % font_text)
         self.txt.tag_configure("bold-italic", font="%s bold italic" % font_text)
@@ -232,6 +235,8 @@ class Sticky(Toplevel):
                                accelerator='Ctrl+U')
         menu_style.add_command(label=_("Overstrike"),
                                command=self.toggle_overstrike)
+        menu_style.add_command(label=_("Mono"),
+                               command=lambda: self.toggle_text_style("mono"))
         # text alignment
         menu_align = Menu(self.menu_txt, tearoff=False)
         menu_align.add_command(label=_("Left"),
@@ -531,28 +536,25 @@ class Sticky(Toplevel):
 
     def set_position_above(self):
         """Make note always above the other windows."""
-        for w in EWMH.getClientList():
-            if w.get_wm_name() == 'mynotes%s' % self.id:
-                EWMH.setWmState(w, 1, '_NET_WM_STATE_ABOVE')
-                EWMH.setWmState(w, 0, '_NET_WM_STATE_BELOW')
+        w = EWMH.getActiveWindow()
+        EWMH.setWmState(w, 1, '_NET_WM_STATE_ABOVE')
+        EWMH.setWmState(w, 0, '_NET_WM_STATE_BELOW')
         EWMH.display.flush()
         self.save_note()
 
     def set_position_below(self):
         """Make note always below the other windows."""
-        for w in EWMH.getClientList():
-            if w.get_wm_name() == 'mynotes%s' % self.id:
-                EWMH.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
-                EWMH.setWmState(w, 1, '_NET_WM_STATE_BELOW')
+        w = EWMH.getActiveWindow()
+        EWMH.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
+        EWMH.setWmState(w, 1, '_NET_WM_STATE_BELOW')
         EWMH.display.flush()
         self.save_note()
 
     def set_position_normal(self):
         """Make note be on top if active or behind the active window."""
-        for w in EWMH.getClientList():
-            if w.get_wm_name() == 'mynotes%s' % self.id:
-                EWMH.setWmState(w, 0, '_NET_WM_STATE_BELOW')
-                EWMH.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
+        w = EWMH.getActiveWindow()
+        EWMH.setWmState(w, 0, '_NET_WM_STATE_BELOW')
+        EWMH.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
         EWMH.display.flush()
         self.save_note()
 
@@ -749,9 +751,12 @@ class Sticky(Toplevel):
 
     def update_text_font(self):
         """Update text font after configuration change."""
+        size = CONFIG.get("Font", "text_size")
         font = "%s %s" %(CONFIG.get("Font", "text_family").replace(" ", "\ "),
-                         CONFIG.get("Font", "text_size"))
+                         size)
+        mono = "%s %s" % (CONFIG.get("Font", "mono").replace(" ", "\ "), size)
         self.txt.configure(font=font)
+        self.txt.tag_configure("mono", font=mono)
         self.txt.tag_configure("bold", font="%s bold" % font)
         self.txt.tag_configure("italic", font="%s italic" % font)
         self.txt.tag_configure("bold-italic", font="%s bold italic" % font)

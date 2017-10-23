@@ -67,6 +67,7 @@ else:
 
 PATH_CONFIG = os.path.join(LOCAL_PATH, "mynotes.ini")
 PATH_LATEX = os.path.join(LOCAL_PATH, "latex")
+PIDFILE = os.path.join(LOCAL_PATH, "mynotes.pid")
 
 if not os.path.exists(PATH_LATEX):
     os.mkdir(PATH_LATEX)
@@ -122,7 +123,7 @@ else:
     CONFIG.set("Font", "mono", "")
     CONFIG.add_section("Categories")
 
-# --- system tray icon
+
 # --- system tray icon
 def get_available_gui_toolkits():
     """Check which gui toolkits are available to create a system tray icon."""
