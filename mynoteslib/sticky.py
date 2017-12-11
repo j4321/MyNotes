@@ -536,6 +536,8 @@ class Sticky(Toplevel):
 
     def set_position_above(self):
         """Make note always above the other windows."""
+        self.focus_force()
+        self.update_idletasks()
         w = EWMH.getActiveWindow()
         EWMH.setWmState(w, 1, '_NET_WM_STATE_ABOVE')
         EWMH.setWmState(w, 0, '_NET_WM_STATE_BELOW')
@@ -544,6 +546,8 @@ class Sticky(Toplevel):
 
     def set_position_below(self):
         """Make note always below the other windows."""
+        self.focus_force()
+        self.update_idletasks()
         w = EWMH.getActiveWindow()
         EWMH.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
         EWMH.setWmState(w, 1, '_NET_WM_STATE_BELOW')
@@ -552,6 +556,8 @@ class Sticky(Toplevel):
 
     def set_position_normal(self):
         """Make note be on top if active or behind the active window."""
+        self.focus_force()
+        self.update_idletasks()
         w = EWMH.getActiveWindow()
         EWMH.setWmState(w, 0, '_NET_WM_STATE_BELOW')
         EWMH.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
