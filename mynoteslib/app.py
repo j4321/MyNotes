@@ -139,12 +139,40 @@ class App(Tk):
         # --- Restore notes
         self.note_data = {}
         if os.path.exists(PATH_DATA):
-            with open(PATH_DATA, "rb") as fich:
-                dp = pickle.Unpickler(fich)
-                note_data = dp.load()
-                for i, key in enumerate(note_data):
-                    self.note_data["%i" % i] = note_data[key]
-            backup()
+            try:
+                with open(PATH_DATA, "rb") as fich:
+                    dp = pickle.Unpickler(fich)
+                    note_data = dp.load()
+            except EOFError:
+                # the data is corrupted
+                # try to restore last backup
+                path = os.path.dirname(PATH_DATA)
+                l = [f for f in os.scandir(path) if f.name[:12] == "notes.backup"]
+                l.sort(key=lambda f: f.stat().st_mtime, reverse=True)
+                i = 0
+                error = True
+                while error and i < len(l):
+                    os.rename(l[i].path, PATH_DATA)
+                    try:
+                        with open(PATH_DATA, "rb") as fich:
+                            dp = pickle.Unpickler(fich)
+                            note_data = dp.load()
+                    except EOFError:
+                        pass
+                    else:
+                        error = False
+                if error:
+                    showerror(_('Error'),
+                              _("The data is corrupted, all notes were lost. If you made a backup, you can restore it from the main menu."))
+                else:
+                    showerror(_('Error'),
+                              _("The data is corrupted, an older backup has been restored and there might be some data losses."))
+
+            else:
+                backup()
+            for i, key in enumerate(note_data):
+                self.note_data["%i" % i] = note_data[key]
+
             for key in self.note_data:
                 data = self.note_data[key]
                 cat = data["category"]

@@ -54,7 +54,7 @@ try:
     app = App()
     app.mainloop()
 except Exception as e:
-    showerror(_("Error"), str(e), traceback.format_exc(), True)
+    showerror(_("Error"), str(type(e)), traceback.format_exc(), True)
 finally:
     try:
         app.save()

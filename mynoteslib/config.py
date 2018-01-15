@@ -22,7 +22,7 @@ Configuration Window
 """
 
 
-from tkinter import Toplevel, StringVar, Menu, TclError, Text
+from tkinter import Toplevel, StringVar, Menu, Text
 from mynoteslib.messagebox import showinfo
 from mynoteslib.autocomplete import AutoCompleteCombobox
 from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator
