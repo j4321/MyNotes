@@ -1,13 +1,13 @@
 # My Notes - Sticky notes/post-it
-# Copyright (C) 2016-2017 Juliette Monsel
+# Copyright (C) 2016-2018 Juliette Monsel
 # This file is distributed under the same license as the MyNotes package.
-# Juliette Monsel <j_4321@protonmail.com>, 2017.
+# Juliette Monsel <j_4321@protonmail.com>, 2018.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: 2.3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-23 15:36+0200\n"
+"POT-Creation-Date: 2018-01-27 22:42+0100\n"
 "PO-Revision-Date: 2017-07-09 20:03+0200\n"
 "Last-Translator: Heimen Stoffels <vistausss@outlook.com>\n"
 "Language-Team: \n"
@@ -18,75 +18,289 @@ msgstr ""
 "X-Generator: Poedit 2.0.2\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: mynoteslib/constantes.py:216 mynoteslib/constantes.py:217
+#: mynoteslib/config.py:41 mynoteslib/app.py:120
+msgid "Preferences"
+msgstr "Voorkeuren"
+
+#: mynoteslib/config.py:74
+msgid "General"
+msgstr "Algemeen"
+
+#: mynoteslib/config.py:81
+msgid "Language"
+msgstr "Taal"
+
+#: mynoteslib/config.py:93
+msgid "GUI Toolkit for the system tray icon"
+msgstr "GUI Toolkit voor het systeemvakpictogram"
+
+#: mynoteslib/config.py:116
+msgid "Opacity"
+msgstr "Doorzichtigheid"
+
+#: mynoteslib/config.py:124
+msgid "Default position of the notes"
+msgstr "Standaard positie van notities"
+
+#: mynoteslib/config.py:128 mynoteslib/sticky.py:190
+msgid "Always above"
+msgstr "Altijd bovenop"
+
+#: mynoteslib/config.py:130 mynoteslib/sticky.py:194
+msgid "Always below"
+msgstr "Altijd onderop"
+
+#: mynoteslib/config.py:132 mynoteslib/sticky.py:198
+msgid "Normal"
+msgstr "Normaal"
+
+#: mynoteslib/config.py:148
+msgid "Title bar disposition"
+msgstr "Titelbalkpositie"
+
+#: mynoteslib/config.py:158 mynoteslib/config.py:174 mynoteslib/config.py:297
+#: mynoteslib/sticky.py:89
+msgid "Title"
+msgstr "Titel"
+
+#: mynoteslib/config.py:196
+msgid "Delete unused LaTex data"
+msgstr "Ongebruikte LaTeX-gegevens verwijderen"
+
+#: mynoteslib/config.py:202
+msgid "Font"
+msgstr "Lettertype"
+
+#: mynoteslib/config.py:211 mynoteslib/config.py:261
+msgid "Sample text"
+msgstr "Voorbeeldtekst"
+
+#: mynoteslib/config.py:239 mynoteslib/sticky.py:229
+msgid "Bold"
+msgstr "Vetgedrukt"
+
+#: mynoteslib/config.py:241 mynoteslib/sticky.py:232
+msgid "Italic"
+msgstr "Cursief"
+
+#: mynoteslib/config.py:243 mynoteslib/sticky.py:235
+msgid "Underline"
+msgstr "Onderstrepen"
+
+#: mynoteslib/config.py:284
+msgid "Mono text"
+msgstr "Mono tekst"
+
+#: mynoteslib/config.py:301 mynoteslib/sticky.py:869
+msgid "Text"
+msgstr "Tekst"
+
+#: mynoteslib/config.py:305 mynoteslib/sticky.py:240
+msgid "Mono"
+msgstr "Mono"
+
+#: mynoteslib/config.py:312
+msgid "Categories"
+msgstr "Categorieën"
+
+#: mynoteslib/config.py:316 mynoteslib/sticky.py:262
+msgid "Symbols"
+msgstr "Symbolen"
+
+#: mynoteslib/config.py:324
+msgid "Available symbols"
+msgstr "Beschikbare symbolen"
+
+#: mynoteslib/config.py:327
+msgid "Reset"
+msgstr "Herstellen"
+
+#: mynoteslib/config.py:333 mynoteslib/export.py:64
+#: mynoteslib/messagebox.py:458 mynoteslib/messagebox.py:583
+#: mynoteslib/categories.py:225
+msgid "Cancel"
+msgstr "Annuleren"
+
+#: mynoteslib/config.py:476
+msgid "The language setting will take effect after restarting the application"
+msgstr ""
+"De taalinstelling zal worden toegepast na het herstarten van de applicatie"
+
+#: mynoteslib/config.py:482
+msgid ""
+"The GUI Toolkit setting will take effect after restarting the application"
+msgstr ""
+"De GUI Toolkit instelling zal worden toegepast na het herstarten van de "
+"applicatie"
+
+#: mynoteslib/about.py:36
+msgid "About MyNotes"
+msgstr "Over MyNotes"
+
+#: mynoteslib/about.py:44
+#, python-format
+msgid "MyNotes %(version)s"
+msgstr "MyNotes %(version)s"
+
+#: mynoteslib/about.py:47
+msgid "Sticky notes/post-it system tray app"
+msgstr "Plaknotities-systeemvakapp"
+
+#: mynoteslib/about.py:68 mynoteslib/about.py:97
+msgid "License"
+msgstr "Licentie"
+
+#: mynoteslib/about.py:71 mynoteslib/about.py:123
+msgid "Close"
+msgstr "Sluiten"
+
+#: mynoteslib/about.py:106
+msgid ""
+"MyNotes is free software: you can redistribute it and/or modify it under the "
+"terms of the GNU General Public License as published by the Free Software "
+"Foundation, either version 3 of the License, or (at your option) any later "
+"version.\n"
+"\n"
+msgstr ""
+"MyNotes is vrije software. U mag het heruitgeven en/of bewerken onder de "
+"voorwaarden van GNU General Public License, zoals gepubliceerd door de Free "
+"Software Foundation. U mag versie 3 of (indien gewenst) elke hogere versie "
+"van de licentie kiezen.\n"
+"\n"
+
+#: mynoteslib/about.py:108
+msgid ""
+"MyNotes is distributed in the hope that it will be useful, but WITHOUT ANY "
+"WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
+"FOR A PARTICULAR PURPOSE. See the GNU General Public License for more "
+"details.\n"
+"\n"
+msgstr ""
+"MyNotes wordt verspreid in de hoop dat het nuttig is, maar ZONDER ENIGE "
+"GARANTIE, niet eens de garantie van VERKOOPBAARHEID of TOEPASSING VOOR EEN "
+"BEPAALD DOEL. Bekijk de GNU General Public License voor meer details.\n"
+"\n"
+
+#: mynoteslib/about.py:110
+msgid ""
+"You should have received a copy of the GNU General Public License along with "
+"this program. If not, see http://www.gnu.org/licenses/."
+msgstr ""
+"U zou een kopie van de GNU General Public License moeten hebben ontvang "
+"tezamen met deze applicatie. Als dit niet zo is, bekijk dan http://www.gnu."
+"org/licenses/"
+
+#: mynoteslib/symbols.py:68 mynoteslib/sticky.py:278
+msgid "Insert"
+msgstr "Invoegen"
+
+#: mynoteslib/constantes.py:214 mynoteslib/constantes.py:215
 msgid "home"
 msgstr "thuis"
 
-#: mynoteslib/constantes.py:218
+#: mynoteslib/constantes.py:216
 msgid "office"
 msgstr "kantoor"
 
-#: mynoteslib/constantes.py:222 mynoteslib/constantes.py:232
+#: mynoteslib/constantes.py:220 mynoteslib/constantes.py:230
 msgid "Blue"
 msgstr "Blauw"
 
-#: mynoteslib/constantes.py:222
+#: mynoteslib/constantes.py:220
 msgid "Turquoise"
 msgstr "Turkoois"
 
-#: mynoteslib/constantes.py:223 mynoteslib/constantes.py:235
+#: mynoteslib/constantes.py:221 mynoteslib/constantes.py:233
 msgid "Orange"
 msgstr "Oranje"
 
-#: mynoteslib/constantes.py:223 mynoteslib/constantes.py:233
+#: mynoteslib/constantes.py:221 mynoteslib/constantes.py:231
 msgid "Red"
 msgstr "Rood"
 
-#: mynoteslib/constantes.py:224 mynoteslib/constantes.py:235
+#: mynoteslib/constantes.py:222 mynoteslib/constantes.py:233
 msgid "Grey"
 msgstr "Grijs"
 
-#: mynoteslib/constantes.py:224 mynoteslib/constantes.py:231
+#: mynoteslib/constantes.py:222 mynoteslib/constantes.py:229
 msgid "White"
 msgstr "Wit"
 
-#: mynoteslib/constantes.py:225 mynoteslib/constantes.py:232
+#: mynoteslib/constantes.py:223 mynoteslib/constantes.py:230
 msgid "Green"
 msgstr "Groen"
 
-#: mynoteslib/constantes.py:225 mynoteslib/constantes.py:231
+#: mynoteslib/constantes.py:223 mynoteslib/constantes.py:229
 msgid "Black"
 msgstr "Zwart"
 
-#: mynoteslib/constantes.py:226
+#: mynoteslib/constantes.py:224
 msgid "Purple"
 msgstr "Paars"
 
-#: mynoteslib/constantes.py:226 mynoteslib/constantes.py:233
+#: mynoteslib/constantes.py:224 mynoteslib/constantes.py:231
 #: mynoteslib/categories.py:203 mynoteslib/categories.py:205
 #: mynoteslib/categories.py:208
 msgid "Yellow"
 msgstr "Geel"
 
-#: mynoteslib/constantes.py:227
+#: mynoteslib/constantes.py:225
 msgid "Dark Blue"
 msgstr "Donkerblauw"
 
-#: mynoteslib/constantes.py:234
+#: mynoteslib/constantes.py:232
 msgid "Cyan"
 msgstr "Cyaan"
 
-#: mynoteslib/constantes.py:234
+#: mynoteslib/constantes.py:232
 msgid "Magenta"
 msgstr "Magenta"
 
-#: mynoteslib/constantes.py:272
+#: mynoteslib/constantes.py:270
 msgid "Open"
 msgstr "Openen"
 
-#: mynoteslib/constantes.py:320
+#: mynoteslib/constantes.py:318
 msgid "Save As"
 msgstr "Opslaan als"
+
+#: mynoteslib/version_check.py:65
+msgid "Update"
+msgstr "Bijwerken"
+
+#: mynoteslib/version_check.py:78
+msgid ""
+"A new version of MyNotes is available.\n"
+"Do you want to download it?"
+msgstr ""
+"Er is een nieuwe versie van MyNotes beschikbaar.\n"
+"Wilt u deze downloaden?"
+
+#: mynoteslib/version_check.py:83 mynoteslib/messagebox.py:396
+#: mynoteslib/messagebox.py:458
+msgid "Yes"
+msgstr "Ja"
+
+#: mynoteslib/version_check.py:85 mynoteslib/messagebox.py:397
+#: mynoteslib/messagebox.py:458
+msgid "No"
+msgstr "Nee"
+
+#: mynoteslib/version_check.py:88
+msgid "Check for updates on startup."
+msgstr "Bij opstarten op updates controleren"
+
+#: mynoteslib/export.py:35 mynoteslib/app.py:127
+msgid "Export"
+msgstr "Exporteren"
+
+#: mynoteslib/export.py:45
+msgid "Select all"
+msgstr "Alles selecteren"
+
+#: mynoteslib/export.py:48
+msgid "Only visible notes"
+msgstr "Alleen zichtbare notities"
 
 #: mynoteslib/messagebox.py:189
 msgid "There is a synchronization conflict. What do you want to do?"
@@ -107,91 +321,6 @@ msgstr "Upload lokale notities naar server"
 #: mynoteslib/messagebox.py:369
 msgid "Please report this bug on "
 msgstr "Rapporteer deze bug op"
-
-#: mynoteslib/messagebox.py:396 mynoteslib/messagebox.py:458
-#: mynoteslib/version_check.py:83
-msgid "Yes"
-msgstr "Ja"
-
-#: mynoteslib/messagebox.py:397 mynoteslib/messagebox.py:458
-#: mynoteslib/version_check.py:85
-msgid "No"
-msgstr "Nee"
-
-#: mynoteslib/messagebox.py:458 mynoteslib/messagebox.py:583
-#: mynoteslib/export.py:64 mynoteslib/categories.py:225
-#: mynoteslib/config.py:340
-msgid "Cancel"
-msgstr "Annuleren"
-
-#: mynoteslib/export.py:35 mynoteslib/app.py:130
-msgid "Export"
-msgstr "Exporteren"
-
-#: mynoteslib/export.py:45
-msgid "Select all"
-msgstr "Alles selecteren"
-
-#: mynoteslib/export.py:48
-msgid "Only visible notes"
-msgstr "Alleen zichtbare notities"
-
-#: mynoteslib/about.py:35
-msgid "About MyNotes"
-msgstr "Over MyNotes"
-
-#: mynoteslib/about.py:43
-#, python-format
-msgid "MyNotes %(version)s"
-msgstr "MyNotes %(version)s"
-
-#: mynoteslib/about.py:46
-msgid "Sticky notes/post-it system tray app"
-msgstr "Plaknotities-systeemvakapp"
-
-#: mynoteslib/about.py:67 mynoteslib/about.py:96
-msgid "License"
-msgstr "Licentie"
-
-#: mynoteslib/about.py:70 mynoteslib/about.py:122
-msgid "Close"
-msgstr "Sluiten"
-
-#: mynoteslib/about.py:105
-msgid ""
-"MyNotes is free software: you can redistribute it and/or modify it under the "
-"terms of the GNU General Public License as published by the Free Software "
-"Foundation, either version 3 of the License, or (at your option) any later "
-"version.\n"
-"\n"
-msgstr ""
-"MyNotes is vrije software. U mag het heruitgeven en/of bewerken onder de "
-"voorwaarden van GNU General Public License, zoals gepubliceerd door de Free "
-"Software Foundation. U mag versie 3 of (indien gewenst) elke hogere versie "
-"van de licentie kiezen.\n"
-"\n"
-
-#: mynoteslib/about.py:107
-msgid ""
-"MyNotes is distributed in the hope that it will be useful, but WITHOUT ANY "
-"WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
-"FOR A PARTICULAR PURPOSE. See the GNU General Public License for more "
-"details.\n"
-"\n"
-msgstr ""
-"MyNotes wordt verspreid in de hoop dat het nuttig is, maar ZONDER ENIGE "
-"GARANTIE, niet eens de garantie van VERKOOPBAARHEID of TOEPASSING VOOR EEN "
-"BEPAALD DOEL. Bekijk de GNU General Public License voor meer details.\n"
-"\n"
-
-#: mynoteslib/about.py:109
-msgid ""
-"You should have received a copy of the GNU General Public License along with "
-"this program. If not, see http://www.gnu.org/licenses/."
-msgstr ""
-"U zou een kopie van de GNU General Public License moeten hebben ontvang "
-"tezamen met deze applicatie. Als dit niet zo is, bekijk dan http://www.gnu."
-"org/licenses/"
 
 #: mynoteslib/categories.py:52
 msgid "Default category "
@@ -218,343 +347,242 @@ msgstr ""
 msgid "New Category"
 msgstr "Nieuwe categorie"
 
-#: mynoteslib/config.py:40 mynoteslib/app.py:123
-msgid "Preferences"
-msgstr "Voorkeuren"
+#: mynoteslib/sticky.py:205
+msgid "Note"
+msgstr "Notitie"
 
-#: mynoteslib/config.py:73
-msgid "General"
-msgstr "Algemeen"
+#: mynoteslib/sticky.py:208
+msgid "List"
+msgstr "Lijst"
 
-#: mynoteslib/config.py:80
-msgid "Language"
-msgstr "Taal"
+#: mynoteslib/sticky.py:211
+msgid "ToDo List"
+msgstr "Nog te doen-lijst"
 
-#: mynoteslib/config.py:92
-msgid "GUI Toolkit for the system tray icon"
-msgstr "GUI Toolkit voor het systeemvakpictogram"
+#: mynoteslib/sticky.py:214
+msgid "Enumeration"
+msgstr "Opsomming"
 
-#: mynoteslib/config.py:115
-msgid "Opacity"
-msgstr "Doorzichtigheid"
+#: mynoteslib/sticky.py:218 mynoteslib/notemanager.py:36
+msgid "Delete"
+msgstr "Verwijderen"
 
-#: mynoteslib/config.py:123
-msgid "Default position of the notes"
-msgstr "Standaard positie van notities"
+#: mynoteslib/sticky.py:219
+msgid "Category"
+msgstr "Categorie"
 
-#: mynoteslib/config.py:127 mynoteslib/sticky.py:188
-msgid "Always above"
-msgstr "Altijd bovenop"
+#: mynoteslib/sticky.py:220 mynoteslib/sticky.py:277
+msgid "Color"
+msgstr "Kleur"
 
-#: mynoteslib/config.py:129 mynoteslib/sticky.py:192
-msgid "Always below"
-msgstr "Altijd onderop"
+#: mynoteslib/sticky.py:221 mynoteslib/sticky.py:474
+msgid "Lock"
+msgstr "Vergrendelen"
 
-#: mynoteslib/config.py:131 mynoteslib/sticky.py:196
-msgid "Normal"
-msgstr "Normaal"
+#: mynoteslib/sticky.py:222
+msgid "Position"
+msgstr "Positie"
 
-#: mynoteslib/config.py:147
-msgid "Title bar disposition"
-msgstr "Titelbalkpositie"
+#: mynoteslib/sticky.py:223
+msgid "Mode"
+msgstr "Modus"
 
-#: mynoteslib/config.py:157 mynoteslib/config.py:173 mynoteslib/config.py:304
-#: mynoteslib/sticky.py:87
-msgid "Title"
-msgstr "Titel"
+#: mynoteslib/sticky.py:238
+msgid "Overstrike"
+msgstr "Doorhalen"
 
-#: mynoteslib/config.py:195
-msgid "Delete unused LaTex data"
-msgstr "Ongebruikte LaTeX-gegevens verwijderen"
+#: mynoteslib/sticky.py:244
+msgid "Left"
+msgstr "Links"
 
-#: mynoteslib/config.py:201
-msgid "Font"
-msgstr "Lettertype"
+#: mynoteslib/sticky.py:247
+msgid "Right"
+msgstr "Rechts"
 
-#: mynoteslib/config.py:210 mynoteslib/config.py:264
-msgid "Sample text"
-msgstr "Voorbeeldtekst"
+#: mynoteslib/sticky.py:250
+msgid "Center"
+msgstr "Centreren"
 
-#: mynoteslib/config.py:242 mynoteslib/sticky.py:227
-msgid "Bold"
-msgstr "Vetgedrukt"
+#: mynoteslib/sticky.py:264
+msgid "Checkbox"
+msgstr "Aankruisvakje"
 
-#: mynoteslib/config.py:244 mynoteslib/sticky.py:230
-msgid "Italic"
-msgstr "Cursief"
+#: mynoteslib/sticky.py:266
+msgid "Image"
+msgstr "Afbeelding"
 
-#: mynoteslib/config.py:246 mynoteslib/sticky.py:233
-msgid "Underline"
-msgstr "Onderstrepen"
+#: mynoteslib/sticky.py:267
+msgid "Date"
+msgstr "Datum"
 
-#: mynoteslib/config.py:289
-msgid "Mono text"
-msgstr "Mono tekst"
+#: mynoteslib/sticky.py:269 mynoteslib/sticky.py:859
+msgid "Link"
+msgstr "Link"
 
-#: mynoteslib/config.py:308 mynoteslib/sticky.py:861
-msgid "Text"
-msgstr "Tekst"
+#: mynoteslib/sticky.py:275
+msgid "Style"
+msgstr "Stijl"
 
-#: mynoteslib/config.py:312 mynoteslib/sticky.py:238
-msgid "Mono"
-msgstr "Mono"
+#: mynoteslib/sticky.py:276
+msgid "Alignment"
+msgstr "Uitlijning"
 
-#: mynoteslib/config.py:319
-msgid "Categories"
-msgstr "Categorieën"
+#: mynoteslib/sticky.py:450
+msgid "Confirmation"
+msgstr "Bevestiging"
 
-#: mynoteslib/config.py:323 mynoteslib/sticky.py:260
-msgid "Symbols"
-msgstr "Symbolen"
+#: mynoteslib/sticky.py:450
+msgid "Delete the note?"
+msgstr "Wilt u de notitie verwijderen?"
 
-#: mynoteslib/config.py:331
-msgid "Available symbols"
-msgstr "Beschikbare symbolen"
+#: mynoteslib/sticky.py:489
+msgid "Unlock"
+msgstr "Ontgrendelen"
 
-#: mynoteslib/config.py:334
-msgid "Reset"
-msgstr "Herstellen"
+#: mynoteslib/sticky.py:868
+msgid "URL or file"
+msgstr "URL of bestand"
 
-#: mynoteslib/config.py:512
-msgid "The language setting will take effect after restarting the application"
-msgstr ""
-"De taalinstelling zal worden toegepast na het herstarten van de applicatie"
-
-#: mynoteslib/config.py:518
-msgid ""
-"The GUI Toolkit setting will take effect after restarting the application"
-msgstr ""
-"De GUI Toolkit instelling zal worden toegepast na het herstarten van de "
-"applicatie"
-
-#: mynoteslib/app.py:109
-msgid "New Note"
-msgstr "Nieuwe notitie"
-
-#: mynoteslib/app.py:111
-msgid "Show All"
-msgstr "Alles weergeven"
-
-#: mynoteslib/app.py:113
-msgid "Show Category"
-msgstr "Categorie weergeven"
-
-#: mynoteslib/app.py:115 mynoteslib/app.py:116
-msgid "Show Note"
-msgstr "Notitie weergeven"
-
-#: mynoteslib/app.py:118
-msgid "Hide All"
-msgstr "Alles verbergen"
-
-#: mynoteslib/app.py:120
-msgid "Hide Category"
-msgstr "Categorie verbergen"
-
-#: mynoteslib/app.py:125
-msgid "Note Manager"
-msgstr "Notitiebeheer"
-
-#: mynoteslib/app.py:127 mynoteslib/app.py:428
-msgid "Backup Notes"
-msgstr "Notities back-uppen"
-
-#: mynoteslib/app.py:128 mynoteslib/app.py:453
-msgid "Restore Backup"
-msgstr "Back-up herstellen"
-
-#: mynoteslib/app.py:131 mynoteslib/app.py:717
-msgid "Import"
-msgstr "Importeren"
-
-#: mynoteslib/app.py:133
-msgid "Check for Updates"
-msgstr "Controleren op updates"
-
-#: mynoteslib/app.py:135
-msgid "About"
-msgstr "Over"
-
-#: mynoteslib/app.py:136
-msgid "Quit"
-msgstr "Afsluiten"
-
-#: mynoteslib/app.py:199 mynoteslib/app.py:436 mynoteslib/app.py:477
-#: mynoteslib/app.py:479 mynoteslib/app.py:707 mynoteslib/app.py:738
-#: mynoteslib/sticky.py:940 mynotes.py:47 mynotes.py:57
+#: mynoteslib/sticky.py:948 mynoteslib/sticky.py:1012 mynoteslib/sticky.py:1022
+#: mynoteslib/app.py:162 mynoteslib/app.py:165 mynoteslib/app.py:224
+#: mynoteslib/app.py:461 mynoteslib/app.py:502 mynoteslib/app.py:504
+#: mynoteslib/app.py:732 mynoteslib/app.py:763 mynotes.py:47 mynotes.py:57
 msgid "Error"
 msgstr "Fout"
 
-#: mynoteslib/app.py:436
+#: mynoteslib/sticky.py:1003 mynoteslib/app.py:669 mynoteslib/app.py:739
+msgid "All files"
+msgstr "Alle bestanden"
+
+#: mynoteslib/sticky.py:1006
+msgid "Select image"
+msgstr "Selecteer afbeelding"
+
+#: mynoteslib/sticky.py:1013
+#, python-brace-format
+msgid "{file}: Unsupported image format."
+msgstr "{file}: Niet-ondersteunde afbeeldingsindeling"
+
+#: mynoteslib/sticky.py:1022
+#, python-brace-format
+msgid "{file} does not exist."
+msgstr "{file} bestaat niet."
+
+#: mynoteslib/app.py:106
+msgid "New Note"
+msgstr "Nieuwe notitie"
+
+#: mynoteslib/app.py:108
+msgid "Show All"
+msgstr "Alles weergeven"
+
+#: mynoteslib/app.py:110
+msgid "Show Category"
+msgstr "Categorie weergeven"
+
+#: mynoteslib/app.py:112 mynoteslib/app.py:113
+msgid "Show Note"
+msgstr "Notitie weergeven"
+
+#: mynoteslib/app.py:115
+msgid "Hide All"
+msgstr "Alles verbergen"
+
+#: mynoteslib/app.py:117
+msgid "Hide Category"
+msgstr "Categorie verbergen"
+
+#: mynoteslib/app.py:122
+msgid "Note Manager"
+msgstr "Notitiebeheer"
+
+#: mynoteslib/app.py:124 mynoteslib/app.py:453
+msgid "Backup Notes"
+msgstr "Notities back-uppen"
+
+#: mynoteslib/app.py:125 mynoteslib/app.py:478
+msgid "Restore Backup"
+msgstr "Back-up herstellen"
+
+#: mynoteslib/app.py:128 mynoteslib/app.py:742
+msgid "Import"
+msgstr "Importeren"
+
+#: mynoteslib/app.py:130
+msgid "Check for Updates"
+msgstr "Controleren op updates"
+
+#: mynoteslib/app.py:132
+msgid "About"
+msgstr "Over"
+
+#: mynoteslib/app.py:133
+msgid "Quit"
+msgstr "Afsluiten"
+
+#: mynoteslib/app.py:163
+msgid ""
+"The data is corrupted, all notes were lost. If you made a backup, you can "
+"restore it from the main menu."
+msgstr ""
+"De gegevens zijn beschadigd, alle notities zijn verloren. Als u een "
+"back-up hebt gemaakt, kunt u deze herstellen via het hoofdmenu."
+
+#: mynoteslib/app.py:166
+msgid ""
+"The data is corrupted, an older backup has been restored and there might be "
+"some data losses."
+msgstr ""
+"De gegevens zijn beschadigd, een oudere back-up is hersteld en er "
+"kunnen gegevensverlies optreden."
+
+#: mynoteslib/app.py:461
 msgid "Backup failed."
 msgstr "Back-up mislukt."
 
-#: mynoteslib/app.py:442
+#: mynoteslib/app.py:467
 msgid "Warning"
 msgstr "Waarschuwing"
 
-#: mynoteslib/app.py:443
+#: mynoteslib/app.py:468
 msgid "Restoring a backup will erase the current notes."
 msgstr ""
 "Door het herstellen van een back-up zullen alle huidige notities worden "
 "verwijderd."
 
-#: mynoteslib/app.py:477
+#: mynoteslib/app.py:502
 #, python-brace-format
 msgid "The file {filename} does not exists."
 msgstr "Het bestand {filename} bestaat niet."
 
-#: mynoteslib/app.py:642
+#: mynoteslib/app.py:667
 msgid "HTML file (.html)"
 msgstr "HTML-bestand (.html)"
 
-#: mynoteslib/app.py:643
+#: mynoteslib/app.py:668
 msgid "Text file (.txt)"
 msgstr "Tekstbestand (.txt)"
 
-#: mynoteslib/app.py:644 mynoteslib/app.py:714
-msgid "All files"
-msgstr "Alle bestanden"
-
-#: mynoteslib/app.py:647
+#: mynoteslib/app.py:672
 msgid "Export Notes As"
 msgstr "Notities exporteren als"
 
-#: mynoteslib/app.py:660 mynoteslib/app.py:687
+#: mynoteslib/app.py:685 mynoteslib/app.py:712
 #, python-brace-format
 msgid "Category: {category}"
 msgstr "Categorie: {category}"
 
-#: mynoteslib/app.py:713
+#: mynoteslib/app.py:738
 msgid "Notes (.notes)"
 msgstr "Notities (.notes)"
 
-#: mynoteslib/app.py:737
+#: mynoteslib/app.py:762
 #, python-brace-format
 msgid "The file {file} is not a valid .notes file."
 msgstr "Het bestand {file} is geen geldig .notes-bestand."
-
-#: mynoteslib/notemanager.py:36 mynoteslib/sticky.py:216
-msgid "Delete"
-msgstr "Verwijderen"
-
-#: mynoteslib/version_check.py:65
-msgid "Update"
-msgstr "Bijwerken"
-
-#: mynoteslib/version_check.py:78
-msgid ""
-"A new version of MyNotes is available.\n"
-"Do you want to download it?"
-msgstr ""
-"Er is een nieuwe versie van MyNotes beschikbaar.\n"
-"Wilt u deze downloaden?"
-
-#: mynoteslib/version_check.py:88
-msgid "Check for updates on startup."
-msgstr "Bij opstarten op updates controleren"
-
-#: mynoteslib/sticky.py:203
-msgid "Note"
-msgstr "Notitie"
-
-#: mynoteslib/sticky.py:206
-msgid "List"
-msgstr "Lijst"
-
-#: mynoteslib/sticky.py:209
-msgid "ToDo List"
-msgstr "Nog te doen-lijst"
-
-#: mynoteslib/sticky.py:212
-msgid "Enumeration"
-msgstr "Opsomming"
-
-#: mynoteslib/sticky.py:217
-msgid "Category"
-msgstr "Categorie"
-
-#: mynoteslib/sticky.py:218 mynoteslib/sticky.py:275
-msgid "Color"
-msgstr "Kleur"
-
-#: mynoteslib/sticky.py:219 mynoteslib/sticky.py:472
-msgid "Lock"
-msgstr "Vergrendelen"
-
-#: mynoteslib/sticky.py:220
-msgid "Position"
-msgstr "Positie"
-
-#: mynoteslib/sticky.py:221
-msgid "Mode"
-msgstr "Modus"
-
-#: mynoteslib/sticky.py:236
-msgid "Overstrike"
-msgstr "Doorhalen"
-
-#: mynoteslib/sticky.py:242
-msgid "Left"
-msgstr "Links"
-
-#: mynoteslib/sticky.py:245
-msgid "Right"
-msgstr "Rechts"
-
-#: mynoteslib/sticky.py:248
-msgid "Center"
-msgstr "Centreren"
-
-#: mynoteslib/sticky.py:262
-msgid "Checkbox"
-msgstr "Aankruisvakje"
-
-#: mynoteslib/sticky.py:264
-msgid "Image"
-msgstr "Afbeelding"
-
-#: mynoteslib/sticky.py:265
-msgid "Date"
-msgstr "Datum"
-
-#: mynoteslib/sticky.py:267 mynoteslib/sticky.py:851
-msgid "Link"
-msgstr "Link"
-
-#: mynoteslib/sticky.py:273
-msgid "Style"
-msgstr "Stijl"
-
-#: mynoteslib/sticky.py:274
-msgid "Alignment"
-msgstr "Uitlijning"
-
-#: mynoteslib/sticky.py:276 mynoteslib/symbols.py:68
-msgid "Insert"
-msgstr "Invoegen"
-
-#: mynoteslib/sticky.py:448
-msgid "Confirmation"
-msgstr "Bevestiging"
-
-#: mynoteslib/sticky.py:448
-msgid "Delete the note?"
-msgstr "Wilt u de notitie verwijderen?"
-
-#: mynoteslib/sticky.py:487
-msgid "Unlock"
-msgstr "Ontgrendelen"
-
-#: mynoteslib/sticky.py:860
-msgid "URL or file"
-msgstr "URL of bestand"
-
-#: mynoteslib/sticky.py:995
-msgid "Select PNG image"
-msgstr "Selecteer PNG-afbeelding"
 
 #: mynotes.py:47
 msgid "MyNotes is already running, if not delete ~/.mynotes/mynotes.pid."
 msgstr ""
 "MyNotes draait al. Als dit niet klopt, verwijder dan ~/.mynotes/mynotes.pid"
+
