@@ -13,6 +13,7 @@ Changelog
     * Fix focus navigation order in dialog to add link
     * Improve font selection in settings dialog
     * Add support for more image formats
+    * Restore most recent backup in case of data corruption
 
 - Version 2.2.1
     * Fix setup.py so that install works
