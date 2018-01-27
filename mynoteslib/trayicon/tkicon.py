@@ -39,23 +39,23 @@ class SubMenu(tkinter.Menu):
         tkinter.Menu.add_cascade(self, label=label, menu=menu)
 
     def get_item_label(self, item):
-        return self.entrycget(item, 'label')
+        return self.entrycget(self.index(item), 'label')
 
     def set_item_label(self, item, label):
-        self.entryconfigure(item, label=label)
+        self.entryconfigure(self.index(item), label=label)
 
     def set_item_menu(self, item, menu):
-        self.entryconfigure(item, menu=menu)
+        self.entryconfigure(self.index(item), menu=menu)
 
     def get_item_menu(self, item):
-        menu_name = str(self.entrycget(item, 'menu'))
+        menu_name = str(self.entrycget(self.index(item), 'menu'))
         return self.nametowidget(menu_name)
 
     def disable_item(self, item):
-        self.entryconfigure(item, state='disabled')
+        self.entryconfigure(self.index(item), state='disabled')
 
     def enable_item(self, item):
-        self.entryconfigure(item, state='normal')
+        self.entryconfigure(self.index(item), state='normal')
 
     def index(self, index):
         try:
