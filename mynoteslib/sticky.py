@@ -997,10 +997,14 @@ class Sticky(Toplevel):
     def add_image(self, event=None):
         """Insert image in note."""
         fichier = askopenfilename(defaultextension="",
-                                  filetypes=[(_("Images"), "*.png|*.jpg|*.jpeg|*.gif"), (_("All files"), "*")],
+                                  filetypes=[("PNG", "*.png"),
+                                             ("JPEG", "*.jpg"),
+                                             ("GIF", "*.gif"),
+                                             (_("All files"), "*")],
                                   initialdir="",
                                   initialfile="",
                                   title=_('Select image'))
+        print(fichier)
         if os.path.exists(fichier):
             try:
                 im = PhotoImage(master=self.txt, file=fichier)
