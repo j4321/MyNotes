@@ -22,17 +22,19 @@ Sticky note class
 """
 
 
-from tkinter import Text, Toplevel, PhotoImage, StringVar, Menu, TclError
+from tkinter import Text, Toplevel, StringVar, Menu, TclError
 from tkinter.ttk import  Style, Sizegrip, Entry, Checkbutton, Label, Button
 from tkinter.font import Font
+from PIL.ImageTk import PhotoImage
 import os
 import re
 from time import strftime
-from mynoteslib.constantes import TEXT_COLORS, askopenfilename, open_url,\
-    PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK, IM_CLIP, sorting, text_ranges,\
-    math_to_image, EWMH
+from mynoteslib.constantes import TEXT_COLORS, askopenfilename,\
+    PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK, IM_CLIP, sorting,\
+    math_to_image, text_ranges, EWMH
 from mynoteslib.symbols import pick_symbol
 from mynoteslib.messagebox import showerror, askokcancel
+from webbrowser import open as open_url
 
 
 class Sticky(Toplevel):
@@ -994,20 +996,26 @@ class Sticky(Toplevel):
 
     def add_image(self, event=None):
         """Insert image in note."""
-        fichier = askopenfilename(defaultextension=".png",
-                                  filetypes=[("PNG", "*.png")],
+        fichier = askopenfilename(defaultextension="",
+                                  filetypes=[(_("Images"), "*.png|*.jpg|*.jpeg|*.gif"), (_("All files"), "*")],
                                   initialdir="",
                                   initialfile="",
-                                  title=_('Select PNG image'))
+                                  title=_('Select image'))
         if os.path.exists(fichier):
-            self.images.append(PhotoImage(master=self.txt, file=fichier))
-            index = self.txt.index("insert")
-            self.txt.image_create(index,
-                                  align='bottom',
-                                  image=self.images[-1],
-                                  name=fichier)
+            try:
+                im = PhotoImage(master=self.txt, file=fichier)
+            except OSError:
+                showerror(_("Error"),
+                          _("{file}: Unsupported image format.").format(file=fichier))
+            else:
+                self.images.append(im)
+                index = self.txt.index("insert")
+                self.txt.image_create(index,
+                                      align='bottom',
+                                      image=im,
+                                      name=fichier)
         elif fichier:
-            showerror("Erreur", "L'image %s n'existe pas" % fichier)
+            showerror(_("Error"), _("{file} does not exist.").format(file=fichier))
 
     def add_symbols(self):
         """Insert symbol in note."""

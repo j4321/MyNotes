@@ -12,6 +12,7 @@ Changelog
     * Make copy/paste between notes work with checkboxes, pictures and links
     * Fix focus navigation order in dialog to add link
     * Improve font selection in settings dialog
+    * Add support for more image formats
 
 - Version 2.2.1
     * Fix setup.py so that install works

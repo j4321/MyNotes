@@ -8,7 +8,7 @@ organized in categories and you can set a default color for each category.
 Checkboxes and images can be incorporated in the notes. If your desktop
 environment supports compositing, the opacity of the notes can be modified.
 
-MyNotes is designed for Linux. It is written in Python 3 and relies 
+MyNotes is designed for Linux. It is written in Python 3 and relies
 mostly on the Tk GUI toolkit.
 
 
@@ -22,9 +22,9 @@ Install
 - Ubuntu
 
     MyNotes is available in the PPA `ppa:j-4321-i/ppa`.
-    
+
     ::
-        
+
         $ sudo add-apt-repository ppa:j-4321-i/ppa
         $ sudo apt-get update
         $ sudo apt-get install mynotes
@@ -36,7 +36,8 @@ Install
         - Tktray https://code.google.com/archive/p/tktray/downloads
         - ewmh https://pypi.python.org/pypi/ewmh
     For instance, in Ubuntu/Debian you will need to install the following packages:
-    python3-tk, tk-tktray, python3-ewmh (available in zesty only)
+    python3-tk, tk-tktray, python3-ewmh (available in >= 17.04 only),
+    python3-pil, python3-pil.imagetk
 
     ewmh can be installed with pip:
     ::
@@ -58,6 +59,6 @@ icon does not behave properly, try to change toolkit, they are not all fully
 compatible with every desktop environment.
 
 If you encounter bugs or if you have suggestions, please open an issue
-on `GitHub <https://github.com/j4321/MyNotes/issues>`__ or write me 
+on `GitHub <https://github.com/j4321/MyNotes/issues>`__ or write me
 an email at <j_4321@protonmail.com>.
 

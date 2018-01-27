@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 My Notes - Sticky notes/post-it
-Copyright 2016-2017 Juliette Monsel <j_4321@protonmail.com>
+Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
 
 My Notes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ from tkinter.ttk import Button, Label, Style
 from mynoteslib.constantes import IM_ICON_48
 from mynoteslib.version import __version__
 
+
 class About(Toplevel):
     """About dialog."""
     def __init__(self, master):
@@ -41,13 +42,13 @@ class About(Toplevel):
 
         Label(self,
               text=_("MyNotes %(version)s") % ({"version": __version__})).grid(row=1,
-                                                                           columnspan=2)
+                                                                               columnspan=2)
         Label(self,
               text=_("Sticky notes/post-it system tray app")).grid(row=2,
                                                                    columnspan=2,
                                                                    padx=10)
         Label(self,
-              text="Copyright (C) Juliette Monsel 2016-2017").grid(row=3,
+              text="Copyright (C) Juliette Monsel 2016-2018").grid(row=3,
                                                                    columnspan=2,
                                                                    padx=10)
         Label(self,
