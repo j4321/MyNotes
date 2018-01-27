@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 My Notes - Sticky notes/post-it
-Copyright 2016-2017 Juliette Monsel <j_4321@protonmail.com>
+Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
 
 My Notes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
