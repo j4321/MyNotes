@@ -462,8 +462,8 @@ class Sticky(Toplevel):
                                selectforeground='white',
                                selectbackground=selectbg,
                                inactiveselectbackground=selectbg)
-            self.style.configure("sel.TCheckbutton", background=selectbg)
-            self.style.map("sel.TCheckbutton", background=[("active", selectbg)])
+            self.style.configure("sel.%s.TCheckbutton" % self.id, background=selectbg)
+            self.style.map("sel.%s.TCheckbutton" % self.id, background=[("active", selectbg)])
             self.is_locked = False
             for checkbox in self.txt.window_names():
                 ch = self.txt.children[checkbox.split(".")[-1]]
@@ -477,8 +477,8 @@ class Sticky(Toplevel):
                                selectforeground='black',
                                inactiveselectbackground='#c3c3c3',
                                selectbackground='#c3c3c3')
-            self.style.configure("sel.TCheckbutton", background='#c3c3c3')
-            self.style.map("sel.TCheckbutton", background=[("active", '#c3c3c3')])
+            self.style.configure("sel.%s.TCheckbutton" % self.id, background='#c3c3c3')
+            self.style.map("sel.%s.TCheckbutton" % self.id, background=[("active", '#c3c3c3')])
             self.cadenas.configure(image=self.im_lock)
             for checkbox in self.txt.window_names():
                 ch = self.txt.children[checkbox.split(".")[-1]]

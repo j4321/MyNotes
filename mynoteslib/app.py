@@ -58,13 +58,11 @@ class App(Tk):
         style = Style(self)
         style.theme_use("clam")
         style.map('TEntry', selectbackground=[('!focus', '#c3c3c3')])
-        selectbg = style.lookup('TEntry', 'selectbackground', ('focus',))
         style.map('TCheckbutton',
                   indicatorbackground=[('pressed', '#dcdad5'),
                                        ('!disabled', 'alternate', '#ffffff'),
                                        ('disabled', 'alternate', '#dcdad5'),
                                        ('disabled', '#dcdad5')])
-        style.configure("sel.TCheckbutton", background=selectbg)
         bg = self.cget('background')
         style.configure('TFrame', background=bg)
         style.configure('TLabel', background=bg)
@@ -75,7 +73,6 @@ class App(Tk):
         style.configure('Horizontal.TScrollbar', background=bg)
         style.configure('TCheckbutton', background=bg)
         style.configure('TSeparator', background=bg)
-        style.map("sel.TCheckbutton", background=[("active", selectbg)])
 
         self.close1 = PhotoImage("img_close", file=cst.IM_CLOSE)
         self.close2 = PhotoImage("img_closeactive", file=cst.IM_CLOSE_ACTIVE)
@@ -326,7 +323,7 @@ class App(Tk):
                 try:
                     i = cst.sorting(txt.index(ch))
                     if i >= deb and i <= fin:
-                        ch.configure(style="sel.TCheckbutton")
+                        ch.configure(style="sel.%s.TCheckbutton" % txt.master.id)
                     else:
                         ch.configure(style=txt.master.id + ".TCheckbutton")
                 except TclError:
