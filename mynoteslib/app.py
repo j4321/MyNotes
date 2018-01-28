@@ -436,7 +436,7 @@ class App(Tk):
                 title = note_title
         except ValueError:
             # cat is not in the menu
-            menu = SubMenu(self.menu_notes)
+            menu = SubMenu(parent=self.menu_notes)
             self.menu_notes.add_cascade(label=category.capitalize(), menu=menu)
             title = note_title
         self.icon.menu.enable_item(4)
