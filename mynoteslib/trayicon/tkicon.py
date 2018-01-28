@@ -62,7 +62,14 @@ class SubMenu(tkinter.Menu):
             i = tkinter.Menu.index(self, index)
         except tkinter.TclError:
             raise ValueError("%r not in menu" % index)
-        return i
+        else:
+            if index == 'end':
+                if i is not None:
+                    return i + 1
+                else:
+                    return 0
+            else:
+                return i
 
 
 class TrayIcon(tkinter.BaseWidget, tkinter.Wm):

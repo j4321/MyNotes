@@ -7,6 +7,7 @@ Changelog
 
 - Version 2.3.1
     * Fix menu for tk GUI toolkit
+    * Fix menu for gtk GUI toolkit
 
 - Version 2.3.0
     * Add support for several system tray icon gui toolkits:
