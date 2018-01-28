@@ -57,6 +57,11 @@ class SubMenu(tkinter.Menu):
     def enable_item(self, item):
         self.entryconfigure(self.index(item), state='normal')
 
+    def delete(self, index1, index2=None):
+        if index2 == "end":
+            index2 = tkinter.Menu.index(self, "end")
+        tkinter.Menu.delete(self, index1, index2)
+
     def index(self, index):
         try:
             i = tkinter.Menu.index(self, index)
