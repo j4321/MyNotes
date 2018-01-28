@@ -67,7 +67,7 @@ class Sticky(Toplevel):
         self.title('mynotes%s' % key)
         self.protocol("WM_DELETE_WINDOW", self.hide)
         self.attributes("-type", "splash")
-        self.attributes("-alpha", CONFIG.getint("General", "opacity")/100)
+        self.attributes("-alpha", CONFIG.getint("General", "opacity") / 100)
         self.rowconfigure(1, weight=1)
         self.minsize(10,10)
 
@@ -541,9 +541,20 @@ class Sticky(Toplevel):
         self.focus_force()
         self.update_idletasks()
         w = EWMH.getActiveWindow()
-        EWMH.setWmState(w, 1, '_NET_WM_STATE_ABOVE')
-        EWMH.setWmState(w, 0, '_NET_WM_STATE_BELOW')
-        EWMH.display.flush()
+        if w is None or w.get_wm_name() != 'mynotes%s' % self.id:
+            cl = EWMH.getClientList()
+            i = 0
+            n = len(cl)
+            while i < n and cl[i].get_wm_name() != 'mynotes%s' % self.id:
+                i += 1
+            if i < n:
+                w = cl[i]
+            else:
+                w = None
+        if w:
+            EWMH.setWmState(w, 1, '_NET_WM_STATE_ABOVE')
+            EWMH.setWmState(w, 0, '_NET_WM_STATE_BELOW')
+            EWMH.display.flush()
         self.save_note()
 
     def set_position_below(self):
@@ -551,9 +562,20 @@ class Sticky(Toplevel):
         self.focus_force()
         self.update_idletasks()
         w = EWMH.getActiveWindow()
-        EWMH.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
-        EWMH.setWmState(w, 1, '_NET_WM_STATE_BELOW')
-        EWMH.display.flush()
+        if w is None or w.get_wm_name() != 'mynotes%s' % self.id:
+            cl = EWMH.getClientList()
+            i = 0
+            n = len(cl)
+            while i < n and cl[i].get_wm_name() != 'mynotes%s' % self.id:
+                i += 1
+            if i < n:
+                w = cl[i]
+            else:
+                w = None
+        if w:
+            EWMH.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
+            EWMH.setWmState(w, 1, '_NET_WM_STATE_BELOW')
+            EWMH.display.flush()
         self.save_note()
 
     def set_position_normal(self):
@@ -561,9 +583,20 @@ class Sticky(Toplevel):
         self.focus_force()
         self.update_idletasks()
         w = EWMH.getActiveWindow()
-        EWMH.setWmState(w, 0, '_NET_WM_STATE_BELOW')
-        EWMH.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
-        EWMH.display.flush()
+        if w is None or w.get_wm_name() != 'mynotes%s' % self.id:
+            cl = EWMH.getClientList()
+            i = 0
+            n = len(cl)
+            while i < n and cl[i].get_wm_name() != 'mynotes%s' % self.id:
+                i += 1
+            if i < n:
+                w = cl[i]
+            else:
+                w = None
+        if w:
+            EWMH.setWmState(w, 0, '_NET_WM_STATE_BELOW')
+            EWMH.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
+            EWMH.display.flush()
         self.save_note()
 
     def set_mode_note(self):
@@ -1004,7 +1037,6 @@ class Sticky(Toplevel):
                                   initialdir="",
                                   initialfile="",
                                   title=_('Select image'))
-        print(fichier)
         if os.path.exists(fichier):
             try:
                 im = PhotoImage(master=self.txt, file=fichier)
