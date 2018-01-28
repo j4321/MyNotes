@@ -583,6 +583,7 @@ class App(Tk):
         del(self.hidden_notes[cat][nb])
         self.notes[nb] = Sticky(self, nb, **self.note_data[nb])
         menu.delete(index)
+        print(nb, menu.index("end"))
         if not menu.index("end"):
             # the menu is empty
             self.menu_notes.delete(cat.capitalize())

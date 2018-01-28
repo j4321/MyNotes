@@ -62,7 +62,7 @@ class SubMenu(Gtk.Menu):
         else:
             index2 = self.index(item2)
             c = self.get_children()
-            for i in range(index2, index2):
+            for i in range(index1, index2):
                 self.remove(c[i])
 
     def index(self, index):
@@ -131,3 +131,16 @@ class TrayIcon:
     def bind_left_click(self, command):
         if not APPIND_SUPPORT:
             self.tray_icon.connect('activate', lambda *args: command())
+
+if __name__ == '__main__':
+    from tkinter import Tk
+    root = Tk()
+    ic = TrayIcon('/home/tux/Images/tux_mini.png')
+    ic.menu.add_command('test', lambda: print(ic.menu.get_item_label(2)))
+    ic.menu.add_command('test 2', lambda: ic.menu.disable_item(2))
+    m = SubMenu()
+    m.add_command('truc')
+    m.add_command('truc 2')
+    ic.menu.add_cascade('test 3', m)
+
+    ic.loop(root)
