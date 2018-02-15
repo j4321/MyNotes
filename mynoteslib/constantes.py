@@ -17,6 +17,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+The scroll.png image is a modified version of the slider-vert.png assets from
+the arc-theme https://github.com/horst3180/arc-theme
+Copyright 2015 horst3180 (https://github.com/horst3180)
 
 The icons are modified versions of icons from the elementary project
 (the xfce fork to be precise https://github.com/shimmerproject/elementary-xfce)
@@ -83,6 +86,7 @@ IM_LOCK = os.path.join(PATH_IMAGES, "verr.png")
 IM_PLUS = os.path.join(PATH_IMAGES, "plus.png")
 IM_MOINS = os.path.join(PATH_IMAGES, "moins.png")
 IM_CLIP = os.path.join(PATH_IMAGES, "clip.png")
+IM_SCROLL_ALPHA = os.path.join(PATH_IMAGES, "scroll.png")
 
 
 # --- config file
@@ -230,8 +234,19 @@ TEXT_COLORS = {_("Black"): "black", _("White"): "white",
                _("Blue"): "blue", _("Green"): "green",
                _("Red"): "red", _("Yellow"): "yellow",
                _("Cyan"): "cyan", _("Magenta"): "magenta",
-               _("Grey"): "grey", _("Orange"): "orange",
-               }
+               _("Grey"): "grey", _("Orange"): "orange"}
+
+
+def active_color(color, output='HTML'):
+    """Return a lighter shade of color (RGB triplet with value max 255) in HTML format."""
+    r, g, b = color
+    r *= 0.7
+    g *= 0.7
+    b *= 0.7
+    if output == 'HTML':
+        return ("#%2.2x%2.2x%2.2x" % (round(r), round(g), round(b))).upper()
+    else:
+        return (round(r), round(g), round(b))
 
 
 # --- latex (optional):  insertion of latex formulas via matplotlib

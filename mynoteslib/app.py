@@ -21,9 +21,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Main class
 """
 
-from tkinter import Tk, PhotoImage, TclError
+from tkinter import Tk, TclError
+from tkinter import PhotoImage as tkPhotoImage
 from tkinter.ttk import Style, Checkbutton
 from tkinter.font import families
+from PIL import Image
+from PIL.ImageTk import PhotoImage
 import os
 import re
 import traceback
@@ -31,7 +34,7 @@ from shutil import copy
 import pickle
 from mynoteslib.trayicon import TrayIcon, SubMenu
 from mynoteslib.constantes import CONFIG, PATH_DATA, PATH_DATA_BACKUP,\
-    LOCAL_PATH, backup, asksaveasfilename, askopenfilename
+    LOCAL_PATH, backup, asksaveasfilename, askopenfilename, COLORS, IM_SCROLL_ALPHA
 import mynoteslib.constantes as cst
 from mynoteslib.config import Config
 from mynoteslib.export import Export
@@ -74,10 +77,54 @@ class App(Tk):
         style.configure('TCheckbutton', background=bg)
         style.configure('TSeparator', background=bg)
 
-        self.close1 = PhotoImage("img_close", file=cst.IM_CLOSE)
-        self.close2 = PhotoImage("img_closeactive", file=cst.IM_CLOSE_ACTIVE)
-        self.roll1 = PhotoImage("img_roll", file=cst.IM_ROLL)
-        self.roll2 = PhotoImage("img_rollactive", file=cst.IM_ROLL_ACTIVE)
+        vmax = self.winfo_rgb('white')[0]
+        self._im_trough = {}
+        self._im_slider = {}
+        self._im_slider_prelight = {}
+        self._im_slider_active = {}
+        for name, html in COLORS.items():
+            color = tuple(int(val / vmax * 255) for val in self.winfo_rgb(html))
+            active_bg = cst.active_color(color)
+            active_bg2 = cst.active_color(cst.active_color(color, 'RGB'))
+            active_bg3 = cst.active_color(cst.active_color(cst.active_color(color, 'RGB'), 'RGB'))
+            slider_alpha = Image.open(IM_SCROLL_ALPHA)
+            slider_vert = Image.new('RGBA', (13, 28), active_bg)
+            slider_vert.putalpha(slider_alpha)
+            slider_vert_active = Image.new('RGBA', (13, 28), active_bg3)
+            slider_vert_active.putalpha(slider_alpha)
+            slider_vert_prelight = Image.new('RGBA', (13, 28), active_bg2)
+            slider_vert_prelight.putalpha(slider_alpha)
+            self._im_trough[name] = tkPhotoImage(width=15, height=15,
+                                                 master=self)
+            self._im_trough[name].put(" ".join(["{" + " ".join([html] * 15) + "}"] * 15))
+            self._im_slider_active[name] = PhotoImage(slider_vert_active,
+                                                      master=self)
+            self._im_slider[name] = PhotoImage(slider_vert,
+                                               master=self)
+            self._im_slider_prelight[name] = PhotoImage(slider_vert_prelight,
+                                                        master=self)
+            self._im_slider_active[name] = PhotoImage(slider_vert_active,
+                                                      master=self)
+            style.element_create('%s.Vertical.Scrollbar.trough' % name, 'image',
+                                 self._im_trough[name])
+            style.element_create('%s.Vertical.Scrollbar.thumb' % name, 'image',
+                                 self._im_slider[name],
+                                 ('pressed', '!disabled', self._im_slider_active[name]),
+                                 ('active', '!disabled', self._im_slider_prelight[name]),
+                                 border=6, sticky='ns')
+            style.layout('%s.Vertical.TScrollbar' % name,
+                         [('%s.Vertical.Scrollbar.trough' % name,
+                           {'children': [('%s.Vertical.Scrollbar.thumb' % name,
+                                          {'expand': '1'})],
+                            'sticky': 'ns'})])
+
+        self.close1 = PhotoImage(name="img_close", file=cst.IM_CLOSE, master=self)
+        self.close2 = PhotoImage(name="img_closeactive", file=cst.IM_CLOSE_ACTIVE,
+                                 master=self)
+        self.roll1 = PhotoImage(name="img_roll", file=cst.IM_ROLL,
+                                master=self)
+        self.roll2 = PhotoImage(name="img_rollactive", file=cst.IM_ROLL_ACTIVE,
+                                master=self)
 
         self.protocol("WM_DELETE_WINDOW", self.quit)
         self.icon = TrayIcon(cst.ICON)
@@ -405,17 +452,9 @@ class App(Tk):
             event.widget.insert("insert", "\n")
 
     # --- Other methods
-    def change_opacity(self, alpha):
-        opacity = int(hex(int(255 * alpha) * 256 ** 3), 16)
-        atom_opacity = cst.EWMH.display.get_atom('_NET_WM_WINDOW_OPACITY')
-        for w in cst.EWMH.getClientList():
-            if w.get_wm_name()[:7] == 'mynotes':
-                w.change_property(atom_opacity, 6, 32, [opacity, 0, 0, 0], 0)
-        cst.EWMH.display.flush()
-
     def make_notes_sticky(self):
         for w in cst.EWMH.getClientList():
-            if w.get_wm_name()[:7] == 'mynotes':
+            if re.match(w.get_wm_name(), 'mynotes[0-9]+'):
                 cst.EWMH.setWmState(w, 1, '_NET_WM_STATE_STICKY')
         cst.EWMH.display.flush()
 
@@ -537,14 +576,13 @@ class App(Tk):
         """Launch the setting manager."""
         conf = Config(self)
         self.wait_window(conf)
-        col_changes, name_changes, new_cat, opacity_change = conf.get_changes()
-        if opacity_change:
-            alpha = CONFIG.getint("General", "opacity") / 100
-            self.change_opacity(alpha)
+        col_changes, name_changes, new_cat = conf.get_changes()
         if new_cat or col_changes or name_changes:
             self.update_notes(col_changes, name_changes)
             self.update_menu()
+        alpha = CONFIG.getint("General", "opacity") / 100
         for note in self.notes.values():
+            note.attributes("-alpha", alpha)
             note.update_title_font()
             note.update_text_font()
             note.update_titlebar()

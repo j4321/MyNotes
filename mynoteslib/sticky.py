@@ -23,7 +23,7 @@ Sticky note class
 
 
 from tkinter import Text, Toplevel, StringVar, Menu, TclError
-from tkinter.ttk import  Style, Sizegrip, Entry, Checkbutton, Label, Button
+from tkinter.ttk import  Style, Sizegrip, Entry, Checkbutton, Label, Button, Frame
 from tkinter.font import Font
 from PIL.ImageTk import PhotoImage
 import os
@@ -31,7 +31,8 @@ import re
 from time import strftime
 from mynoteslib.constantes import TEXT_COLORS, askopenfilename,\
     PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK, IM_CLIP, sorting,\
-    math_to_image, text_ranges, EWMH
+    math_to_image, text_ranges, EWMH, INV_COLORS
+from mynoteslib.autoscrollbar import AutoScrollbar
 from mynoteslib.symbols import pick_symbol
 from mynoteslib.messagebox import showerror, askokcancel
 from webbrowser import open as open_url
@@ -77,6 +78,8 @@ class Sticky(Toplevel):
         selectbg = self.style.lookup('TEntry', 'selectbackground', ('focus',))
 
         # --- note elements
+        # -------- titlebar
+        self.titlebar = Frame(self, style=self.id + '.TFrame')
         # title
         font_title = "%s %s" %(CONFIG.get("Font", "title_family").replace(" ", "\ "),
                                CONFIG.get("Font", "title_size"))
@@ -87,20 +90,37 @@ class Sticky(Toplevel):
 
         self.title_var = StringVar(master=self,
                                    value=kwargs.get("title", _("Title")))
-        self.title_label = Label(self,
+        self.title_label = Label(self.titlebar,
                                  textvariable=self.title_var,
                                  anchor="center",
                                  style=self.id + ".TLabel",
                                  font=font_title)
-        self.title_entry = Entry(self, textvariable=self.title_var,
+        self.title_entry = Entry(self.titlebar, textvariable=self.title_var,
                                  exportselection=False,
                                  justify="center", font=font_title)
         # buttons/icons
-        self.roll = Label(self, image="img_roll", style=self.id + ".TLabel")
-        self.close = Label(self, image="img_close", style=self.id + ".TLabel")
+        self.roll = Label(self.titlebar, image="img_roll", style=self.id + ".TLabel")
+        self.close = Label(self.titlebar, image="img_close", style=self.id + ".TLabel")
         self.im_lock = PhotoImage(master=self, file=IM_LOCK)
         self.im_clip = PhotoImage(master=self, file=IM_CLIP)
-        self.cadenas = Label(self, style=self.id + ".TLabel")
+        self.cadenas = Label(self.titlebar, style=self.id + ".TLabel")
+
+        if CONFIG.get("General", "buttons_position") == "right":
+            # right = lock icon - title - roll - close
+            self.titlebar.columnconfigure(1, weight=1)
+            self.roll.grid(row=0, column=2, sticky="e")
+            self.close.grid(row=0, column=3, sticky="e", padx=(0,2))
+            self.cadenas.grid(row=0, column=0, sticky="w")
+            self.title_label.grid(row=0, column=1, sticky="ew", pady=(1,0))
+        else:
+            # left = close - roll - title - lock icon
+            self.titlebar.columnconfigure(2, weight=1)
+            self.roll.grid(row=0, column=1, sticky="w")
+            self.close.grid(row=0, column=0, sticky="w", padx=(2,0))
+            self.cadenas.grid(row=0,column=3, sticky="e")
+            self.title_label.grid(row=0, column=2, sticky="ew", pady=(1,0))
+
+        # -------- body
         # corner grip
         self.corner = Sizegrip(self, style=self.id + ".TSizegrip")
         # texte
@@ -108,13 +128,16 @@ class Sticky(Toplevel):
         font_text = "%s %s" %(CONFIG.get("Font", "text_family").replace(" ", "\ "),
                               size)
         mono = "%s %s" % (CONFIG.get("Font", "mono").replace(" ", "\ "), size)
+        self.scroll = AutoScrollbar(self, orient='vertical')
         self.txt = Text(self, wrap='word', undo=True,
                         selectforeground='white',
                         inactiveselectbackground=selectbg,
                         selectbackground=selectbg,
                         tabs=(10, 'right', 21, 'left'),
                         relief="flat", borderwidth=0,
-                        highlightthickness=0, font=font_text)
+                        highlightthickness=0, font=font_text,
+                        yscrollcommand=self.scroll.set)
+        self.scroll.configure(command=self.txt.yview)
         # tags
         self.txt.tag_configure("mono", font=mono)
         self.txt.tag_configure("bold", font="%s bold" % font_text)
@@ -330,24 +353,14 @@ class Sticky(Toplevel):
             self.txt.tag_add(mode, "1.0", "end")
 
         # --- placement
+        self.columnconfigure(0, weight=1)
         # titlebar
-        if CONFIG.get("General", "buttons_position") == "right":
-            # right = lock icon - title - roll - close
-            self.columnconfigure(1, weight=1)
-            self.roll.grid(row=0, column=2, sticky="e")
-            self.close.grid(row=0, column=3, sticky="e", padx=(0,2))
-            self.cadenas.grid(row=0,column=0, sticky="w")
-            self.title_label.grid(row=0, column=1, sticky="ew", pady=(1,0))
-        else:
-            # left = close - roll - title - lock icon
-            self.columnconfigure(2, weight=1)
-            self.roll.grid(row=0, column=1, sticky="w")
-            self.close.grid(row=0, column=0, sticky="w", padx=(2,0))
-            self.cadenas.grid(row=0,column=3, sticky="e")
-            self.title_label.grid(row=0, column=2, sticky="ew", pady=(1,0))
+        self.titlebar.grid(row=0, column=0, columnspan=2, sticky='ew')
+
         # body
-        self.txt.grid(row=1, columnspan=4, column=0, sticky="ewsn",
+        self.txt.grid(row=1, column=0, sticky="ewsn",
                       pady=(1,4), padx=4)
+        self.scroll.grid(row=1, column=1, sticky='ns', pady=(2, 14))
         self.corner.lift(self.txt)
         self.corner.place(relx=1.0, rely=1.0, anchor="se")
 
@@ -421,6 +434,8 @@ class Sticky(Toplevel):
                                  background=self.color)
             self.style.configure(self.id +  ".TLabel",
                                  background=self.color)
+            self.style.configure(self.id +  ".TFrame",
+                                 background=self.color)
             self.style.configure("close" + self.id +  ".TLabel",
                                  background=self.color)
             self.style.configure("roll" + self.id +  ".TLabel",
@@ -436,6 +451,7 @@ class Sticky(Toplevel):
                            background=[("active", self.color)])
             self.style.map("roll" + self.id +  ".TLabel",
                            background=[("active", self.color)])
+            self.scroll.configure(style='%s.Vertical.TScrollbar' % INV_COLORS[value])
             self.configure(bg=self.color)
             self.txt.configure(bg=self.color)
 
@@ -816,20 +832,20 @@ class Sticky(Toplevel):
         """Update title bar button order."""
         if CONFIG.get("General", "buttons_position") == "right":
             # right = lock icon - title - roll - close
-            self.columnconfigure(1, weight=1)
-            self.columnconfigure(2, weight=0)
-            self.roll.grid_configure(row=0, column=2, sticky="e")
-            self.close.grid_configure(row=0, column=3, sticky="e", padx=(0,2))
-            self.cadenas.grid_configure(row=0,column=0, sticky="w")
-            self.title_label.grid_configure(row=0, column=1, sticky="ew", pady=(1,0))
+            self.titlebar.columnconfigure(1, weight=1)
+            self.titlebar.columnconfigure(2, weight=0)
+            self.roll.grid(row=0, column=2, sticky="e")
+            self.close.grid(row=0, column=3, sticky="e", padx=(0,2))
+            self.cadenas.grid(row=0, column=0, sticky="w")
+            self.title_label.grid(row=0, column=1, sticky="ew", pady=(1,0))
         else:
             # left = close - roll - title - lock icon
-            self.columnconfigure(2, weight=1)
-            self.columnconfigure(1, weight=0)
-            self.roll.grid_configure(row=0, column=1, sticky="w")
-            self.close.grid_configure(row=0, column=0, sticky="w", padx=(2,0))
-            self.cadenas.grid_configure(row=0,column=3, sticky="e")
-            self.title_label.grid_configure(row=0, column=2, sticky="ew", pady=(1,0))
+            self.titlebar.columnconfigure(1, weight=0)
+            self.titlebar.columnconfigure(2, weight=1)
+            self.roll.grid(row=0, column=1, sticky="w")
+            self.close.grid(row=0, column=0, sticky="w", padx=(2,0))
+            self.cadenas.grid(row=0,column=3, sticky="e")
+            self.title_label.grid(row=0, column=2, sticky="ew", pady=(1,0))
 
     # --- Text edition
     # ---* --Link
