@@ -454,8 +454,11 @@ class App(Tk):
     # --- Other methods
     def make_notes_sticky(self):
         for w in cst.EWMH.getClientList():
-            if re.match(w.get_wm_name(), 'mynotes[0-9]+'):
-                cst.EWMH.setWmState(w, 1, '_NET_WM_STATE_STICKY')
+            try:
+                if re.match(r'mynotes[0-9]+', w.get_wm_name()):
+                    cst.EWMH.setWmState(w, 1, '_NET_WM_STATE_STICKY')
+            except TypeError:
+                pass   # some windows have name b''
         cst.EWMH.display.flush()
 
     def add_note_to_menu(self, nb, note_title, category):
