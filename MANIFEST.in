@@ -1,2 +1,2 @@
-include COPYING changelog *.rst
+include COPYING changelog *.rst *.md
 recursive-include po *
