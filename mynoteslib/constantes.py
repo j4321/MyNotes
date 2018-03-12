@@ -190,19 +190,16 @@ setlocale(LC_ALL, '')
 
 APP_NAME = "MyNotes"
 
-LANGUAGES = {"fr": "Français", "en": "English", "nl": "Nederlands"}
+LANGUAGES = {"fr": "Français", "en": "English", "nl": "Nederlands", "de": "Deutsch"}
 REV_LANGUAGES = {val: key for key, val in LANGUAGES.items()}
 
 if LANGUE not in LANGUAGES:
     # Check the default locale
-    lc = getdefaultlocale()[0][:2]
-    if lc == "fr":
-        LANGUE = "fr_FR"
-    elif lc == "nl":
-        LANGUE = "nl_NL"
+    LANGUE = getdefaultlocale()[0].split('_')[0]
+    if LANGUE in LANGUAGES:
+        CONFIG.set("General", "language", LANGUE)
     else:
-        LANGUE = "en_US"
-    CONFIG.set("General", "language", LANGUE[:2])
+        CONFIG.set("General", "language", "en")
 
 gettext.find(APP_NAME, PATH_LOCALE)
 gettext.bind_textdomain_codeset(APP_NAME, "UTF-8")
