@@ -241,6 +241,7 @@ class App(Tk):
         self.bind_class('TEntry', '<Control-a>', self.select_all_entry)
         # bind Ctrl+Y to redo
         self.bind_class('Text', '<Control-y>', self.redo_event)
+        self.bind_class('Text', '<Control-z>', self.undo_event)
         # unbind Ctrl+I and Ctrl+B
         self.bind_class('Text', '<Control-i>', lambda e: None)
         self.bind_class('Text', '<Control-b>', lambda e: None)
@@ -382,6 +383,13 @@ class App(Tk):
                     ch.configure(style=txt.master.id + ".TCheckbutton")
                 except TclError:
                     pass
+
+    def undo_event(self, event):
+        try:
+            event.widget.edit_undo()
+        except TclError:
+            # nothing to redo
+            pass
 
     def redo_event(self, event):
         try:

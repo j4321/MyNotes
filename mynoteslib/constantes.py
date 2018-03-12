@@ -249,6 +249,16 @@ def active_color(color, output='HTML'):
         return (round(r), round(g), round(b))
 
 
+# --- special keys
+SPECIAL_KEYS = ['Alt_L', 'Alt_R', 'Cancel', 'Caps_Lock', 'Control_L',
+                'Control_R', 'Down', 'End', 'Escape', 'Execute', 'F1', 'F2',
+                'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12',
+                'Home', 'Insert', 'Left', 'Linefeed', 'KP_Begin', 'KP_Down',
+                'KP_End', 'KP_Home', 'KP_Insert', 'KP_Left', 'KP_Next',
+                'KP_Prior', 'KP_Right', 'KP_Up', 'Next', 'Num_Lock', 'Pause',
+                'Print', 'Prior', 'Right', 'Scroll_Lock', 'Shift_L', 'Shift_R',
+                'Up']
+
 # --- latex (optional):  insertion of latex formulas via matplotlib
 try:
     from matplotlib import rc

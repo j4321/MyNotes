@@ -31,11 +31,43 @@ import re
 from time import strftime
 from mynoteslib.constantes import TEXT_COLORS, askopenfilename,\
     PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK, IM_CLIP, sorting,\
-    math_to_image, text_ranges, EWMH, INV_COLORS
+    math_to_image, text_ranges, EWMH, INV_COLORS, SPECIAL_KEYS
 from mynoteslib.autoscrollbar import AutoScrollbar
 from mynoteslib.symbols import pick_symbol
 from mynoteslib.messagebox import showerror, askokcancel
 from webbrowser import open as open_url
+
+
+class MyText(Text):
+    def __init__(self, *args, **kwargs):
+        Text.__init__(self, *args, **kwargs)
+        self.undo_stack = []
+        self.redo_stack = []
+        self.bind('<Control-Key>', self.control)
+        self.bind('<Key>', self.on_key)
+
+    def on_key(self, event):
+        if event.keysym not in SPECIAL_KEYS:
+            self.undo_stack.append((event.keysym, self.index('insert')))
+            self.redo_stack.clear()
+        print(self.undo_stack)
+
+    def control(self, event):
+        pass
+
+    def edit_undo(self):
+        item = self.undo_stack.pop()
+        self.redo_stack.append(item)
+        print('undo', item)
+
+    def edit_redo(self):
+        item = self.redo_stack.pop()
+        self.undo_stack.append(item)
+        print('redo', item)
+
+    def image_create(self, cnf={}, **kw):
+        kw.update(cnf)
+        self.undo_stack.append(('image', kw.get('image')))
 
 
 class Sticky(Toplevel):
@@ -129,14 +161,14 @@ class Sticky(Toplevel):
                               size)
         mono = "%s %s" % (CONFIG.get("Font", "mono").replace(" ", "\ "), size)
         self.scroll = AutoScrollbar(self, orient='vertical')
-        self.txt = Text(self, wrap='word', undo=True,
-                        selectforeground='white',
-                        inactiveselectbackground=selectbg,
-                        selectbackground=selectbg,
-                        tabs=(10, 'right', 21, 'left'),
-                        relief="flat", borderwidth=0,
-                        highlightthickness=0, font=font_text,
-                        yscrollcommand=self.scroll.set)
+        self.txt = MyText(self, wrap='word', undo=False,
+                          selectforeground='white',
+                          inactiveselectbackground=selectbg,
+                          selectbackground=selectbg,
+                          tabs=(10, 'right', 21, 'left'),
+                          relief="flat", borderwidth=0,
+                          highlightthickness=0, font=font_text,
+                          yscrollcommand=self.scroll.set)
         self.scroll.configure(command=self.txt.yview)
         # tags
         self.txt.tag_configure("mono", font=mono)
