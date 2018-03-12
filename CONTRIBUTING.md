@@ -34,3 +34,7 @@ Below are the steps to create a translation and compile it and submit a pull req
    for instance, for the German translation, add `"de": "Deutsch"`.
 
 6. Submit a pull request
+
+## Other contributions
+
+If you have an idea, feel free to open an issue to describe it.
