@@ -31,9 +31,6 @@ Below are the steps to create a translation and compile it and submit a pull req
 ```
 
 5. Add the language in the `LANGUAGES` dictionary in `mynoteslib/constantes.py` (line 193):
-   e.g. to add the German translation:
-```python
-    LANGUAGES = {"fr": "Français", "en": "English", "nl": "Nederlands", "de": "Deutsch"}
-```
+   for instance, for the German translation, add `"de": "Deutsch"`.
 
 6. Submit a pull request
