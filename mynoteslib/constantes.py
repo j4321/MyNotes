@@ -190,9 +190,10 @@ setlocale(LC_ALL, '')
 
 APP_NAME = "MyNotes"
 
-LANGUAGES = {"fr": "Français", "en": "English", "nl": "Nederlands", "de": "Deutsch"}
-REV_LANGUAGES = {val: key for key, val in LANGUAGES.items()}
 
+LANGUAGES = {"fr": "Français", "en": "English", "nl": "Nederlands"}
+REV_LANGUAGES = {val: key for key, val in LANGUAGES.items()}
+print(LANGUE, LANGUE in LANGUAGES)
 if LANGUE not in LANGUAGES:
     # Check the default locale
     LANGUE = getdefaultlocale()[0].split('_')[0]
