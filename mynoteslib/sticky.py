@@ -34,40 +34,41 @@ from mynoteslib.constantes import TEXT_COLORS, askopenfilename,\
     math_to_image, text_ranges, EWMH, INV_COLORS, SPECIAL_KEYS
 from mynoteslib.autoscrollbar import AutoScrollbar
 from mynoteslib.symbols import pick_symbol
+from mynoteslib.mytext import MyText
 from mynoteslib.messagebox import showerror, askokcancel
 from webbrowser import open as open_url
 
 
-class MyText(Text):
-    def __init__(self, *args, **kwargs):
-        Text.__init__(self, *args, **kwargs)
-        self.undo_stack = []
-        self.redo_stack = []
-        self.bind('<Control-Key>', self.control)
-        self.bind('<Key>', self.on_key)
-
-    def on_key(self, event):
-        if event.keysym not in SPECIAL_KEYS:
-            self.undo_stack.append((event.keysym, self.index('insert')))
-            self.redo_stack.clear()
-        print(self.undo_stack)
-
-    def control(self, event):
-        pass
-
-    def edit_undo(self):
-        item = self.undo_stack.pop()
-        self.redo_stack.append(item)
-        print('undo', item)
-
-    def edit_redo(self):
-        item = self.redo_stack.pop()
-        self.undo_stack.append(item)
-        print('redo', item)
-
-    def image_create(self, cnf={}, **kw):
-        kw.update(cnf)
-        self.undo_stack.append(('image', kw.get('image')))
+#class MyText(Text):
+#    def __init__(self, *args, **kwargs):
+#        Text.__init__(self, *args, **kwargs)
+#        self.undo_stack = []
+#        self.redo_stack = []
+#        self.bind('<Control-Key>', self.control)
+#        self.bind('<Key>', self.on_key)
+#
+#    def on_key(self, event):
+#        if event.keysym not in SPECIAL_KEYS:
+#            self.undo_stack.append((event.keysym, self.index('insert')))
+#            self.redo_stack.clear()
+#        print(self.undo_stack)
+#
+#    def control(self, event):
+#        pass
+#
+#    def edit_undo(self):
+#        item = self.undo_stack.pop()
+#        self.redo_stack.append(item)
+#        print('undo', item)
+#
+#    def edit_redo(self):
+#        item = self.redo_stack.pop()
+#        self.undo_stack.append(item)
+#        print('redo', item)
+#
+#    def image_create(self, cnf={}, **kw):
+#        kw.update(cnf)
+#        self.undo_stack.append(('image', kw.get('image')))
 
 
 class Sticky(Toplevel):
@@ -672,9 +673,9 @@ class Sticky(Toplevel):
                     self.txt.delete("%i.0"  % i, "%i.%i"  % (i, res.end()))
             if self.txt.get("%i.0"  % i, "%i.3"  % i) != "\t•\t":
                 self.txt.insert("%i.0" % i, "\t•\t")
-        self.txt.tag_add("list", "1.0", "end")
-        self.txt.tag_remove("todolist", "1.0", "end")
-        self.txt.tag_remove("enum", "1.0", "end")
+        self.txt.tag_add_undoable("list", "1.0", "end")
+        self.txt.tag_remove_undoable("todolist", "1.0", "end")
+        self.txt.tag_remove_undoable("enum", "1.0", "end")
         self.save_note()
 
     def set_mode_enum(self):
@@ -696,9 +697,9 @@ class Sticky(Toplevel):
                     self.txt.delete("%i.0"  % i, "%i.3"  % i)
             if not re.match('^\t[0-9]+\.', l):
                 self.txt.insert("%i.0" % i, "\t0.\t")
-        self.txt.tag_add("enum", "1.0", "end")
-        self.txt.tag_remove("todolist", "1.0", "end")
-        self.txt.tag_remove("list", "1.0", "end")
+        self.txt.tag_add_undoable("enum", "1.0", "end")
+        self.txt.tag_remove_undoable("todolist", "1.0", "end")
+        self.txt.tag_remove_undoable("list", "1.0", "end")
         self.update_enum()
         self.txt.configure(autoseparators=True)
         self.txt.edit_separator()
@@ -719,10 +720,10 @@ class Sticky(Toplevel):
             except TclError:
                 ch = Checkbutton(self.txt, takefocus=False,
                                  style=self.id + ".TCheckbutton")
-                self.txt.window_create("%i.0"  % i, window=ch)
-        self.txt.tag_remove("enum", "1.0", "end")
-        self.txt.tag_remove("list", "1.0", "end")
-        self.txt.tag_add("todolist", "1.0", "end")
+                self.txt.window_create_undoable("%i.0"  % i, window=ch)
+        self.txt.tag_remove_undoable("enum", "1.0", "end")
+        self.txt.tag_remove_undoable("list", "1.0", "end")
+        self.txt.tag_add_undoable("todolist", "1.0", "end")
         self.save_note()
 
     # --- bindings
@@ -982,7 +983,7 @@ class Sticky(Toplevel):
         ch = Checkbutton(self.txt, takefocus=False,
                          style=self.id + ".TCheckbutton")
         index = self.txt.index("insert")
-        self.txt.window_create(index, window=ch)
+        self.txt.window_create_undoable(index, window=ch)
 
     def add_date(self, event=None):
         """Insert today's date in note."""
@@ -1020,10 +1021,10 @@ class Sticky(Toplevel):
                             self.txt.delete(index)
                         else:
                             index = self.txt.index("insert")
-                    self.txt.image_create(index,
-                                          align='bottom',
-                                          image=self.images[-1],
-                                          name=im)
+                    self.txt.image_create_undoable(index,
+                                                   align='bottom',
+                                                   image=self.images[-1],
+                                                   name=im)
                     self.txt.tag_add(img, index)
                     top.destroy()
 
@@ -1071,10 +1072,10 @@ class Sticky(Toplevel):
         im = os.path.join(PATH_LATEX, img)
         math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
         self.images.append(PhotoImage(file=im, master=self))
-        self.txt.image_create(index,
-                              align='bottom',
-                              image=self.images[-1],
-                              name=im)
+        self.txt.image_create_undoable(index,
+                                       align='bottom',
+                                       image=self.images[-1],
+                                       name=im)
         self.txt.tag_add(img, index)
 
     def add_image(self, event=None):
@@ -1120,20 +1121,20 @@ class Sticky(Toplevel):
                 # first char is in style so 'unstyle' the range
                 self.txt.tag_remove(style, "sel.first", "sel.last")
             elif style is "bold" and "bold-italic" in current_tags:
-                self.txt.tag_remove("bold-italic", "sel.first", "sel.last")
-                self.txt.tag_add("italic", "sel.first", "sel.last")
+                self.txt.tag_remove_undoable("bold-italic", "sel.first", "sel.last")
+                self.txt.tag_add_undoable("italic", "sel.first", "sel.last")
             elif style is "italic" and "bold-italic" in current_tags:
-                self.txt.tag_remove("bold-italic", "sel.first", "sel.last")
-                self.txt.tag_add("bold", "sel.first", "sel.last")
+                self.txt.tag_remove_undoable("bold-italic", "sel.first", "sel.last")
+                self.txt.tag_add_undoable("bold", "sel.first", "sel.last")
             elif style is "bold" and "italic" in current_tags:
-                self.txt.tag_remove("italic", "sel.first", "sel.last")
-                self.txt.tag_add("bold-italic", "sel.first", "sel.last")
+                self.txt.tag_remove_undoable("italic", "sel.first", "sel.last")
+                self.txt.tag_add_undoable("bold-italic", "sel.first", "sel.last")
             elif style is "italic" and "bold" in current_tags:
-                self.txt.tag_remove("bold", "sel.first", "sel.last")
-                self.txt.tag_add("bold-italic", "sel.first", "sel.last")
+                self.txt.tag_remove_undoable("bold", "sel.first", "sel.last")
+                self.txt.tag_add_undoable("bold-italic", "sel.first", "sel.last")
             else:
                 # first char is normal, so apply style to the whole selection
-                self.txt.tag_add(style, "sel.first", "sel.last")
+                self.txt.tag_add_undoable(style, "sel.first", "sel.last")
 
     def toggle_underline(self):
         """Toggle underline property of the selected text."""
@@ -1141,16 +1142,16 @@ class Sticky(Toplevel):
             current_tags = self.txt.tag_names("sel.first")
             if "underline" in current_tags:
                 # first char is in style so 'unstyle' the range
-                self.txt.tag_remove("underline", "sel.first", "sel.last")
+                self.txt.tag_remove_undoable("underline", "sel.first", "sel.last")
                 for coul in TEXT_COLORS.values():
-                    self.txt.tag_remove(coul + "-underline", "sel.first", "sel.last")
+                    self.txt.tag_remove_undoable(coul + "-underline", "sel.first", "sel.last")
             else:
-                self.txt.tag_add("underline", "sel.first", "sel.last")
+                self.txt.tag_add_undoable("underline", "sel.first", "sel.last")
                 for coul in TEXT_COLORS.values():
                     r = text_ranges( self.txt, coul, "sel.first", "sel.last")
                     if r:
                         for deb, fin in zip(r[::2], r[1::2]):
-                            self.txt.tag_add(coul + "-underline", "sel.first", "sel.last")
+                            self.txt.tag_add_undoable(coul + "-underline", "sel.first", "sel.last")
 
     def toggle_overstrike(self):
         """Toggle overstrike property of the selected text."""
@@ -1158,33 +1159,33 @@ class Sticky(Toplevel):
             current_tags = self.txt.tag_names("sel.first")
             if "overstrike" in current_tags:
                 # first char is in style so 'unstyle' the range
-                self.txt.tag_remove("overstrike", "sel.first", "sel.last")
+                self.txt.tag_remove_undoable("overstrike", "sel.first", "sel.last")
                 for coul in TEXT_COLORS.values():
-                    self.txt.tag_remove(coul + "-overstrike", "sel.first", "sel.last")
+                    self.txt.tag_remove_undoable(coul + "-overstrike", "sel.first", "sel.last")
             else:
-                self.txt.tag_add("overstrike", "sel.first", "sel.last")
+                self.txt.tag_add_undoable("overstrike", "sel.first", "sel.last")
                 for coul in TEXT_COLORS.values():
                     r = text_ranges( self.txt, coul, "sel.first", "sel.last")
                     if r:
                         for deb, fin in zip(r[::2], r[1::2]):
-                            self.txt.tag_add(coul + "-overstrike", "sel.first", "sel.last")
+                            self.txt.tag_add_undoable(coul + "-overstrike", "sel.first", "sel.last")
 
     def change_sel_color(self, color):
         """Change the color of the selection."""
         if self.txt.tag_ranges("sel"):
             for coul in TEXT_COLORS.values():
-                self.txt.tag_remove(coul, "sel.first", "sel.last")
-                self.txt.tag_remove(coul + "-overstrike", "sel.first", "sel.last")
-                self.txt.tag_remove(coul + "-underline", "sel.first", "sel.last")
+                self.txt.tag_remove_undoable(coul, "sel.first", "sel.last")
+                self.txt.tag_remove_undoable(coul + "-overstrike", "sel.first", "sel.last")
+                self.txt.tag_remove_undoable(coul + "-underline", "sel.first", "sel.last")
             if not color == "black":
-                self.txt.tag_add(color, "sel.first", "sel.last")
+                self.txt.tag_add_undoable(color, "sel.first", "sel.last")
                 underline = text_ranges( self.txt, "underline", "sel.first", "sel.last")
                 overstrike = text_ranges( self.txt, "overstrike", "sel.first", "sel.last")
 
                 for deb, fin in zip(underline[::2], underline[1::2]):
-                    self.txt.tag_add(color + "-underline", deb, fin)
+                    self.txt.tag_add_undoable(color + "-underline", deb, fin)
                 for deb, fin in zip(overstrike[::2], overstrike[1::2]):
-                    self.txt.tag_add(color + "-overstrike", deb, fin)
+                    self.txt.tag_add_undoable(color + "-overstrike", deb, fin)
 
 
     def set_align(self, alignment):
@@ -1196,11 +1197,11 @@ class Sticky(Toplevel):
             if not "\t" in self.txt.get(deb, fin):
                 # tabulations don't support right/center alignment
                 # remove old alignment tag
-                self.txt.tag_remove("left", deb, fin)
-                self.txt.tag_remove("right", deb, fin)
-                self.txt.tag_remove("center", deb, fin)
+                self.txt.tag_remove_undoable("left", deb, fin)
+                self.txt.tag_remove_undoable("right", deb, fin)
+                self.txt.tag_remove_undoable("center", deb, fin)
                 # set new alignment tag
-                self.txt.tag_add(alignment, deb, fin)
+                self.txt.tag_add_undoable(alignment, deb, fin)
 
     def update_enum(self):
         """Update enumeration numbers."""

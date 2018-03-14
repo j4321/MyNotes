@@ -249,6 +249,7 @@ class App(Tk):
         self.bind_class('Text', '<Control-o>', lambda e: None)
         self.bind_class('Text', '<Control-h>', lambda e: None)
         self.bind_class('Text', '<Control-t>', lambda e: None)
+        self.bind_class('Text', '<<Paste>>', lambda e: None)
         self.bind_class('Text', '<Control-x>', self.cut_text)
         self.bind_class('Text', '<Control-c>', self.copy_text)
         self.bind_class('Text', '<Control-v>', self.paste_text)
@@ -324,9 +325,11 @@ class App(Tk):
     def cut_text(self, event):
         self.copy_text(event)
         event.widget.delete('sel.first', 'sel.last')
+        return 'break'
 
     def paste_text(self, event):
         txt = event.widget
+        txt.event_generate('<<BeforePaste>>')
         if self.clipboard == txt.clipboard_get():
             links = {}
             for oldtag, link in self.link_clipboard.items():
@@ -361,6 +364,7 @@ class App(Tk):
         else:
             self.clipboard = ""
             txt.insert('insert', txt.clipboard_get())
+        txt.event_generate('<<Paste>>')
 
     def highlight_checkboxes(self, event):
         txt = event.widget
