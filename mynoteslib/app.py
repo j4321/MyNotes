@@ -23,7 +23,7 @@ Main class
 
 from tkinter import Tk, TclError
 from tkinter import PhotoImage as tkPhotoImage
-from tkinter.ttk import Style, Checkbutton
+from tkinter.ttk import Style
 from tkinter.font import families
 from PIL import Image
 from PIL.ImageTk import PhotoImage
@@ -39,6 +39,7 @@ import mynoteslib.constantes as cst
 from mynoteslib.config import Config
 from mynoteslib.export import Export
 from mynoteslib.sticky import Sticky
+from mynoteslib.mytext import Checkbox
 from mynoteslib.about import About
 from mynoteslib.notemanager import Manager
 from mynoteslib.version_check import UpdateChecker
@@ -232,10 +233,10 @@ class App(Tk):
         self.make_notes_sticky()
 
         # --- class bindings
-        # newline depending on mode
-        self.bind_class("Text", "<Return>", self.insert_newline)
-        # char deletion taking into account list type
-        self.bind_class("Text", "<BackSpace>", self.delete_char)
+#        # newline depending on mode
+#        self.bind_class("Text", "<Return>", self.insert_newline)
+#        # char deletion taking into account list type
+#        self.bind_class("Text", "<BackSpace>", self.delete_char)
         # change Ctrl+A to select all instead of go to the beginning of the line
         self.bind_class('Text', '<Control-a>', self.select_all_text)
         self.bind_class('TEntry', '<Control-a>', self.select_all_entry)
@@ -324,7 +325,9 @@ class App(Tk):
 
     def cut_text(self, event):
         self.copy_text(event)
+        event.widget.add_undo_sep()
         event.widget.delete_undoable('sel.first', 'sel.last')
+        event.widget.add_undo_sep()
         return 'break'
 
     def paste_text(self, event):
@@ -333,6 +336,7 @@ class App(Tk):
         txt.add_undo_sep()
         if self.clipboard == txt.clipboard_get():
             links = {}
+
             for oldtag, link in self.link_clipboard.items():
                 newtag = txt.master.create_link(link)
                 links[oldtag] = newtag
@@ -347,9 +351,16 @@ class App(Tk):
                         txt.image_create_undoable(index, align='bottom', image=img, name=name)
                 elif c[0] is 'checkbox':
                     state, tags = c[1]
-                    ch = Checkbutton(txt, takefocus=False, style='sel.TCheckbutton')
-                    ch.state(state)
-                    txt.window_create_undoable(index, window=ch)
+
+                    def create_ch():
+                        ch = Checkbox(txt, takefocus=False, style='sel.TCheckbutton')
+                        ch.state(state)
+                        return ch
+
+                    txt.window_create_undoable(index, create=create_ch)
+                    txt.update_idletasks()
+#                    ch = txt.nametowidget(txt.window_cget(index, 'window'))
+#                    ch.state(state)
                 else:
                     char, tags = c[1]
                     link = [t for t in tags if 'link#' in t]
@@ -413,59 +424,63 @@ class App(Tk):
         event.widget.tag_add("sel", "1.0", "end-1c")
         self.highlight_checkboxes(event)
 
-    def delete_char(self, event):
-        txt = event.widget
-        deb_line = txt.get("insert linestart", "insert")
-        tags = txt.tag_names("insert")
-        if txt.tag_ranges("sel"):
-            if txt.tag_nextrange("enum", "sel.first", "sel.last"):
-                update = True
-            else:
-                update = False
-            txt.delete("sel.first", "sel.last")
-            if update:
-                txt.master.update_enum()
-        elif txt.index("insert") != "1.0":
-            if re.match('^\t[0-9]+\.\t$', deb_line) and 'enum' in tags:
-                txt.delete("insert linestart", "insert")
-                txt.insert("insert", "\t\t")
-                txt.master.update_enum()
-            elif deb_line == "\t•\t" and 'list' in tags:
-                txt.delete("insert linestart", "insert")
-                txt.insert("insert", "\t\t")
-            elif deb_line == "\t\t":
-                txt.delete("insert linestart", "insert")
-            elif "todolist" in tags and txt.index("insert") == txt.index("insert linestart+1c"):
-                try:
-                    ch = txt.window_cget("insert-1c", "window")
-                    txt.delete("insert-1c")
-                    txt.children[ch.split('.')[-1]].destroy()
-                    txt.insert("insert", "\t\t")
-                except TclError:
-                    txt.delete("insert-1c")
-            else:
-                txt.delete("insert-1c")
-
-    def insert_newline(self, event):
-        mode = event.widget.master.mode.get()
-        if mode == "list":
-            event.widget.insert("insert", "\n\t•\t")
-            event.widget.tag_add("list", "1.0", "end")
-        elif mode == "todolist":
-            event.widget.insert("insert", "\n")
-            ch = Checkbutton(event.widget, takefocus=False,
-                             style=event.widget.master.id + ".TCheckbutton")
-            event.widget.window_create("insert", window=ch)
-            event.widget.tag_add("todolist", "1.0", "end")
-        elif mode == "enum":
-            event.widget.configure(autoseparators=False)
-            event.widget.edit_separator()
-            event.widget.insert("insert", "\n\t0.\t")
-            event.widget.master.update_enum()
-            event.widget.edit_separator()
-            event.widget.configure(autoseparators=True)
-        else:
-            event.widget.insert("insert", "\n")
+#    def delete_char(self, event):
+#        txt = event.widget
+#        deb_line = txt.get("insert linestart", "insert")
+#        tags = txt.tag_names("insert")
+#        if txt.tag_ranges("sel"):
+#            if txt.tag_nextrange("enum", "sel.first", "sel.last"):
+#                update = True
+#            else:
+#                update = False
+#            txt.delete_undoable("sel.first", "sel.last")
+#            if update:
+#                txt.master.update_enum()
+#        elif txt.index("insert") != "1.0":
+#            if re.match('^\t[0-9]+\.\t$', deb_line) and 'enum' in tags:
+#                txt.delete_undoable("insert linestart", "insert")
+#                txt.insert_undoable("insert", "\t\t")
+#                txt.master.update_enum()
+#            elif deb_line == "\t•\t" and 'list' in tags:
+#                txt.delete_undoable("insert linestart", "insert")
+#                txt.insert_undoable("insert", "\t\t")
+#            elif deb_line == "\t\t":
+#                txt.delete_undoable("insert linestart", "insert")
+#            elif "todolist" in tags and txt.index("insert") == txt.index("insert linestart+1c"):
+#                try:
+#                    ch = txt.window_cget("insert-1c", "window")
+#                    txt.delete_undoable("insert-1c")
+#                    txt.children[ch.split('.')[-1]].destroy()
+#                    txt.insert_undoable("insert", "\t\t")
+#                except TclError:
+#                    txt.delete_undoable("insert-1c")
+#            else:
+#                txt.delete_undoable("insert-1c")
+#
+#    def insert_newline(self, event):
+#        mode = event.widget.master.mode.get()
+#        txt = event.widget
+#        if mode == "list":
+#            txt.add_undo_sep()
+#            txt.insert_undoable("insert", "\n\t•\t")
+#            txt.tag_add_undoable("list", "1.0", "end")
+#            txt.add_undo_sep()
+#        elif mode == "todolist":
+#            txt.add_undo_sep()
+#            txt.insert_undoable("insert", "\n")
+#            ch = Checkbutton(txt, takefocus=False,
+#                             style=txt.master.id + ".TCheckbutton")
+#            txt.window_create_undoable("insert", window=ch)
+#            txt.tag_add_undoable("todolist", "1.0", "end")
+#            txt.add_undo_sep()
+#        elif mode == "enum":
+#            txt.add_undo_sep()
+#            txt.insert_undoable("insert", "\n\t0.\t")
+#            txt.master.update_enum()
+#            txt.add_undo_sep()
+#        else:
+#            txt.insert_undoable("insert", "\n")
+#            txt.add_undo_sep()
 
     # --- Other methods
     def make_notes_sticky(self):

@@ -22,8 +22,8 @@ Sticky note class
 """
 
 
-from tkinter import Text, Toplevel, StringVar, Menu, TclError
-from tkinter.ttk import  Style, Sizegrip, Entry, Checkbutton, Label, Button, Frame
+from tkinter import Toplevel, StringVar, Menu, TclError
+from tkinter.ttk import  Style, Sizegrip, Entry, Label, Button, Frame
 from tkinter.font import Font
 from PIL.ImageTk import PhotoImage
 import os
@@ -31,10 +31,10 @@ import re
 from time import strftime
 from mynoteslib.constantes import TEXT_COLORS, askopenfilename,\
     PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK, IM_CLIP, sorting,\
-    math_to_image, text_ranges, EWMH, INV_COLORS, SPECIAL_KEYS
+    math_to_image, text_ranges, EWMH, INV_COLORS
 from mynoteslib.autoscrollbar import AutoScrollbar
 from mynoteslib.symbols import pick_symbol
-from mynoteslib.mytext import MyText
+from mynoteslib.mytext import MyText, Checkbox
 from mynoteslib.messagebox import showerror, askokcancel
 from webbrowser import open as open_url
 
@@ -310,14 +310,22 @@ class Sticky(Toplevel):
         # we need to restore objects with increasing index to avoid placment errors
         indexes = list(kwargs.get("inserted_objects", {}).keys())
         indexes.sort(key=sorting)
+
         for index in indexes:
             kind, val = kwargs["inserted_objects"][index]
             if kind == "checkbox":
-                ch = Checkbutton(self.txt, takefocus=False,
-                                 style=self.id + ".TCheckbutton")
                 if val:
-                    ch.state(("selected",))
-                self.txt.window_create(index, window=ch)
+                    state = ('selected', '!alternate')
+                else:
+                    state = ('!selected', '!alternate')
+
+                def create_ch():
+                    ch = Checkbox(self.txt, takefocus=False,
+                                  style=self.id + ".TCheckbutton")
+                    ch.state(state)
+                    return ch
+
+                self.txt.window_create(index, create=create_ch)
 
             elif kind == "image":
                 if os.path.exists(val):
@@ -352,6 +360,7 @@ class Sticky(Toplevel):
         mode = self.mode.get()
         if mode != "note":
             self.txt.tag_add(mode, "1.0", "end")
+        self.txt.mode = mode
 
         # --- placement
         self.columnconfigure(0, weight=1)
@@ -427,6 +436,11 @@ class Sticky(Toplevel):
             self.set_position_above()
         elif self.position.get() == "below":
             self.set_position_below()
+
+    def _create_checkbox(self):
+        ch = Checkbox(self.txt, takefocus=False,
+                      style=self.id + ".TCheckbutton")
+        return ch
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -621,6 +635,7 @@ class Sticky(Toplevel):
     def set_mode_note(self):
         """Set mode to note (classic text input)."""
         self.txt.add_undo_sep()
+        self.txt.mode_change('note')
         self.txt.tag_remove_undoable("list", "1.0", "end")
         self.txt.tag_remove_undoable("todolist", "1.0", "end")
         self.txt.tag_remove_undoable("enum", "1.0", "end")
@@ -632,6 +647,7 @@ class Sticky(Toplevel):
         end = int(self.txt.index("end").split(".")[0])
         lines  = self.txt.get("1.0", "end").splitlines()
         self.txt.add_undo_sep()
+        self.txt.mode_change('list')
         for i, l in zip(range(1, end), lines):
             # remove checkboxes
             try:
@@ -655,6 +671,7 @@ class Sticky(Toplevel):
     def set_mode_enum(self):
         """Set mode to enum (enumeration)."""
         self.txt.add_undo_sep()
+        self.txt.mode_change('enum')
         end = int(self.txt.index("end").split(".")[0])
         lines  = self.txt.get("1.0", "end").splitlines()
         for i, l in zip(range(1, end), lines):
@@ -682,6 +699,8 @@ class Sticky(Toplevel):
         end = int(self.txt.index("end").split(".")[0])
         lines  = self.txt.get("1.0", "end").splitlines()
         self.txt.add_undo_sep()
+        self.txt.mode_change('todolist')
+
         for i,l in zip(range(1, end), lines):
             res = re.match('^\t[0-9]+\.\t', l)
             if res:
@@ -689,11 +708,10 @@ class Sticky(Toplevel):
             elif self.txt.get("%i.0"  % i, "%i.3"  % i) == "\t•\t":
                 self.txt.delete_undoable("%i.0"  % i, "%i.3"  % i)
             try:
-                ch = self.txt.window_cget("%i.0"  % i, "window")
+                self.txt.window_cget("%i.0"  % i, "window")
             except TclError:
-                ch = Checkbutton(self.txt, takefocus=False,
-                                 style=self.id + ".TCheckbutton")
-                self.txt.window_create_undoable("%i.0"  % i, window=ch)
+                self.txt.window_create_undoable("%i.0"  % i, create=self._create_checkbox)
+
         self.txt.tag_remove_undoable("enum", "1.0", "end")
         self.txt.tag_remove_undoable("list", "1.0", "end")
         self.txt.tag_add_undoable("todolist", "1.0", "end")
@@ -933,14 +951,14 @@ class Sticky(Toplevel):
         text.bind("<Return>", ok)
         link.bind("<Return>", ok)
 
-#    def create_link(self, link):
-#        self.nb_links += 1
-#        lnb = self.nb_links
-#        lid = "link#%i" % lnb
-#        self.links[lnb] = link
-#        self.txt.tag_bind(lid, "<Button-1>", lambda e: self.open_link(lnb))
-#        self.txt.tag_bind(lid, "<Double-Button-1>", lambda e: self.edit_link(lnb))
-#        return lid
+    def create_link(self, link):
+        self.nb_links += 1
+        lnb = self.nb_links
+        lid = "link#%i" % lnb
+        self.links[lnb] = link
+        self.txt.tag_bind(lid, "<Button-1>", lambda e: self.open_link(lnb))
+        self.txt.tag_bind(lid, "<Double-Button-1>", lambda e: self.edit_link(lnb))
+        return lid
 
     def open_link(self, link_nb):
         """Open link after small delay to avoid opening link on double click."""
@@ -956,11 +974,9 @@ class Sticky(Toplevel):
     # ---* --Add other objects
     def add_checkbox(self, event=None):
         """Insert checkbox in note."""
-        ch = Checkbutton(self.txt, takefocus=False,
-                         style=self.id + ".TCheckbutton")
         index = self.txt.index("insert")
         self.txt.add_undo_sep()
-        self.txt.window_create_undoable(index, window=ch)
+        self.txt.window_create_undoable(index, create=self._create_checkbox)
         self.txt.add_undo_sep()
 
     def add_date(self, event=None):
@@ -1039,26 +1055,26 @@ class Sticky(Toplevel):
         text.pack(fill='x', expand=True)
         text.bind('<Return>', ok)
         text.focus_set()
-#
-#    def create_latex(self, latex, index):
-#        l = [int(os.path.splitext(f)[0]) for f in os.listdir(PATH_LATEX)]
-#        l.sort()
-#        if l:
-#            i = l[-1] + 1
-#        else:
-#            i = 0
-#        img = "%i.png" % i
-#        self.latex[img] = latex
-#        self.txt.tag_bind(img, '<Double-Button-1>',
-#                          lambda e: self.add_latex(img))
-#        im = os.path.join(PATH_LATEX, img)
-#        math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
-#        self.images.append(PhotoImage(file=im, master=self))
-#        self.txt.image_create_undoable(index,
-#                                       align='bottom',
-#                                       image=self.images[-1],
-#                                       name=im)
-#        self.txt.tag_add(img, index)
+
+    def create_latex(self, latex, index):
+        l = [int(os.path.splitext(f)[0]) for f in os.listdir(PATH_LATEX)]
+        l.sort()
+        if l:
+            i = l[-1] + 1
+        else:
+            i = 0
+        img = "%i.png" % i
+        self.latex[img] = latex
+        self.txt.tag_bind(img, '<Double-Button-1>',
+                          lambda e: self.add_latex(img))
+        im = os.path.join(PATH_LATEX, img)
+        math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
+        self.images.append(PhotoImage(file=im, master=self))
+        self.txt.image_create_undoable(index,
+                                       align='bottom',
+                                       image=self.images[-1],
+                                       name=im)
+        self.txt.tag_add_undoable(img, index)
 
     def add_image(self, event=None):
         """Insert image in note."""
@@ -1203,7 +1219,6 @@ class Sticky(Toplevel):
         """Update enumeration numbers."""
         lines  = self.txt.get("1.0", "end").splitlines()
         indexes = []
-        self.txt.add_undo_sep()
         for i,l in enumerate(lines):
             res = re.match('^\t[0-9]+\.\t', l)
             res2 = re.match('^\t[0-9]+\.', l)
