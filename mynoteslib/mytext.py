@@ -15,70 +15,87 @@ class MyText(Text):
     def __init__(self, master=None, **kw):
         Text.__init__(self, master, **kw)
 
-        self._undo_stack = []
+        self._undo_stack = [[]]
         self._redo_stack = []
 
         self.bind('<Key>', self._on_keypress)
         self.bind('<Control-Key>', self._on_ctrl_keypress)
         self.bind('<Control-z>', self.undo)
         self.bind('<Control-y>', self.redo)
-        self.bind('<<Cut>>', self._on_cut)
-        self.bind('<<BeforePaste>>', self._on_before_paste)
-        self.bind('<<Paste>>', self._on_paste)
+#        self.bind('<<Cut>>', self._on_cut)
+#        self.bind('<<BeforePaste>>', self._on_before_paste)
+#        self.bind('<<Paste>>', self._on_paste)
         self.bind_class('Text', '<Control-y>', lambda e: None)
 
     def undo(self, event=None):
         try:
-            item = self._undo_stack.pop()
-#            print(item)
+            items = []
+            # skip empty sets
+            while not items:
+                items = self._undo_stack.pop()
         except IndexError:
             # empty stack
-            pass
+            self._undo_stack.append([])
         else:
-            self._redo_stack.append(item)
-            if 'insert_' in item[0]:
-                self.delete(item[1])
-            elif item[0] == 'insert':
-                self.delete(item[1], item[2])
-            elif item[0] == 'delete':
-                self._restore_text_with_prop(item[1], item[3])
-            elif item[0] == 'paste':
-                self.delete(item[1], item[2])
-            elif item[0] == 'tag_remove':
-                self.tag_add(*item[1:])
-            elif item[0] == 'tag_add':
-                self.tag_remove(item[1], item[2], *item[3])
+            self._redo_stack.append(items)
+            for item in reversed(items):
+                self._undo_single(item)
+            if not self._undo_stack:
+                self._undo_stack.append([])
         return "break"
 
     def redo(self, event=None):
         try:
-            item = self._redo_stack.pop()
-#            print(item)
+            items = self._redo_stack.pop()
         except IndexError:
             # empty stack
             pass
         else:
-            self._undo_stack.append(item)
-            if item[0] == 'insert_char':
-                self.insert(item[1], item[2])
-            elif item[0] == 'insert_image':
-                self.image_create(item[1], item[2])
-            elif item[0] == 'insert_window':
-                self.window_create(item[1], **item[2])
-            elif item[0] == 'insert':
-                self.insert(item[1], item[3], *item[4])
-            elif item[0] == 'delete':
-                self.delete(item[1], item[2])
-            elif item[0] == 'paste':
-                self._restore_text_with_prop(item[1], item[3])
-            elif item[0] == 'tag_remove':
-                self.tag_remove(*item[1:])
-            elif item[0] == 'tag_add':
-                self.tag_add(item[1], item[2], *item[3])
+            self._undo_stack.append(items)
+            for item in items:
+                self._redo_single(item)
         return "break"
 
+    def add_undo_sep(self):
+        if self._undo_stack[-1]:
+            self._undo_stack.append([])
+        print(self._undo_stack)
+        self._redo_stack.clear()
+
+    def _undo_single(self, item):
+        if 'insert_' in item[0]:
+            self.delete(item[1])
+        elif item[0] == 'insert':
+            self.delete(item[1], item[2])
+        elif item[0] == 'delete':
+            self._restore_text_with_prop(item[1], item[3])
+        elif item[0] == 'paste':
+            self.delete(item[1], item[2])
+        elif item[0] == 'tag_remove':
+            self.tag_add(*item[1:])
+        elif item[0] == 'tag_add':
+            self.tag_remove(item[1], item[2], *item[3])
+
+    def _redo_single(self, item):
+        if item[0] == 'insert_char':
+            self.insert(item[1], item[2])
+        elif item[0] == 'insert_image':
+            self.image_create(item[1], item[2])
+        elif item[0] == 'insert_window':
+            self.window_create(item[1], **item[2])
+        elif item[0] == 'insert':
+            self.insert(item[1], item[3], *item[4])
+        elif item[0] == 'delete':
+            self.delete(item[1], item[2])
+        elif item[0] == 'paste':
+            self._restore_text_with_prop(item[1], item[3])
+        elif item[0] == 'tag_remove':
+            self.tag_remove(*item[1:])
+        elif item[0] == 'tag_add':
+            self.tag_add(item[1], item[2], *item[3])
+
     def image_create_undoable(self, index, cnf={}, **kw):
-        self._undo_stack.append(('insert_image', self.index(index), kw))
+        self._undo_stack[-1].append(('insert_image', self.index(index), kw))
         self._redo_stack.clear()
         self.image_create(index, cnf, **kw)
 
@@ -93,11 +110,10 @@ class MyText(Text):
 
             def create():
                 return win.__class__(**props)
-            print(win.__class__, props)
 
             kw['create'] = create
 
-        self._undo_stack.append(('insert_window', self.index(index), kw))
+        self._undo_stack[-1].append(('insert_window', self.index(index), kw))
         self._redo_stack.clear()
         Text.window_create(self, index, cnf, **kw)
 
@@ -112,18 +128,18 @@ class MyText(Text):
 
             def create():
                 return win.__class__(**props)
-            print(win.__class__, props)
 
             kw['create'] = create
 
         Text.window_create(self, index, cnf, **kw)
 
     def tag_remove_undoable(self, tagName, index1, index2=None):
-        self._undo_stack.append(('tag_remove', tagName, index1, index2))
+        self._undo_stack[-1].append(('tag_remove', tagName, self.index(index1),
+                                    self.index(index2)))
         self.tag_remove(tagName, index1, index2)
 
     def tag_add_undoable(self, tagName, index1, *args):
-        self._undo_stack.append(('tag_add', tagName, index1, args))
+        self._undo_stack[-1].append(('tag_add', tagName, self.index(index1), [self.index(i) for i in args]))
         self.tag_add(tagName, index1, *args)
 
     def _on_ctrl_keypress(self, event):
@@ -133,28 +149,38 @@ class MyText(Text):
         self._redo_stack.clear()
         sel = self.tag_ranges('sel')
         if sel:
-            self._undo_stack.append(('delete', sel[0], sel[1],
-                                     self._copy_text(*sel)))
+            index1, index2 = self.index(sel[0]), self.index(sel[1])
+            self.add_undo_sep()
+            self._undo_stack[-1].append(('delete', index1, index2,
+                                         self._copy_text(index1, index2)))
+            self.add_undo_sep()
 
     def _on_paste(self, event):
         index1 = self._undo_stack[-1][1]
         index2 = self.index('insert')
-        self._undo_stack[-1].extend([index2, self._copy_text(index1, index2)])
+        self._undo_stack[-1][-1].extend([index2, self._copy_text(index1, index2)])
+        self.add_undo_sep()
 
     def _on_before_paste(self, event):
-        self._undo_stack.append(['paste', self.index('insert')])
+        self.add_undo_sep()
+        self._undo_stack[-1].append(['paste', self.index('insert')])
 
     def delete_undoable(self, index1, index2=None):
         index1 = self.index(index1)
         if index2 is None:
             index2 = self.index('{}+1c'.format(index1))
-        self._undo_stack.append(('delete', index1, index2,
-                                 self._copy_text(index1, index2)))
+        else:
+            index2 = self.index(index2)
+        self.add_undo_sep()
+        self._undo_stack[-1].append(('delete', index1, index2,
+                                     self._copy_text(index1, index2)))
+        self.add_undo_sep()
+        self.delete(index1, index2)
 
     def insert_undoable(self, index, chars, *args):
         index1 = self.index(index)
         index2 = self.index('{}+{}c'.format(index1, len(chars)))
-        self._undo_stack.append(('insert', index1, index2, chars, args))
+        self._undo_stack[-1].append(('insert', index1, index2, chars, args))
         self.insert(index, chars, *args)
 
     def _on_keypress(self, event):
@@ -162,24 +188,36 @@ class MyText(Text):
             self._redo_stack.clear()
             sel = self.tag_ranges('sel')
             if sel:
-                self._undo_stack.append(('delete', sel[0], sel[1],
-                                         self._copy_text(*sel)))
+                index1, index2 = self.index(sel[0]), self.index(sel[1])
+                self.add_undo_sep()
+                self._undo_stack[-1].append(('delete', index1, index2,
+                                             self._copy_text(index1, index2)))
+                self.add_undo_sep()
             else:
                 index = self.index('insert-1c')
                 index2 = self.index('insert')
                 char = self.get(index)
                 if char:
-                    self._undo_stack.append(('delete', index, index2,
-                                             self._copy_text(index, index2)))
+                    self.add_undo_sep()
+                    self._undo_stack[-1].append(('delete', index, index2,
+                                                 self._copy_text(index, index2)))
+                    self.add_undo_sep()
         elif event.char != '':
+            if event.keysym == 'Return':
+                char = '\n'
+            else:
+                char = event.char
             self._redo_stack.clear()
             sel = self.tag_ranges('sel')
             if sel:
-                self._undo_stack.append(('delete', sel[0], sel[1],
-                                         self._copy_text(*sel)))
-                self._undo_stack.append(('insert_char', sel[0], event.char))
+                print(sel)
+                self._undo_stack[-1].append(('delete', sel[0], sel[1],
+                                             self._copy_text(*sel)))
+                self._undo_stack[-1].append(('insert_char', sel[0], char))
             else:
-                self._undo_stack.append(('insert_char', self.index('insert'), event.char))
+                self._undo_stack[-1].append(('insert_char', self.index('insert'), char))
+            if event.keysym in ['space', 'Return', 'Tab']:
+                self.add_undo_sep()
 
     def _copy_text(self, index1, index2):
         content = []
@@ -221,13 +259,13 @@ class MyText(Text):
         for c in content:
             index = self.index('insert')
             if c[0] is 'image':
-                Text.image_create(self, index, **c[1])
+                self.image_create(index, **c[1])
             elif c[0] is 'window':
-                Text.window_create(self, index, **c[1])
+                self.window_create(index, **c[1])
             else:
                 self.insert('insert', c[1])
             for tag in c[2]:
-                Text.tag_add(self, tag, index)
+                self.tag_add(tag, index)
         self.tag_remove('sel', '1.0', 'end')
 
 

@@ -324,12 +324,13 @@ class App(Tk):
 
     def cut_text(self, event):
         self.copy_text(event)
-        event.widget.delete('sel.first', 'sel.last')
+        event.widget.delete_undoable('sel.first', 'sel.last')
         return 'break'
 
     def paste_text(self, event):
         txt = event.widget
-        txt.event_generate('<<BeforePaste>>')
+#        txt.event_generate('<<BeforePaste>>')
+        txt.add_undo_sep()
         if self.clipboard == txt.clipboard_get():
             links = {}
             for oldtag, link in self.link_clipboard.items():
@@ -343,12 +344,12 @@ class App(Tk):
                     if latex and cst.LATEX:
                         txt.master.create_latex(latex, index)
                     else:
-                        txt.image_create(index, align='bottom', image=img, name=name)
+                        txt.image_create_undoable(index, align='bottom', image=img, name=name)
                 elif c[0] is 'checkbox':
                     state, tags = c[1]
                     ch = Checkbutton(txt, takefocus=False, style='sel.TCheckbutton')
                     ch.state(state)
-                    txt.window_create(index, window=ch)
+                    txt.window_create_undoable(index, window=ch)
                 else:
                     char, tags = c[1]
                     link = [t for t in tags if 'link#' in t]
@@ -356,15 +357,16 @@ class App(Tk):
                         tags = list(tags)
                         tags.remove(link[0])
                         tags.append(links[link[0]])
-                    txt.insert('insert', char)
+                    txt.insert_undoable('insert', char)
                 for tag in tags:
-                    txt.tag_add(tag, index)
+                    txt.tag_add_undoable(tag, index)
             txt.tag_remove('sel', '1.0', 'end')
             self.highlight_checkboxes(event)
         else:
             self.clipboard = ""
-            txt.insert('insert', txt.clipboard_get())
-        txt.event_generate('<<Paste>>')
+            txt.insert_undoable('insert', txt.clipboard_get())
+        txt.add_undo_sep()
+#        txt.event_generate('<<Paste>>')
 
     def highlight_checkboxes(self, event):
         txt = event.widget
@@ -389,18 +391,20 @@ class App(Tk):
                     pass
 
     def undo_event(self, event):
-        try:
-            event.widget.edit_undo()
-        except TclError:
-            # nothing to redo
-            pass
+#        try:
+#            event.widget.edit_undo()
+#        except TclError:
+#            # nothing to redo
+#            pass
+        pass
 
     def redo_event(self, event):
-        try:
-            event.widget.edit_redo()
-        except TclError:
-            # nothing to redo
-            pass
+#        try:
+#            event.widget.edit_redo()
+#        except TclError:
+#            # nothing to redo
+#            pass
+        pass
 
     def select_all_entry(self, event):
         event.widget.selection_range(0, "end")
