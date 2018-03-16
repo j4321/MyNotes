@@ -34,7 +34,7 @@ from mynoteslib.constantes import TEXT_COLORS, askopenfilename,\
     math_to_image, text_ranges, EWMH, INV_COLORS
 from mynoteslib.autoscrollbar import AutoScrollbar
 from mynoteslib.symbols import pick_symbol
-from mynoteslib.mytext import MyText, Checkbox
+from mynoteslib.mytext import MyText
 from mynoteslib.messagebox import showerror, askokcancel
 from webbrowser import open as open_url
 
@@ -131,6 +131,7 @@ class Sticky(Toplevel):
         mono = "%s %s" % (CONFIG.get("Font", "mono").replace(" ", "\ "), size)
         self.scroll = AutoScrollbar(self, orient='vertical')
         self.txt = MyText(self, wrap='word', undo=False, autoseparator=False,
+                          cb_style=self.id + ".TCheckbutton",
                           selectforeground='white',
                           inactiveselectbackground=selectbg,
                           selectbackground=selectbg,
@@ -318,15 +319,7 @@ class Sticky(Toplevel):
                     state = ('selected', '!alternate')
                 else:
                     state = ('!selected', '!alternate')
-
-                def create_ch():
-                    ch = Checkbox(self.txt, takefocus=False,
-                                  style=self.id + ".TCheckbutton")
-                    ch.state(state)
-                    return ch
-
-                self.txt.window_create(index, create=create_ch)
-
+                self.txt.checkbox_create(index, state)
             elif kind == "image":
                 if os.path.exists(val):
                     self.images.append(PhotoImage(master=self.txt, file=val))
@@ -436,11 +429,6 @@ class Sticky(Toplevel):
             self.set_position_above()
         elif self.position.get() == "below":
             self.set_position_below()
-
-    def _create_checkbox(self):
-        ch = Checkbox(self.txt, takefocus=False,
-                      style=self.id + ".TCheckbutton")
-        return ch
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -652,8 +640,8 @@ class Sticky(Toplevel):
             # remove checkboxes
             try:
                 ch = self.txt.window_cget("%i.0"  % i, "window")
-                self.txt.children[ch.split('.')[-1]].destroy()
                 self.txt.delete_undoable("%i.0"  % i)
+                self.txt.children[ch.split('.')[-1]].destroy()
             except TclError:
                 # there is no checkbox
                 # remove enumeration
@@ -678,8 +666,8 @@ class Sticky(Toplevel):
             # remove checkboxes
             try:
                 ch = self.txt.window_cget("%i.0"  % i, "window")
-                self.txt.children[ch.split('.')[-1]].destroy()
                 self.txt.delete_undoable("%i.0"  % i)
+                self.txt.children[ch.split('.')[-1]].destroy()
             except TclError:
                 # there is no checkbox
                 # remove bullets
@@ -710,7 +698,7 @@ class Sticky(Toplevel):
             try:
                 self.txt.window_cget("%i.0"  % i, "window")
             except TclError:
-                self.txt.window_create_undoable("%i.0"  % i, create=self._create_checkbox)
+                self.txt.checkbox_create_undoable("%i.0"  % i)
 
         self.txt.tag_remove_undoable("enum", "1.0", "end")
         self.txt.tag_remove_undoable("list", "1.0", "end")
@@ -976,7 +964,7 @@ class Sticky(Toplevel):
         """Insert checkbox in note."""
         index = self.txt.index("insert")
         self.txt.add_undo_sep()
-        self.txt.window_create_undoable(index, create=self._create_checkbox)
+        self.txt.checkbox_create_undoable(index)
         self.txt.add_undo_sep()
 
     def add_date(self, event=None):

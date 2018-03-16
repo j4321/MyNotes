@@ -1,15 +1,29 @@
 #! /usr/bin/python3
-# -*- coding: utf-8 -*-
+# -*- coding:Utf-8 -*-
 """
-Created on Wed Mar 14 13:00:10 2018
+My Notes - Sticky notes/post-it
+Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
 
-@author: juliette
+My Notes is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+My Notes is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+Text class with improved undo/redo
 """
 
 from tkinter import Text, TclError
 from tkinter.ttk import Checkbutton
-from tkfilebrowser import askopenfilename
-from mynoteslib import constantes as cst
+from mynoteslib.constantes import sorting
 import re
 
 
@@ -22,10 +36,11 @@ class Checkbox(Checkbutton):
 
 
 class MyText(Text):
-    def __init__(self, master=None, mode='note', **kw):
+    def __init__(self, master=None, mode='note', cb_style="TCheckbutton", **kw):
         Text.__init__(self, master, **kw)
 
         self.mode = mode
+        self.cb_style = cb_style
 
         self._undo_stack = [[]]
         self._redo_stack = []
@@ -34,9 +49,6 @@ class MyText(Text):
         self.bind('<Control-Key>', self._on_ctrl_keypress)
         self.bind('<Control-z>', self.undo)
         self.bind('<Control-y>', self.redo)
-#        self.bind('<<Cut>>', self._on_cut)
-#        self.bind('<<BeforePaste>>', self._on_before_paste)
-#        self.bind('<<Paste>>', self._on_paste)
         self.bind_class('Text', '<Control-y>', lambda e: None)
 
     def mode_change(self, new_mode):
@@ -110,8 +122,8 @@ class MyText(Text):
             self.insert(item[1], item[2])
         elif item[0] == 'insert_image':
             self.image_create(item[1], item[2])
-        elif item[0] == 'insert_window':
-            self.window_create(item[1], **item[2])
+        elif item[0] == 'insert_checkbox':
+            self.checkbox_create(item[1], item[2])
         elif item[0] == 'insert':
             self.insert(item[1], item[3], *item[4])
         elif item[0] == 'delete':
@@ -132,44 +144,25 @@ class MyText(Text):
             else:
                 self.nametowidget(win).state(('!selected', '!alternate'))
 
+    def checkbox_create(self, index, state=('!alternate',), **kw):
+        kw2 = kw.copy()
+        kw2['takefocus'] = False
+        kw2['style'] = self.cb_style
+        ch = Checkbox(self, **kw2)
+        ch.state(state)
+        self.window_create(index, window=ch)
+
+    def checkbox_create_undoable(self, index, state=('!alternate',)):
+        self._undo_stack[-1].append(('insert_checkbox', self.index(index), state))
+        self._redo_stack.clear()
+        ch = Checkbox(self, takefocus=False, style=self.cb_style)
+        ch.state(state)
+        self.window_create(index, window=ch)
+
     def image_create_undoable(self, index, cnf={}, **kw):
         self._undo_stack[-1].append(('insert_image', self.index(index), kw))
         self._redo_stack.clear()
         self.image_create(index, cnf, **kw)
-
-    def window_create_undoable(self, index, cnf={}, **kw):
-        win = cnf.pop('window', None) or kw.pop('window', None)
-        if win:
-            props = {key: win.cget(key) for key in win.keys()}
-            props['master'] = self
-
-            if 'class' in props and not props['class']:
-                del props['class']
-
-            def create():
-                return win.__class__(**props)
-
-            kw['create'] = create
-        self._undo_stack[-1].append(('insert_window', self.index(index), kw))
-        self._redo_stack.clear()
-        Text.window_create(self, index, cnf, **kw)
-
-    def window_create(self, index, cnf={}, **kw):
-        win = cnf.pop('window', None) or kw.pop('window', None)
-        if win:
-            win = kw.pop('window')
-            props = {key: win.cget(key) for key in win.keys()}
-            props['master'] = self
-
-            if 'class' in props and not props['class']:
-                del props['class']
-
-            def create():
-                return win.__class__(**props)
-
-            kw['create'] = create
-
-        Text.window_create(self, index, cnf, **kw)
 
     def tag_remove_undoable(self, tagName, index1, index2=None):
         self._undo_stack[-1].append(('tag_remove', tagName, self.index(index1),
@@ -182,26 +175,6 @@ class MyText(Text):
 
     def _on_ctrl_keypress(self, event):
         pass
-
-#    def _on_cut(self, event):
-#        self._redo_stack.clear()
-#        sel = self.tag_ranges('sel')
-#        if sel:
-#            index1, index2 = self.index(sel[0]), self.index(sel[1])
-#            self.add_undo_sep()
-#            self._undo_stack[-1].append(('delete', index1, index2,
-#                                         self._copy_text(index1, index2)))
-#            self.add_undo_sep()
-#
-#    def _on_paste(self, event):
-#        index1 = self._undo_stack[-1][1]
-#        index2 = self.index('insert')
-#        self._undo_stack[-1][-1].extend([index2, self._copy_text(index1, index2)])
-#        self.add_undo_sep()
-#
-#    def _on_before_paste(self, event):
-#        self.add_undo_sep()
-#        self._undo_stack[-1].append(['paste', self.index('insert')])
 
     def delete_undoable(self, index1, index2=None):
         index1 = self.index(index1)
@@ -220,6 +193,7 @@ class MyText(Text):
         self._undo_stack[-1].append(('insert', index1, index2, chars, args))
 
     def _on_keypress(self, event):
+        # --- deletion
         if event.keysym == 'BackSpace':
             self._redo_stack.clear()
             self.add_undo_sep()
@@ -255,56 +229,43 @@ class MyText(Text):
                     self.delete_undoable("insert-1c")
             self.add_undo_sep()
             return 'break'
-
-#            sel = self.tag_ranges('sel')
-#            if sel:
-#                index1, index2 = self.index(sel[0]), self.index(sel[1])
-#                self.add_undo_sep()
-#                self._undo_stack[-1].append(('delete', index1, index2,
-#                                             self._copy_text(index1, index2)))
-#                self.add_undo_sep()
-#            else:
-#                index = self.index('insert-1c')
-#                index2 = self.index('insert')
-#                if index != index2:
-#                    self.add_undo_sep()
-#                    self._undo_stack[-1].append(('delete', index, index2,
-#                                                 self._copy_text(index, index2)))
-#                    self.add_undo_sep()
+        elif event.keysym == 'Delete':
+            self._redo_stack.clear()
+            sel = self.tag_ranges('sel')
+            if sel:
+                self.add_undo_sep()
+                self._undo_stack[-1].append(('delete', sel[0], sel[1],
+                                             self._copy_text(*sel)))
+                self.add_undo_sep()
+        # --- newline
         elif event.keysym == 'Return':
             self._redo_stack.clear()
             if self.mode == "list":
                 self.add_undo_sep()
-                event.widget.insert_undoable("insert", "\n\t•\t")
-                event.widget.tag_add_undoable("list", "1.0", "end")
+                self.insert_undoable("insert", "\n\t•\t")
+                self.tag_add_undoable("list", "1.0", "end")
                 self.add_undo_sep()
             elif self.mode == "todolist":
                 self.add_undo_sep()
-                event.widget.insert_undoable("insert", "\n")
-
-                def create():
-                    ch = Checkbox(event.widget, takefocus=False,
-                                     style=event.widget.master.id + ".TCheckbutton")
-                    return ch
-
-                event.widget.window_create_undoable("insert", create=create)
-                event.widget.tag_add_undoable("todolist", "1.0", "end")
+                self.insert_undoable("insert", "\n")
+                self.checkbox_create_undoable("insert", ('!alternate',))
+                self.tag_add_undoable("todolist", "1.0", "end")
                 self.add_undo_sep()
             elif self.mode == "enum":
                 self.add_undo_sep()
-                event.widget.insert_undoable("insert", "\n\t0.\t")
-                event.widget.master.update_enum()
+                self.insert_undoable("insert", "\n\t0.\t")
+                self.master.update_enum()
                 self.add_undo_sep()
             else:
-                event.widget.insert_undoable("insert", "\n")
+                self.insert_undoable("insert", "\n")
                 self.add_undo_sep()
             return 'break'
+        # --- normal char
         elif event.char != '':
             self._redo_stack.clear()
             char = event.char
             sel = self.tag_ranges('sel')
             if sel:
-                print(sel)
                 self.add_undo_sep()
                 self._undo_stack[-1].append(('delete', sel[0], sel[1],
                                              self._copy_text(*sel)))
@@ -316,9 +277,10 @@ class MyText(Text):
                 self.add_undo_sep()
 
     def _copy_text(self, index1, index2):
+        """Copy text, images, checkboxes with the formatting between index1 and index2."""
         content = []
-        deb = cst.sorting(str(index1))
-        fin = cst.sorting(str(index2))
+        deb = sorting(str(index1))
+        fin = sorting(str(index2))
         for l in range(deb[0], fin[0] + 1):
             if l == deb[0]:
                 dc = deb[1]
@@ -327,7 +289,7 @@ class MyText(Text):
             if l == fin[0]:
                 nc = fin[1]
             else:
-                nc = cst.sorting(str(self.index('%i.end' % l)))[1]
+                nc = sorting(str(self.index('%i.end' % l)))[1]
 
             for c in range(dc, nc):
                 index = '%i.%i' % (l, c)
@@ -338,14 +300,10 @@ class MyText(Text):
                     content.append(('image', kw, tags))
                 except TclError:
                     try:
-                        keys = ['align', 'padx', 'pady', 'stretch', 'create']
-                        kw = {k: self.window_cget(index, k) for k in keys}
-                        try:
-                            state = self.nametowidget(self.window_cget(index, 'window')).state()
-                        except AttributeError:
-                            state = None
+                        win = self.nametowidget(self.window_cget(index, 'window'))
+                        state = win.state()
                         tags = self.tag_names(index)
-                        content.append(('window', kw, tags, state))
+                        content.append(('checkbox', state, tags))
                     except TclError:
                         tags = self.tag_names(index)
                         content.append(('char', self.get(index), tags))
@@ -354,54 +312,17 @@ class MyText(Text):
         return content
 
     def _restore_text_with_prop(self, index1, content):
+        """Restore text, images, checkboxes and formatting at index1."""
         self.mark_set('insert', index1)
         for c in content:
             index = self.index('insert')
             if c[0] is 'image':
                 self.image_create(index, **c[1])
-            elif c[0] is 'window':
-                self.window_create(index, **c[1])
+            elif c[0] is 'checkbox':
+                self.checkbox_create(index, c[1])
                 self.update_idletasks()
-                if c[3]:
-                    win = self.nametowidget(self.window_cget(index, 'window'))
-                    win.state(c[3])
             else:
                 self.insert('insert', c[1])
             for tag in c[2]:
                 self.tag_add(tag, index)
         self.tag_remove('sel', '1.0', 'end')
-
-
-if __name__ == '__main__':
-    from tkinter import Tk, PhotoImage, Button
-    from tkinter.ttk import Checkbutton, Style
-
-    def add_image():
-        file = askopenfilename(root)
-        if file:
-            t.images.append(PhotoImage(file=file, master=root))
-            t.image_create_undoable('insert', image=t.images[-1])
-
-    def add_ch():
-#        ch = Checkbutton(t)
-#        ch.state(('selected', '!alternate' ))
-        def create():
-            return Checkbox(t)
-
-        t.add_undo_sep()
-        index = t.index('insert')
-        t.window_create_undoable('insert', create=create)
-        t.update_idletasks()
-        t.nametowidget(t.window_cget(index, 'window')).state(('selected', '!alternate'))
-#        t.window_create_undoable('insert', window=ch)
-        t.add_undo_sep()
-
-    root = Tk()
-    s = Style(root)
-    s.theme_use('clam')
-    t = MyText(root, mode='list')
-    t.images = []
-    t.pack()
-    Button(root, text='Image', command=add_image).pack()
-    Button(root, text='Ch', command=add_ch).pack()
-#    root.mainloop()
