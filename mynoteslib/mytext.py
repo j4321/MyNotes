@@ -22,8 +22,9 @@ Text class with improved undo/redo
 """
 
 from tkinter import Text, TclError
+from tkinter.font import Font
 from tkinter.ttk import Checkbutton
-from mynoteslib.constantes import sorting
+from mynoteslib.constantes import sorting, CONFIG, TEXT_COLORS
 import re
 
 
@@ -37,19 +38,88 @@ class Checkbox(Checkbutton):
 
 class MyText(Text):
     def __init__(self, master=None, mode='note', cb_style="TCheckbutton", **kw):
-        Text.__init__(self, master, **kw)
+        Text.__init__(self, master, wrap='word', undo=False,
+                      autoseparator=False, tabs=(10, 'right', 21, 'left'),
+                      relief="flat", borderwidth=0,
+                      highlightthickness=0, **kw)
 
         self.mode = mode
         self.cb_style = cb_style
 
+        # --- undo/redo
         self._undo_stack = [[]]
         self._redo_stack = []
 
+        size = CONFIG.get("Font", "text_size")
+        font_text = "%s %s" % (CONFIG.get("Font", "text_family").replace(" ", "\ "), size)
+        mono = "%s %s" % (CONFIG.get("Font", "mono").replace(" ", "\ "), size)
+
+        # --- tags
+        self.tag_configure("mono", font=mono)
+        self.tag_configure("bold", font="%s bold" % font_text)
+        self.tag_configure("italic", font="%s italic" % font_text)
+        self.tag_configure("bold-italic", font="%s bold italic" % font_text)
+
+        try:    # only >= tk8.6.6 support selectforeground
+            self.tag_configure("underline", underline=True,
+                               selectforeground="white")
+            self.tag_configure("overstrike", overstrike=True,
+                               selectforeground="white")
+            self.tag_configure("link", foreground="blue", underline=True,
+                               selectforeground="white")
+            self.tag_configure("file", foreground="blue", underline=True,
+                               selectforeground="white")
+            for coul in TEXT_COLORS.values():
+                self.tag_configure(coul, foreground=coul,
+                                   selectforeground="white")
+                self.tag_configure(coul + "-underline", foreground=coul,
+                                   selectforeground="white", underline=True)
+                self.tag_configure(coul + "-overstrike", foreground=coul,
+                                   overstrike=True, selectforeground="white")
+        except TclError:
+            self.tag_configure("underline", underline=True)
+            self.tag_configure("overstrike", overstrike=True)
+            self.tag_configure("link", foreground="blue", underline=True)
+            self.tag_configure("file", foreground="blue", underline=True)
+            for coul in TEXT_COLORS.values():
+                self.tag_configure(coul, foreground=coul)
+                self.tag_configure(coul + "-underline", foreground=coul,
+                                   underline=True)
+                self.tag_configure(coul + "-overstrike", foreground=coul,
+                                   overstrike=True)
+        self.tag_configure("center", justify="center")
+        self.tag_configure("left", justify="left")
+        self.tag_configure("right", justify="right")
+        self.tag_configure("list", lmargin1=0, lmargin2=21,
+                           tabs=(10, 'right', 21, 'left'))
+        self.tag_configure("todolist", lmargin1=0, lmargin2=21,
+                           tabs=(10, 'right', 21, 'left'))
+        margin = 2 * Font(self, font=font_text).measure("m")
+        self.tag_configure("enum", lmargin1=0, lmargin2=margin + 5,
+                           tabs=(margin, 'right', margin + 5, 'left'))
+
+        # --- bindings
         self.bind('<Key>', self._on_keypress)
         self.bind('<Control-Key>', self._on_ctrl_keypress)
         self.bind('<Control-z>', self.undo)
         self.bind('<Control-y>', self.redo)
+        # add binding to the existing class binding so that the selected text
+        # is erased on pasting
+        self.bind("<Control-v>", self._paste)
+
         self.bind_class('Text', '<Control-y>', lambda e: None)
+
+        self.tag_bind("link", "<Enter>",
+                      lambda event: self.configure(cursor="hand1"))
+        self.tag_bind("link", "<Leave>",
+                      lambda event: self.configure(cursor=""))
+
+    def _paste(self, event):
+        """Delete selected text before pasting."""
+        if self.txt.tag_ranges("sel"):
+            self.txt.add_undo_sep()
+            self.txt.delete_undoable("sel.first", "sel.last")
+            self.txt.add_undo_sep()
 
     def mode_change(self, new_mode):
         self._undo_stack[-1].append(('mode', self.mode, new_mode))

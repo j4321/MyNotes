@@ -125,65 +125,13 @@ class Sticky(Toplevel):
         # corner grip
         self.corner = Sizegrip(self, style=self.id + ".TSizegrip")
         # texte
-        size = CONFIG.get("Font", "text_size")
-        font_text = "%s %s" %(CONFIG.get("Font", "text_family").replace(" ", "\ "),
-                              size)
-        mono = "%s %s" % (CONFIG.get("Font", "mono").replace(" ", "\ "), size)
         self.scroll = AutoScrollbar(self, orient='vertical')
-        self.txt = MyText(self, wrap='word', undo=False, autoseparator=False,
-                          cb_style=self.id + ".TCheckbutton",
+        self.txt = MyText(self, cb_style=self.id + ".TCheckbutton",
                           selectforeground='white',
                           inactiveselectbackground=selectbg,
                           selectbackground=selectbg,
-                          tabs=(10, 'right', 21, 'left'),
-                          relief="flat", borderwidth=0,
-                          highlightthickness=0, font=font_text,
                           yscrollcommand=self.scroll.set)
         self.scroll.configure(command=self.txt.yview)
-        # tags
-        self.txt.tag_configure("mono", font=mono)
-        self.txt.tag_configure("bold", font="%s bold" % font_text)
-        self.txt.tag_configure("italic", font="%s italic" % font_text)
-        self.txt.tag_configure("bold-italic", font="%s bold italic" % font_text)
-
-        try:    # only >= tk8.6.6 support selectforeground
-            self.txt.tag_configure("underline", underline=True,
-                                   selectforeground="white")
-            self.txt.tag_configure("overstrike", overstrike=True,
-                                   selectforeground="white")
-            self.txt.tag_configure("link", foreground="blue", underline=True,
-                                   selectforeground="white")
-            self.txt.tag_configure("file", foreground="blue", underline=True,
-                                   selectforeground="white")
-            for coul in TEXT_COLORS.values():
-                self.txt.tag_configure(coul, foreground=coul,
-                                       selectforeground="white")
-                self.txt.tag_configure(coul + "-underline", foreground=coul,
-                                       selectforeground="white", underline=True)
-                self.txt.tag_configure(coul + "-overstrike", foreground=coul,
-                                       overstrike=True, selectforeground="white")
-        except TclError:
-            self.txt.tag_configure("underline", underline=True)
-            self.txt.tag_configure("overstrike", overstrike=True)
-            self.txt.tag_configure("link", foreground="blue", underline=True)
-            self.txt.tag_configure("file", foreground="blue", underline=True)
-            for coul in TEXT_COLORS.values():
-                self.txt.tag_configure(coul, foreground=coul)
-                self.txt.tag_configure(coul + "-underline", foreground=coul,
-                                       underline=True)
-                self.txt.tag_configure(coul + "-overstrike", foreground=coul,
-                                       overstrike=True)
-        self.txt.tag_configure("center", justify="center")
-        self.txt.tag_configure("left", justify="left")
-        self.txt.tag_configure("right", justify="right")
-        self.txt.tag_configure("list", lmargin1=0, lmargin2=21,
-                               tabs=(10, 'right', 21, 'left'))
-        self.txt.tag_configure("todolist", lmargin1=0, lmargin2=21,
-                               tabs=(10, 'right', 21, 'left'))
-        margin = 2*Font(self, font=font_text).measure("m")
-        self.txt.tag_configure("enum", lmargin1=0, lmargin2=margin + 5,
-                               tabs=(margin, 'right', margin + 5, 'left'))
-
 
         # --- menus
         # --- * menu on title
@@ -263,7 +211,8 @@ class Sticky(Toplevel):
         menu_style.add_command(label=_("Overstrike"),
                                command=self.toggle_overstrike)
         menu_style.add_command(label=_("Mono"),
-                               command=lambda: self.toggle_text_style("mono"))
+                               command=lambda: self.toggle_text_style("mono"),
+                               accelerator='Ctrl+M')
         # text alignment
         menu_align = Menu(self.menu_txt, tearoff=False)
         menu_align.add_command(label=_("Left"),
@@ -389,21 +338,18 @@ class Sticky(Toplevel):
         self.title_entry.bind("<FocusOut>", lambda e: self.title_entry.place_forget())
         self.title_entry.bind("<Escape>", lambda e: self.title_entry.place_forget())
 
-        self.txt.tag_bind("link", "<Enter>",
-                          lambda event: self.txt.configure(cursor="hand1"))
-        self.txt.tag_bind("link", "<Leave>",
-                          lambda event: self.txt.configure(cursor=""))
         self.txt.bind("<FocusOut>", self.save_note)
         self.txt.bind('<Button-3>', self.show_menu_txt)
-        # add binding to the existing class binding so that the selected text
-        # is erased on pasting
-        self.txt.bind("<Control-v>", self.paste)
+#        # add binding to the existing class binding so that the selected text
+#        # is erased on pasting
+#        self.txt.bind("<Control-v>", self.paste)
 
         self.corner.bind('<ButtonRelease-1>', self.resize)
 
         # --- keyboard shortcuts
         self.txt.bind('<Control-b>', lambda e: self.toggle_text_style('bold'))
         self.txt.bind('<Control-i>', lambda e: self.toggle_text_style('italic'))
+        self.txt.bind('<Control-m>', lambda e: self.toggle_text_style('mono'))
         self.txt.bind('<Control-u>', lambda e: self.toggle_underline())
         self.txt.bind('<Control-r>', lambda e: self.set_align('right'))
         self.txt.bind('<Control-l>', lambda e: self.set_align('left'))
@@ -458,12 +404,12 @@ class Sticky(Toplevel):
             self.configure(bg=self.color)
             self.txt.configure(bg=self.color)
 
-    def paste(self, event):
-        """Delete selected text before pasting."""
-        if self.txt.tag_ranges("sel"):
-            self.txt.add_undo_sep()
-            self.txt.delete_undoable("sel.first", "sel.last")
-            self.txt.add_undo_sep()
+#    def paste(self, event):
+#        """Delete selected text before pasting."""
+#        if self.txt.tag_ranges("sel"):
+#            self.txt.add_undo_sep()
+#            self.txt.delete_undoable("sel.first", "sel.last")
+#            self.txt.add_undo_sep()
 
     def delete(self, confirmation=True):
         """Delete this note."""
