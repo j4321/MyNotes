@@ -34,7 +34,7 @@ from mynoteslib.constantes import TEXT_COLORS, askopenfilename,\
     math_to_image, text_ranges, EWMH, INV_COLORS
 from mynoteslib.autoscrollbar import AutoScrollbar
 from mynoteslib.symbols import pick_symbol
-from mynoteslib.mytext import MyText, Checkbox
+from mynoteslib.mytext import MyText
 from mynoteslib.messagebox import showerror, askokcancel
 from webbrowser import open as open_url
 
@@ -59,11 +59,9 @@ class Sticky(Toplevel):
         self.id = key
         self.is_locked = not (kwargs.get("locked", False))
         self.images = []
-        self.links = {}
         self.links_click_id = {}  # delay click effect to avoid triggering <1> with <Double-1>
         self.files = {}
         self.files_click_id = {}  # delay click effect to avoid triggering <1> with <Double-1>
-        self.latex = {}
         self.nb_links = 0
         self.nb_files = 0
         self.title('mynotes%s' % key)
@@ -125,64 +123,13 @@ class Sticky(Toplevel):
         # corner grip
         self.corner = Sizegrip(self, style=self.id + ".TSizegrip")
         # texte
-        size = CONFIG.get("Font", "text_size")
-        font_text = "%s %s" %(CONFIG.get("Font", "text_family").replace(" ", "\ "),
-                              size)
-        mono = "%s %s" % (CONFIG.get("Font", "mono").replace(" ", "\ "), size)
         self.scroll = AutoScrollbar(self, orient='vertical')
-        self.txt = MyText(self, wrap='word', undo=False, autoseparator=False,
+        self.txt = MyText(self, cb_style=self.id + ".TCheckbutton",
                           selectforeground='white',
                           inactiveselectbackground=selectbg,
                           selectbackground=selectbg,
-                          tabs=(10, 'right', 21, 'left'),
-                          relief="flat", borderwidth=0,
-                          highlightthickness=0, font=font_text,
                           yscrollcommand=self.scroll.set)
         self.scroll.configure(command=self.txt.yview)
-        # tags
-        self.txt.tag_configure("mono", font=mono)
-        self.txt.tag_configure("bold", font="%s bold" % font_text)
-        self.txt.tag_configure("italic", font="%s italic" % font_text)
-        self.txt.tag_configure("bold-italic", font="%s bold italic" % font_text)
-
-        try:    # only >= tk8.6.6 support selectforeground
-            self.txt.tag_configure("underline", underline=True,
-                                   selectforeground="white")
-            self.txt.tag_configure("overstrike", overstrike=True,
-                                   selectforeground="white")
-            self.txt.tag_configure("link", foreground="blue", underline=True,
-                                   selectforeground="white")
-            self.txt.tag_configure("file", foreground="blue", underline=True,
-                                   selectforeground="white")
-            for coul in TEXT_COLORS.values():
-                self.txt.tag_configure(coul, foreground=coul,
-                                       selectforeground="white")
-                self.txt.tag_configure(coul + "-underline", foreground=coul,
-                                       selectforeground="white", underline=True)
-                self.txt.tag_configure(coul + "-overstrike", foreground=coul,
-                                       overstrike=True, selectforeground="white")
-        except TclError:
-            self.txt.tag_configure("underline", underline=True)
-            self.txt.tag_configure("overstrike", overstrike=True)
-            self.txt.tag_configure("link", foreground="blue", underline=True)
-            self.txt.tag_configure("file", foreground="blue", underline=True)
-            for coul in TEXT_COLORS.values():
-                self.txt.tag_configure(coul, foreground=coul)
-                self.txt.tag_configure(coul + "-underline", foreground=coul,
-                                       underline=True)
-                self.txt.tag_configure(coul + "-overstrike", foreground=coul,
-                                       overstrike=True)
-        self.txt.tag_configure("center", justify="center")
-        self.txt.tag_configure("left", justify="left")
-        self.txt.tag_configure("right", justify="right")
-        self.txt.tag_configure("list", lmargin1=0, lmargin2=21,
-                               tabs=(10, 'right', 21, 'left'))
-        self.txt.tag_configure("todolist", lmargin1=0, lmargin2=21,
-                               tabs=(10, 'right', 21, 'left'))
-        margin = 2*Font(self, font=font_text).measure("m")
-        self.txt.tag_configure("enum", lmargin1=0, lmargin2=margin + 5,
-                               tabs=(margin, 'right', margin + 5, 'left'))
-
 
         # --- menus
         # --- * menu on title
@@ -262,7 +209,8 @@ class Sticky(Toplevel):
         menu_style.add_command(label=_("Overstrike"),
                                command=self.toggle_overstrike)
         menu_style.add_command(label=_("Mono"),
-                               command=lambda: self.toggle_text_style("mono"))
+                               command=lambda: self.toggle_text_style("mono"),
+                               accelerator='Ctrl+M')
         # text alignment
         menu_align = Menu(self.menu_txt, tearoff=False)
         menu_align.add_command(label=_("Left"),
@@ -318,15 +266,7 @@ class Sticky(Toplevel):
                     state = ('selected', '!alternate')
                 else:
                     state = ('!selected', '!alternate')
-
-                def create_ch():
-                    ch = Checkbox(self.txt, takefocus=False,
-                                  style=self.id + ".TCheckbutton")
-                    ch.state(state)
-                    return ch
-
-                self.txt.window_create(index, create=create_ch)
-
+                self.txt.checkbox_create(index, state)
             elif kind == "image":
                 if os.path.exists(val):
                     self.images.append(PhotoImage(master=self.txt, file=val))
@@ -342,7 +282,7 @@ class Sticky(Toplevel):
 
         for link in kwargs.get("links", {}).values():
             self.nb_links += 1
-            self.links[self.nb_links] = link
+            self.txt.links[self.nb_links] = link
             self.links_click_id[self.nb_links] = ""
             lid = "link#%i" % self.nb_links
             self.txt.tag_bind(lid,
@@ -353,7 +293,7 @@ class Sticky(Toplevel):
                               lambda e, lnb=self.nb_links: self.edit_link(lnb))
 
         for img, latex in kwargs.get("latex", {}).items():
-            self.latex[img] = latex
+            self.txt.latex[img] = latex
             if LATEX:
                 self.txt.tag_bind(img, '<Double-Button-1>',
                                   lambda e, im=img: self.add_latex(im))
@@ -396,21 +336,15 @@ class Sticky(Toplevel):
         self.title_entry.bind("<FocusOut>", lambda e: self.title_entry.place_forget())
         self.title_entry.bind("<Escape>", lambda e: self.title_entry.place_forget())
 
-        self.txt.tag_bind("link", "<Enter>",
-                          lambda event: self.txt.configure(cursor="hand1"))
-        self.txt.tag_bind("link", "<Leave>",
-                          lambda event: self.txt.configure(cursor=""))
         self.txt.bind("<FocusOut>", self.save_note)
         self.txt.bind('<Button-3>', self.show_menu_txt)
-        # add binding to the existing class binding so that the selected text
-        # is erased on pasting
-        self.txt.bind("<Control-v>", self.paste)
 
         self.corner.bind('<ButtonRelease-1>', self.resize)
 
         # --- keyboard shortcuts
         self.txt.bind('<Control-b>', lambda e: self.toggle_text_style('bold'))
         self.txt.bind('<Control-i>', lambda e: self.toggle_text_style('italic'))
+        self.txt.bind('<Control-m>', lambda e: self.toggle_text_style('mono'))
         self.txt.bind('<Control-u>', lambda e: self.toggle_underline())
         self.txt.bind('<Control-r>', lambda e: self.set_align('right'))
         self.txt.bind('<Control-l>', lambda e: self.set_align('left'))
@@ -421,7 +355,7 @@ class Sticky(Toplevel):
         if LATEX:
             self.txt.bind('<Control-t>', lambda e: self.add_latex())
 
-        # window geometry
+        # --- window geometry
         self.update_idletasks()
         self.geometry(kwargs.get("geometry", '220x235'))
         self.save_geometry = kwargs.get("geometry", '220x235')
@@ -436,11 +370,6 @@ class Sticky(Toplevel):
             self.set_position_above()
         elif self.position.get() == "below":
             self.set_position_below()
-
-    def _create_checkbox(self):
-        ch = Checkbox(self.txt, takefocus=False,
-                      style=self.id + ".TCheckbutton")
-        return ch
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -469,13 +398,6 @@ class Sticky(Toplevel):
             self.scroll.configure(style='%s.Vertical.TScrollbar' % INV_COLORS[value])
             self.configure(bg=self.color)
             self.txt.configure(bg=self.color)
-
-    def paste(self, event):
-        """Delete selected text before pasting."""
-        if self.txt.tag_ranges("sel"):
-            self.txt.add_undo_sep()
-            self.txt.delete_undoable("sel.first", "sel.last")
-            self.txt.add_undo_sep()
 
     def delete(self, confirmation=True):
         """Delete this note."""
@@ -542,11 +464,11 @@ class Sticky(Toplevel):
         data["rolled"] = not self.txt.winfo_ismapped()
         data["position"] = self.position.get()
         data["links"] = {}
-        for i, link in self.links.items():
+        for i, link in self.txt.links.items():
             if self.txt.tag_ranges("link#%i" % i):
                 data["links"][i] = link
         data["latex"] = {}
-        for img, latex in self.latex.items():
+        for img, latex in self.txt.latex.items():
             if self.txt.tag_ranges(img):
                 data["latex"][img] = latex
         for image in self.txt.image_names():
@@ -652,8 +574,8 @@ class Sticky(Toplevel):
             # remove checkboxes
             try:
                 ch = self.txt.window_cget("%i.0"  % i, "window")
-                self.txt.children[ch.split('.')[-1]].destroy()
                 self.txt.delete_undoable("%i.0"  % i)
+                self.txt.children[ch.split('.')[-1]].destroy()
             except TclError:
                 # there is no checkbox
                 # remove enumeration
@@ -678,8 +600,8 @@ class Sticky(Toplevel):
             # remove checkboxes
             try:
                 ch = self.txt.window_cget("%i.0"  % i, "window")
-                self.txt.children[ch.split('.')[-1]].destroy()
                 self.txt.delete_undoable("%i.0"  % i)
+                self.txt.children[ch.split('.')[-1]].destroy()
             except TclError:
                 # there is no checkbox
                 # remove bullets
@@ -710,7 +632,7 @@ class Sticky(Toplevel):
             try:
                 self.txt.window_cget("%i.0"  % i, "window")
             except TclError:
-                self.txt.window_create_undoable("%i.0"  % i, create=self._create_checkbox)
+                self.txt.checkbox_create_undoable("%i.0"  % i)
 
         self.txt.tag_remove_undoable("enum", "1.0", "end")
         self.txt.tag_remove_undoable("list", "1.0", "end")
@@ -906,8 +828,8 @@ class Sticky(Toplevel):
 
                 tags = self.txt.tag_names(index) + ("link", lid)
                 self.txt.insert_undoable(index, txt, tags)
+                self.txt.link_create_undoable(lnb, lien)
                 self.txt.add_undo_sep()
-                self.links[lnb] = lien
                 self.txt.tag_bind(lid, "<Button-1>", lambda e: self.open_link(lnb))
                 self.txt.tag_bind(lid, "<Double-Button-1>", lambda e: self.edit_link(lnb))
             top.destroy()
@@ -923,10 +845,12 @@ class Sticky(Toplevel):
         else:
             lid = "link#%i" % link_nb
             txt = self.txt.get('%s.first' % lid, '%s.last' % lid)
-            link_txt = self.links[link_nb]
+            link_txt = self.txt.links[link_nb]
             sel = self.txt.index('%s.first' % lid), self.txt.index('%s.last' % lid)
+            self.txt.tag_add('sel', *sel)
 
         top = Toplevel(self, class_='MyNotes')
+        top.withdraw()
         top.transient(self)
         top.update_idletasks()
         top.geometry("+%i+%i" % top.winfo_pointerxy())
@@ -950,19 +874,22 @@ class Sticky(Toplevel):
         link.focus_set()
         text.bind("<Return>", ok)
         link.bind("<Return>", ok)
+        top.bind('<Escape>', lambda e: top.destroy())
+        top.deiconify()
 
     def create_link(self, link):
         self.nb_links += 1
         lnb = self.nb_links
         lid = "link#%i" % lnb
-        self.links[lnb] = link
+#        self.txt.links[lnb] = link
+        self.txt.link_create_undoable(lnb, link)
         self.txt.tag_bind(lid, "<Button-1>", lambda e: self.open_link(lnb))
         self.txt.tag_bind(lid, "<Double-Button-1>", lambda e: self.edit_link(lnb))
         return lid
 
     def open_link(self, link_nb):
         """Open link after small delay to avoid opening link on double click."""
-        lien = self.links[link_nb]
+        lien = self.txt.links[link_nb]
         self.links_click_id[link_nb] = self.after(500, lambda: open_url(lien))
 
     def edit_link(self, link_nb):
@@ -976,7 +903,7 @@ class Sticky(Toplevel):
         """Insert checkbox in note."""
         index = self.txt.index("insert")
         self.txt.add_undo_sep()
-        self.txt.window_create_undoable(index, create=self._create_checkbox)
+        self.txt.checkbox_create_undoable(index)
         self.txt.add_undo_sep()
 
     def add_date(self, event=None):
@@ -1003,7 +930,6 @@ class Sticky(Toplevel):
                                       lambda e: self.add_latex(img))
                 else:
                     img = img_name
-                self.latex[img] = latex
                 im = os.path.join(PATH_LATEX, img)
                 try:
                     math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
@@ -1018,18 +944,17 @@ class Sticky(Toplevel):
                             self.txt.delete_undoable(index)
                         else:
                             index = self.txt.index("insert")
-                    self.txt.image_create_undoable(index,
-                                                   align='bottom',
-                                                   image=self.images[-1],
-                                                   name=im)
+                    self.txt.latex_create_undoable(index, img, self.images[-1], latex)
                     self.txt.tag_add_undoable(img, index)
                     self.txt.add_undo_sep()
                     top.destroy()
+                    self.txt.focus_force()
 
                 except Exception as e:
                     showerror(_("Error"), str(e))
 
         top = Toplevel(self, class_='MyNotes')
+        top.withdraw()
         top.transient(self)
         top.update_idletasks()
         top.geometry("+%i+%i" % top.winfo_pointerxy())
@@ -1038,7 +963,8 @@ class Sticky(Toplevel):
         top.title("LaTeX")
         text = Entry(top, justify='center')
         if img_name is not None:
-            text.insert(0, self.latex[img_name])
+            text.insert(0, self.txt.latex[img_name])
+
             sel = ()
         else:
             if self.txt.tag_ranges('sel'):
@@ -1054,7 +980,9 @@ class Sticky(Toplevel):
 
         text.pack(fill='x', expand=True)
         text.bind('<Return>', ok)
+        text.bind('<Escape>', lambda e: top.destroy())
         text.focus_set()
+        top.deiconify()
 
     def create_latex(self, latex, index):
         l = [int(os.path.splitext(f)[0]) for f in os.listdir(PATH_LATEX)]
@@ -1064,16 +992,12 @@ class Sticky(Toplevel):
         else:
             i = 0
         img = "%i.png" % i
-        self.latex[img] = latex
         self.txt.tag_bind(img, '<Double-Button-1>',
                           lambda e: self.add_latex(img))
         im = os.path.join(PATH_LATEX, img)
         math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
         self.images.append(PhotoImage(file=im, master=self))
-        self.txt.image_create_undoable(index,
-                                       align='bottom',
-                                       image=self.images[-1],
-                                       name=im)
+        self.txt.latex_create_undoable(index, img, self.images[-1], latex)
         self.txt.tag_add_undoable(img, index)
 
     def add_image(self, event=None):
