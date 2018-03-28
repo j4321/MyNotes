@@ -301,7 +301,7 @@ class App(Tk):
                         im = txt.image_cget(index, 'image')
                         name = txt.image_cget(index, 'name').split('#')[0]
                         key = os.path.split(name)[1]
-                        latex = txt.master.latex.get(key, '')
+                        latex = txt.latex.get(key, '')
                         tags = list(txt.tag_names(index))
                         if latex:
                             tags.remove(key)

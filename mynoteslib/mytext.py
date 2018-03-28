@@ -118,10 +118,10 @@ class MyText(Text):
 
     def _paste(self, event):
         """Delete selected text before pasting."""
-        if self.txt.tag_ranges("sel"):
-            self.txt.add_undo_sep()
-            self.txt.delete_undoable("sel.first", "sel.last")
-            self.txt.add_undo_sep()
+        if self.tag_ranges("sel"):
+            self.add_undo_sep()
+            self.delete_undoable("sel.first", "sel.last")
+            self.add_undo_sep()
 
     def mode_change(self, new_mode):
         self._undo_stack[-1].append(('mode', self.mode, new_mode))

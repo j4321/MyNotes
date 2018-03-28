@@ -63,7 +63,6 @@ class Sticky(Toplevel):
         self.links_click_id = {}  # delay click effect to avoid triggering <1> with <Double-1>
         self.files = {}
         self.files_click_id = {}  # delay click effect to avoid triggering <1> with <Double-1>
-#        self.latex = {}
         self.nb_links = 0
         self.nb_files = 0
         self.title('mynotes%s' % key)
@@ -340,9 +339,6 @@ class Sticky(Toplevel):
 
         self.txt.bind("<FocusOut>", self.save_note)
         self.txt.bind('<Button-3>', self.show_menu_txt)
-#        # add binding to the existing class binding so that the selected text
-#        # is erased on pasting
-#        self.txt.bind("<Control-v>", self.paste)
 
         self.corner.bind('<ButtonRelease-1>', self.resize)
 
@@ -360,7 +356,7 @@ class Sticky(Toplevel):
         if LATEX:
             self.txt.bind('<Control-t>', lambda e: self.add_latex())
 
-        # window geometry
+        # --- window geometry
         self.update_idletasks()
         self.geometry(kwargs.get("geometry", '220x235'))
         self.save_geometry = kwargs.get("geometry", '220x235')
@@ -403,13 +399,6 @@ class Sticky(Toplevel):
             self.scroll.configure(style='%s.Vertical.TScrollbar' % INV_COLORS[value])
             self.configure(bg=self.color)
             self.txt.configure(bg=self.color)
-
-#    def paste(self, event):
-#        """Delete selected text before pasting."""
-#        if self.txt.tag_ranges("sel"):
-#            self.txt.add_undo_sep()
-#            self.txt.delete_undoable("sel.first", "sel.last")
-#            self.txt.add_undo_sep()
 
     def delete(self, confirmation=True):
         """Delete this note."""
@@ -937,7 +926,6 @@ class Sticky(Toplevel):
                                       lambda e: self.add_latex(img))
                 else:
                     img = img_name
-#                 def[img] = latex
                 im = os.path.join(PATH_LATEX, img)
                 try:
                     math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
@@ -956,6 +944,7 @@ class Sticky(Toplevel):
                     self.txt.tag_add_undoable(img, index)
                     self.txt.add_undo_sep()
                     top.destroy()
+                    self.txt.focus_force()
 
                 except Exception as e:
                     showerror(_("Error"), str(e))
@@ -995,16 +984,11 @@ class Sticky(Toplevel):
         else:
             i = 0
         img = "%i.png" % i
-#        self.latex[img] = latex
         self.txt.tag_bind(img, '<Double-Button-1>',
                           lambda e: self.add_latex(img))
         im = os.path.join(PATH_LATEX, img)
         math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
         self.images.append(PhotoImage(file=im, master=self))
-#        self.txt.image_create_undoable(index,
-#                                       align='bottom',
-#                                       image=self.images[-1],
-#                                       name=im)
         self.txt.latex_create_undoable(index, img, self.images[-1], latex)
         self.txt.tag_add_undoable(img, index)
 
