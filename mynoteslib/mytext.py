@@ -56,6 +56,7 @@ class MyText(Text):
         size = CONFIG.get("Font", "text_size")
         font_text = "%s %s" % (CONFIG.get("Font", "text_family").replace(" ", "\ "), size)
         mono = "%s %s" % (CONFIG.get("Font", "mono").replace(" ", "\ "), size)
+        self.configure(font_text)
 
         # --- tags
         self.tag_configure("mono", font=mono)
