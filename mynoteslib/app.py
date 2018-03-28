@@ -253,6 +253,7 @@ class App(Tk):
         self.bind_class('Text', '<Control-x>', self.cut_text)
         self.bind_class('Text', '<Control-c>', self.copy_text)
         self.bind_class('Text', '<Control-v>', self.paste_text)
+        self.bind_class('Text', '<Double-1>', self.select_word)
         # highlight checkboxes when inside text selection
         self.bind_class("Text", "<ButtonPress-1>", self.highlight_checkboxes, True)
         self.bind_class("Text", "<ButtonRelease-1>", self.highlight_checkboxes, True)
@@ -273,6 +274,23 @@ class App(Tk):
         showerror(_("Error"), str(args[1]), err, True)
 
     # --- class bindings methods
+    @staticmethod
+    def select_word(event):
+        """Select word on double click."""
+        txt = event.widget
+        index = txt.index('@%i,%i' % (event.x, event.y))
+        txt.tag_remove('sel', '1.0', 'end')
+        try:
+            txt.image_cget(index, 'image')
+        except TclError:
+            # not an image
+            start = txt.index('%s wordstart' % index)
+            end = txt.index('%s wordend' % index)
+            txt.tag_add('sel', start, end)
+        else:
+            # this is an image
+            txt.tag_add('sel', index)
+
     def copy_text(self, event):
         txt = event.widget
         sel = txt.tag_ranges('sel')
