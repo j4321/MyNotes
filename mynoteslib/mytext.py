@@ -46,6 +46,7 @@ class MyText(Text):
 
         self.mode = mode
         self.cb_style = cb_style
+        self.links = {}
         self.latex = {}
 
         # --- undo/redo
@@ -171,6 +172,8 @@ class MyText(Text):
             self.delete(item[1])
         elif item[0] == 'insert':
             self.delete(item[1], item[2])
+        elif item[0] == 'link':
+            self.links[item[1]] = item[2]
         elif item[0] == 'delete':
             self._restore_text_with_prop(item[1], item[3])
         elif item[0] == 'paste':
@@ -202,6 +205,8 @@ class MyText(Text):
             self.checkbox_create(item[1], item[2])
         elif item[0] == 'insert':
             self.insert(item[1], item[3], *item[4])
+        elif item[0] == 'link':
+            self.links[item[1]] = item[3]
         elif item[0] == 'delete':
             self.delete(item[1], item[2])
         elif item[0] == 'paste':
@@ -239,6 +244,11 @@ class MyText(Text):
         self._undo_stack[-1].append(('insert_image', self.index(index), kw))
         self._redo_stack.clear()
         self.image_create(index, **kw)
+
+    def link_create_undoable(self, link_nb, link):
+        self._undo_stack[-1].append(('link', link_nb, self.links.get(link_nb), link))
+        self._redo_stack.clear()
+        self.links[link_nb] = link
 
     def latex_create_undoable(self, index, img_name, image, latex):
         """Insert image generated from latex expression given in the entry."""
@@ -410,7 +420,7 @@ class MyText(Text):
             index = self.index('insert')
             if c[0] is 'image':
                 self.image_create(index, **c[1])
-            if c[0] is 'latex':
+            elif c[0] is 'latex':
                 self.image_create(index, **c[1])
                 self.latex[c[3]] = c[4]
             elif c[0] is 'checkbox':

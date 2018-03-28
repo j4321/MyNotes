@@ -335,7 +335,7 @@ class App(Tk):
                             link = [t for t in tags if 'link#' in t]
                             if link:
                                 lnb = int(link[0].split('#')[1])
-                                self.link_clipboard[link[0]] = txt.master.links[lnb]
+                                self.link_clipboard[link[0]] = txt.links[lnb]
                             self.clibboard_content.append(('char', (txt.get(index), tags)))
                 if l < fin[0]:
                     self.clibboard_content.append(('char', ('\n', [])))
@@ -349,7 +349,6 @@ class App(Tk):
 
     def paste_text(self, event):
         txt = event.widget
-#        txt.event_generate('<<BeforePaste>>')
         txt.add_undo_sep()
         if self.clipboard == txt.clipboard_get():
             links = {}
@@ -368,17 +367,8 @@ class App(Tk):
                         txt.image_create_undoable(index, align='bottom', image=img, name=name)
                 elif c[0] is 'checkbox':
                     state, tags = c[1]
-
-#                    def create_ch():
-#                        ch = Checkbox(txt, takefocus=False, style='sel.TCheckbutton')
-#                        ch.state(state)
-#                        return ch
-#
-#                    txt.window_create_undoable(index, create=create_ch)
                     txt.checkbox_create_undoable(index, state)
                     txt.update_idletasks()
-#                    ch = txt.nametowidget(txt.window_cget(index, 'window'))
-#                    ch.state(state)
                 else:
                     char, tags = c[1]
                     link = [t for t in tags if 'link#' in t]
@@ -395,7 +385,6 @@ class App(Tk):
             self.clipboard = ""
             txt.insert_undoable('insert', txt.clipboard_get())
         txt.add_undo_sep()
-#        txt.event_generate('<<Paste>>')
 
     def highlight_checkboxes(self, event):
         txt = event.widget
