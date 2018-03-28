@@ -833,6 +833,7 @@ class Sticky(Toplevel):
                 self.txt.tag_bind(lid, "<Button-1>", lambda e: self.open_link(lnb))
                 self.txt.tag_bind(lid, "<Double-Button-1>", lambda e: self.edit_link(lnb))
             top.destroy()
+            self.txt.focus_force()
 
         if link_nb is None:
             if self.txt.tag_ranges('sel'):
@@ -1025,6 +1026,7 @@ class Sticky(Toplevel):
                                                image=im,
                                                name=fichier)
                 self.txt.add_undo_sep()
+                self.txt.focus_force()
         elif fichier:
             showerror(_("Error"), _("{file} does not exist.").format(file=fichier))
 
