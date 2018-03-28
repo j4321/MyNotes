@@ -23,7 +23,7 @@ Main class
 
 from tkinter import Tk, TclError
 from tkinter import PhotoImage as tkPhotoImage
-from tkinter.ttk import Style, Checkbutton
+from tkinter.ttk import Style
 from tkinter.font import families
 from PIL import Image
 from PIL.ImageTk import PhotoImage
@@ -232,15 +232,16 @@ class App(Tk):
         self.make_notes_sticky()
 
         # --- class bindings
-        # newline depending on mode
-        self.bind_class("Text", "<Return>", self.insert_newline)
-        # char deletion taking into account list type
-        self.bind_class("Text", "<BackSpace>", self.delete_char)
+#        # newline depending on mode
+#        self.bind_class("Text", "<Return>", self.insert_newline)
+#        # char deletion taking into account list type
+#        self.bind_class("Text", "<BackSpace>", self.delete_char)
         # change Ctrl+A to select all instead of go to the beginning of the line
         self.bind_class('Text', '<Control-a>', self.select_all_text)
         self.bind_class('TEntry', '<Control-a>', self.select_all_entry)
         # bind Ctrl+Y to redo
-        self.bind_class('Text', '<Control-y>', self.redo_event)
+        self.bind_class('Text', '<Control-y>', lambda e: None)
+        self.bind_class('Text', '<Control-z>', lambda e: None)
         # unbind Ctrl+I and Ctrl+B
         self.bind_class('Text', '<Control-i>', lambda e: None)
         self.bind_class('Text', '<Control-b>', lambda e: None)
@@ -248,9 +249,11 @@ class App(Tk):
         self.bind_class('Text', '<Control-o>', lambda e: None)
         self.bind_class('Text', '<Control-h>', lambda e: None)
         self.bind_class('Text', '<Control-t>', lambda e: None)
+        self.bind_class('Text', '<<Paste>>', lambda e: None)
         self.bind_class('Text', '<Control-x>', self.cut_text)
         self.bind_class('Text', '<Control-c>', self.copy_text)
         self.bind_class('Text', '<Control-v>', self.paste_text)
+        self.bind_class('Text', '<Double-1>', self.select_word)
         # highlight checkboxes when inside text selection
         self.bind_class("Text", "<ButtonPress-1>", self.highlight_checkboxes, True)
         self.bind_class("Text", "<ButtonRelease-1>", self.highlight_checkboxes, True)
@@ -271,6 +274,23 @@ class App(Tk):
         showerror(_("Error"), str(args[1]), err, True)
 
     # --- class bindings methods
+    @staticmethod
+    def select_word(event):
+        """Select word on double click."""
+        txt = event.widget
+        index = txt.index('@%i,%i' % (event.x, event.y))
+        txt.tag_remove('sel', '1.0', 'end')
+        try:
+            txt.image_cget(index, 'image')
+        except TclError:
+            # not an image
+            start = txt.index('%s wordstart' % index)
+            end = txt.index('%s wordend' % index)
+            txt.tag_add('sel', start, end)
+        else:
+            # this is an image
+            txt.tag_add('sel', index)
+
     def copy_text(self, event):
         txt = event.widget
         sel = txt.tag_ranges('sel')
@@ -299,7 +319,7 @@ class App(Tk):
                         im = txt.image_cget(index, 'image')
                         name = txt.image_cget(index, 'name').split('#')[0]
                         key = os.path.split(name)[1]
-                        latex = txt.master.latex.get(key, '')
+                        latex = txt.latex.get(key, '')
                         tags = list(txt.tag_names(index))
                         if latex:
                             tags.remove(key)
@@ -315,19 +335,24 @@ class App(Tk):
                             link = [t for t in tags if 'link#' in t]
                             if link:
                                 lnb = int(link[0].split('#')[1])
-                                self.link_clipboard[link[0]] = txt.master.links[lnb]
+                                self.link_clipboard[link[0]] = txt.links[lnb]
                             self.clibboard_content.append(('char', (txt.get(index), tags)))
                 if l < fin[0]:
                     self.clibboard_content.append(('char', ('\n', [])))
 
     def cut_text(self, event):
         self.copy_text(event)
-        event.widget.delete('sel.first', 'sel.last')
+        event.widget.add_undo_sep()
+        event.widget.delete_undoable('sel.first', 'sel.last')
+        event.widget.add_undo_sep()
+        return 'break'
 
     def paste_text(self, event):
         txt = event.widget
+        txt.add_undo_sep()
         if self.clipboard == txt.clipboard_get():
             links = {}
+
             for oldtag, link in self.link_clipboard.items():
                 newtag = txt.master.create_link(link)
                 links[oldtag] = newtag
@@ -339,12 +364,11 @@ class App(Tk):
                     if latex and cst.LATEX:
                         txt.master.create_latex(latex, index)
                     else:
-                        txt.image_create(index, align='bottom', image=img, name=name)
+                        txt.image_create_undoable(index, align='bottom', image=img, name=name)
                 elif c[0] is 'checkbox':
                     state, tags = c[1]
-                    ch = Checkbutton(txt, takefocus=False, style='sel.TCheckbutton')
-                    ch.state(state)
-                    txt.window_create(index, window=ch)
+                    txt.checkbox_create_undoable(index, state)
+                    txt.update_idletasks()
                 else:
                     char, tags = c[1]
                     link = [t for t in tags if 'link#' in t]
@@ -352,14 +376,15 @@ class App(Tk):
                         tags = list(tags)
                         tags.remove(link[0])
                         tags.append(links[link[0]])
-                    txt.insert('insert', char)
+                    txt.insert_undoable('insert', char)
                 for tag in tags:
-                    txt.tag_add(tag, index)
+                    txt.tag_add_undoable(tag, index)
             txt.tag_remove('sel', '1.0', 'end')
             self.highlight_checkboxes(event)
         else:
             self.clipboard = ""
-            txt.insert('insert', txt.clipboard_get())
+            txt.insert_undoable('insert', txt.clipboard_get())
+        txt.add_undo_sep()
 
     def highlight_checkboxes(self, event):
         txt = event.widget
@@ -383,73 +408,12 @@ class App(Tk):
                 except TclError:
                     pass
 
-    def redo_event(self, event):
-        try:
-            event.widget.edit_redo()
-        except TclError:
-            # nothing to redo
-            pass
-
     def select_all_entry(self, event):
         event.widget.selection_range(0, "end")
 
     def select_all_text(self, event):
         event.widget.tag_add("sel", "1.0", "end-1c")
         self.highlight_checkboxes(event)
-
-    def delete_char(self, event):
-        txt = event.widget
-        deb_line = txt.get("insert linestart", "insert")
-        tags = txt.tag_names("insert")
-        if txt.tag_ranges("sel"):
-            if txt.tag_nextrange("enum", "sel.first", "sel.last"):
-                update = True
-            else:
-                update = False
-            txt.delete("sel.first", "sel.last")
-            if update:
-                txt.master.update_enum()
-        elif txt.index("insert") != "1.0":
-            if re.match('^\t[0-9]+\.\t$', deb_line) and 'enum' in tags:
-                txt.delete("insert linestart", "insert")
-                txt.insert("insert", "\t\t")
-                txt.master.update_enum()
-            elif deb_line == "\t•\t" and 'list' in tags:
-                txt.delete("insert linestart", "insert")
-                txt.insert("insert", "\t\t")
-            elif deb_line == "\t\t":
-                txt.delete("insert linestart", "insert")
-            elif "todolist" in tags and txt.index("insert") == txt.index("insert linestart+1c"):
-                try:
-                    ch = txt.window_cget("insert-1c", "window")
-                    txt.delete("insert-1c")
-                    txt.children[ch.split('.')[-1]].destroy()
-                    txt.insert("insert", "\t\t")
-                except TclError:
-                    txt.delete("insert-1c")
-            else:
-                txt.delete("insert-1c")
-
-    def insert_newline(self, event):
-        mode = event.widget.master.mode.get()
-        if mode == "list":
-            event.widget.insert("insert", "\n\t•\t")
-            event.widget.tag_add("list", "1.0", "end")
-        elif mode == "todolist":
-            event.widget.insert("insert", "\n")
-            ch = Checkbutton(event.widget, takefocus=False,
-                             style=event.widget.master.id + ".TCheckbutton")
-            event.widget.window_create("insert", window=ch)
-            event.widget.tag_add("todolist", "1.0", "end")
-        elif mode == "enum":
-            event.widget.configure(autoseparators=False)
-            event.widget.edit_separator()
-            event.widget.insert("insert", "\n\t0.\t")
-            event.widget.master.update_enum()
-            event.widget.edit_separator()
-            event.widget.configure(autoseparators=True)
-        else:
-            event.widget.insert("insert", "\n")
 
     # --- Other methods
     def make_notes_sticky(self):
