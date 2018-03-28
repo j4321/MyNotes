@@ -850,6 +850,7 @@ class Sticky(Toplevel):
             self.txt.tag_add('sel', *sel)
 
         top = Toplevel(self, class_='MyNotes')
+        top.withdraw()
         top.transient(self)
         top.update_idletasks()
         top.geometry("+%i+%i" % top.winfo_pointerxy())
@@ -874,6 +875,7 @@ class Sticky(Toplevel):
         text.bind("<Return>", ok)
         link.bind("<Return>", ok)
         top.bind('<Escape>', lambda e: top.destroy())
+        top.deiconify()
 
     def create_link(self, link):
         self.nb_links += 1
@@ -952,6 +954,7 @@ class Sticky(Toplevel):
                     showerror(_("Error"), str(e))
 
         top = Toplevel(self, class_='MyNotes')
+        top.withdraw()
         top.transient(self)
         top.update_idletasks()
         top.geometry("+%i+%i" % top.winfo_pointerxy())
@@ -979,6 +982,7 @@ class Sticky(Toplevel):
         text.bind('<Return>', ok)
         text.bind('<Escape>', lambda e: top.destroy())
         text.focus_set()
+        top.deiconify()
 
     def create_latex(self, latex, index):
         l = [int(os.path.splitext(f)[0]) for f in os.listdir(PATH_LATEX)]

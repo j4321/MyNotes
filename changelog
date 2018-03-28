@@ -5,6 +5,11 @@ Copyright 2016 Juliette Monsel <j_4321@protonmail.com>
 Changelog
 ---------
 
+- Version 2.4.0
+    * Add scrollbars to notes
+    * Improved undo (Ctrl+Z) /redo (Ctrl+Y): works with text, image, links,
+      checkboxes, latex and formatting
+
 - Version 2.3.1
     * Fix menu for tk GUI toolkit
     * Fix menu for gtk GUI toolkit
@@ -39,7 +44,7 @@ Changelog
     * Add optional and limited latex support to insert one line formulas
       using matplotlib to render them as png images.
       (available only if matplotlib is available on the system)
-    * Improve checkboxe highlighting
+    * Improve checkbox highlighting
     * Add keyboard shortcuts for text formatting:
         Ctrl+B toggle bold
         Ctrl+I toggle italic
