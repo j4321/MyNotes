@@ -37,6 +37,7 @@ from mynoteslib.constantes import CONFIG, PATH_DATA, PATH_DATA_BACKUP,\
     LOCAL_PATH, backup, asksaveasfilename, askopenfilename, COLORS, IM_SCROLL_ALPHA
 import mynoteslib.constantes as cst
 from mynoteslib.config import Config
+from mynoteslib.sync import download_from_server, check_login_info, warn_exist_remote
 from mynoteslib.export import Export
 from mynoteslib.sticky import Sticky
 from mynoteslib.about import About
@@ -179,6 +180,28 @@ class App(Tk):
         self.icon.menu.add_command(label=_('About'), command=lambda: About(self))
         self.icon.menu.add_command(label=_('Quit'), command=self.quit)
         self.icon.loop(self)
+
+        # --- Sync
+        self.password = ""
+
+        if CONFIG.getboolean("Sync", "on"):
+            self.get_server_pwd()
+            if self.password:
+                while (not check_login_info(self.password)) and self.password:
+                    self.get_server_login()
+                if self.password:
+                    self.configure(cursor="watch")
+                    res = download_from_server(self.password)
+                    if not res:
+                        showinfo(_("Information"),
+                                 _("There was an error during the synchronization so synchronization has been disabled."))
+                        CONFIG.set("Sync", "on", "False")
+            else:
+                showinfo(_("Information"),
+                         _("No password has been given so synchronization has been disabled."))
+                CONFIG.set("Sync", "on", "False")
+        self.time = time.time()
+
 
         # --- Restore notes
         self.note_data = {}
@@ -650,6 +673,7 @@ class App(Tk):
         with open(PATH_DATA, "wb") as fich:
             dp = pickle.Pickler(fich)
             dp.dump(self.note_data)
+        save_modif_info()
 
     def new(self):
         """Create a new note."""
@@ -779,3 +803,84 @@ class App(Tk):
 
     def quit(self):
         self.destroy()
+
+    def get_server_pwd(self):
+        def ok(event=None):
+            self.password = pwd.get()
+            top.destroy()
+            self.update_idletasks()
+
+        top = Toplevel(self)
+        top.title(_("Sync"))
+        top.grab_set()
+        top.resizable(False, False)
+        pwd = Entry(top, show="*", justify="center")
+
+        Label(top, text="Server password").pack(padx=4, pady=4)
+        pwd.pack(padx=4, pady=4)
+        Button(top, text=_("Connect"), command=ok).pack(padx=4, pady=4)
+        pwd.bind("<Return>", ok)
+        pwd.focus_set()
+        self.wait_window(top)
+
+    def get_server_login(self):
+        def ok(event=None):
+            if "selected" in ch.state():
+                username = user.get()
+                CONFIG.set("Sync", "username", username)
+                self.password = pwd.get()
+            else:
+                CONFIG.set("Sync", "on", "False")
+                self.password = ""
+            top.destroy()
+
+        def toggle():
+            if "selected" in ch.state():
+                state = "!disabled"
+            else:
+                state = "disabled"
+            user.state((state,))
+            pwd.state((state,))
+
+        top = Toplevel(self)
+        top.title(_("Sync"))
+        top.grab_set()
+        top.resizable(False, False)
+
+        user = Entry(top)
+        user.insert(0, CONFIG.get("Sync", "username"))
+        pwd = Entry(top, show="*")
+
+        ch = Checkbutton(top, text=_("Synchronize notes with server"), command=toggle)
+        ch.state(("selected",))
+        ch.grid(row=0, columnspan=2, padx=4, pady=4, sticky="w")
+        Label(top, text=_("Username")).grid(row=1, column=0, padx=4, pady=4,
+                                            sticky='e')
+        Label(top, text=_("Password")).grid(row=2, column=0, padx=4, pady=4,
+                                            sticky='e')
+        user.grid(row=1, column=1, padx=4, pady=4)
+        pwd.grid(row=2, column=1, padx=4, pady=4)
+        Button(top, text="Ok", command=ok).grid(row=3, columnspan=2)
+        pwd.bind("<Return>", ok)
+        pwd.focus_set()
+        self.wait_window(top)
+
+    def set_password(self, pwd, sync_activated):
+        self.password = pwd
+        if CONFIG.getboolean("Sync", "on"):
+            if not self.password:
+                CONFIG.set("Sync", "on", "False")
+                showinfo(_("Information"),
+                         _("No password has been given so synchronization has been disabled."))
+            while (not check_login_info(self.password)) and self.password:
+                self.get_server_login()
+            if self.password and sync_activated:
+                res = warn_exist_remote(self.password)
+                if res == "download":
+                    self.restore(PATH_DATA, False)
+
+    def get_password(self):
+        return self.password
+
+    def get_time(self):
+        return self.time

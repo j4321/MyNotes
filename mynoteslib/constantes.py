@@ -29,6 +29,9 @@ Constants and functions
 """
 
 
+
+import time
+import platform
 import os
 import gettext
 from configparser import ConfigParser
@@ -54,6 +57,7 @@ if os.access(PATH, os.W_OK) and os.path.exists(os.path.join(PATH, "images")):
     PATH_IMAGES = os.path.join(PATH, "images")
     PATH_DATA_BACKUP = os.path.join(LOCAL_PATH, "backup", "notes.backup%i")
     PATH_DATA = os.path.join(LOCAL_PATH, "backup", "notes")
+    PATH_DATA_INFO = os.path.join(LOCAL_PATH, "backup", "notes.info")
     if not os.path.exists(os.path.join(LOCAL_PATH, "backup")):
         os.mkdir(os.path.join(LOCAL_PATH, "backup"))
 else:
@@ -65,6 +69,7 @@ else:
     PATH_IMAGES = "/usr/share/mynotes/images"
     PATH_DATA_BACKUP = os.path.join(LOCAL_PATH, "notes.backup%i")
     PATH_DATA = os.path.join(LOCAL_PATH, "notes")
+    PATH_DATA_INFO = os.path.join(LOCAL_PATH, "notes.info")
 
 PATH_CONFIG = os.path.join(LOCAL_PATH, "mynotes.ini")
 PATH_LATEX = os.path.join(LOCAL_PATH, "latex")
@@ -106,6 +111,15 @@ if os.path.exists(PATH_CONFIG):
         CONFIG.set("General", "trayicon", "")
     if not CONFIG.has_option("Font", "mono"):
         CONFIG.set("Font", "mono", "")
+    if not CONFIG.has_section("Sync"):
+        CONFIG.add_section("Sync")
+        CONFIG.set("Sync", "on", "False")
+        CONFIG.set("Sync", "server_type", "WebDav")
+        CONFIG.set("Sync", "server", "")
+        CONFIG.set("Sync", "username", "")
+        CONFIG.set("Sync", "protocol", "https")
+        CONFIG.set("Sync", "port", "443")
+        CONFIG.set("Sync", "file", "")
 else:
     LANGUE = ""
     CONFIG.add_section("General")
@@ -124,6 +138,14 @@ else:
     CONFIG.set("Font", "title_style", "bold")
     CONFIG.set("Font", "mono", "")
     CONFIG.add_section("Categories")
+    CONFIG.add_section("Sync")
+    CONFIG.set("Sync", "on", "False")
+    CONFIG.set("Sync", "server", "")
+    CONFIG.set("Sync", "server_type", "WebDav")
+    CONFIG.set("Sync", "username", "")
+    CONFIG.set("Sync", "protocol", "https")
+    CONFIG.set("Sync", "port", "443")
+    CONFIG.set("Sync", "file", "")
 
 
 # --- system tray icon
@@ -453,6 +475,16 @@ def text_ranges(widget, tag, index1="1.0", index2="end"):
 
     return tag_ranges
 
+def save_modif_info(tps=None):
+    """ save info about last modifications (machine and time) """
+    if tps is None:
+        tps = time.time()
+    info = platform.uname()
+    info = "%s %s %s %s %s\n" % (info.system, info.node, info.release,
+                               info.version, info.machine)
+    lines = [info, str(tps)]
+    with open(PATH_DATA_INFO, 'w') as fich:
+        fich.writelines(lines)
 
 # --- export
 BALISES_OPEN = {"bold": "<b>",
