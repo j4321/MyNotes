@@ -59,7 +59,6 @@ class Sticky(Toplevel):
         self.id = key
         self.is_locked = not (kwargs.get("locked", False))
         self.images = []
-        self.links = {}
         self.links_click_id = {}  # delay click effect to avoid triggering <1> with <Double-1>
         self.files = {}
         self.files_click_id = {}  # delay click effect to avoid triggering <1> with <Double-1>
@@ -283,7 +282,7 @@ class Sticky(Toplevel):
 
         for link in kwargs.get("links", {}).values():
             self.nb_links += 1
-            self.links[self.nb_links] = link
+            self.txt.links[self.nb_links] = link
             self.links_click_id[self.nb_links] = ""
             lid = "link#%i" % self.nb_links
             self.txt.tag_bind(lid,
@@ -465,7 +464,7 @@ class Sticky(Toplevel):
         data["rolled"] = not self.txt.winfo_ismapped()
         data["position"] = self.position.get()
         data["links"] = {}
-        for i, link in self.links.items():
+        for i, link in self.txt.links.items():
             if self.txt.tag_ranges("link#%i" % i):
                 data["links"][i] = link
         data["latex"] = {}
@@ -829,8 +828,8 @@ class Sticky(Toplevel):
 
                 tags = self.txt.tag_names(index) + ("link", lid)
                 self.txt.insert_undoable(index, txt, tags)
+                self.txt.link_create_undoable(lnb, lien)
                 self.txt.add_undo_sep()
-                self.links[lnb] = lien
                 self.txt.tag_bind(lid, "<Button-1>", lambda e: self.open_link(lnb))
                 self.txt.tag_bind(lid, "<Double-Button-1>", lambda e: self.edit_link(lnb))
             top.destroy()
@@ -846,8 +845,9 @@ class Sticky(Toplevel):
         else:
             lid = "link#%i" % link_nb
             txt = self.txt.get('%s.first' % lid, '%s.last' % lid)
-            link_txt = self.links[link_nb]
+            link_txt = self.txt.links[link_nb]
             sel = self.txt.index('%s.first' % lid), self.txt.index('%s.last' % lid)
+            self.txt.tag_add('sel', *sel)
 
         top = Toplevel(self, class_='MyNotes')
         top.transient(self)
@@ -873,19 +873,21 @@ class Sticky(Toplevel):
         link.focus_set()
         text.bind("<Return>", ok)
         link.bind("<Return>", ok)
+        top.bind('<Escape>', lambda e: top.destroy())
 
     def create_link(self, link):
         self.nb_links += 1
         lnb = self.nb_links
         lid = "link#%i" % lnb
-        self.links[lnb] = link
+#        self.txt.links[lnb] = link
+        self.txt.link_create_undoable(lnb, link)
         self.txt.tag_bind(lid, "<Button-1>", lambda e: self.open_link(lnb))
         self.txt.tag_bind(lid, "<Double-Button-1>", lambda e: self.edit_link(lnb))
         return lid
 
     def open_link(self, link_nb):
         """Open link after small delay to avoid opening link on double click."""
-        lien = self.links[link_nb]
+        lien = self.txt.links[link_nb]
         self.links_click_id[link_nb] = self.after(500, lambda: open_url(lien))
 
     def edit_link(self, link_nb):
@@ -959,6 +961,7 @@ class Sticky(Toplevel):
         text = Entry(top, justify='center')
         if img_name is not None:
             text.insert(0, self.txt.latex[img_name])
+
             sel = ()
         else:
             if self.txt.tag_ranges('sel'):
@@ -974,6 +977,7 @@ class Sticky(Toplevel):
 
         text.pack(fill='x', expand=True)
         text.bind('<Return>', ok)
+        text.bind('<Escape>', lambda e: top.destroy())
         text.focus_set()
 
     def create_latex(self, latex, index):
