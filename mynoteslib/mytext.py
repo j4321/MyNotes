@@ -24,7 +24,8 @@ Text class with improved undo/redo
 from tkinter import Text, TclError
 from tkinter.font import Font
 from tkinter.ttk import Checkbutton
-from mynoteslib.constantes import sorting, CONFIG, TEXT_COLORS
+from mynoteslib.constantes import sorting, CONFIG, TEXT_COLORS, PATH_LATEX
+import os
 import re
 
 
@@ -45,6 +46,7 @@ class MyText(Text):
 
         self.mode = mode
         self.cb_style = cb_style
+        self.latex = {}
 
         # --- undo/redo
         self._undo_stack = [[]]
@@ -192,6 +194,10 @@ class MyText(Text):
             self.insert(item[1], item[2])
         elif item[0] == 'insert_image':
             self.image_create(item[1], item[2])
+        elif item[0] == 'insert_latex':
+            index, kw, img_name, latex = item[1:]
+            self.latex[img_name] = latex
+            self.image_create(index, **kw)
         elif item[0] == 'insert_checkbox':
             self.checkbox_create(item[1], item[2])
         elif item[0] == 'insert':
@@ -229,10 +235,19 @@ class MyText(Text):
         ch.state(state)
         self.window_create(index, window=ch)
 
-    def image_create_undoable(self, index, cnf={}, **kw):
+    def image_create_undoable(self, index, **kw):
         self._undo_stack[-1].append(('insert_image', self.index(index), kw))
         self._redo_stack.clear()
-        self.image_create(index, cnf, **kw)
+        self.image_create(index, **kw)
+
+    def latex_create_undoable(self, index, img_name, image, latex):
+        """Insert image generated from latex expression given in the entry."""
+        im = os.path.join(PATH_LATEX, img_name)
+        kw = dict(align='bottom', image=image, name=im)
+        self._undo_stack[-1].append(('insert_latex', self.index(index), kw, img_name, latex))
+        self._redo_stack.clear()
+        self.latex[img_name] = latex
+        self.image_create(index, **kw)
 
     def tag_remove_undoable(self, tagName, index1, index2=None):
         self._undo_stack[-1].append(('tag_remove', tagName, self.index(index1),
@@ -367,7 +382,14 @@ class MyText(Text):
                     keys = ['name', 'image', 'align', 'padx', 'pady']
                     kw = {k: self.image_cget(index, k) for k in keys}
                     tags = self.tag_names(index)
-                    content.append(('image', kw, tags))
+                    i = 0
+                    while i < len(tags) and not re.match(r'[0-9]+\.png', tags[i]):
+                        i += 1
+                    if i < len(tags):
+                        latex = self.latex[tags[i]]
+                        content.append(('latex', kw, tags, tags[i], latex))
+                    else:
+                        content.append(('image', kw, tags))
                 except TclError:
                     try:
                         win = self.nametowidget(self.window_cget(index, 'window'))
@@ -388,6 +410,9 @@ class MyText(Text):
             index = self.index('insert')
             if c[0] is 'image':
                 self.image_create(index, **c[1])
+            if c[0] is 'latex':
+                self.image_create(index, **c[1])
+                self.latex[c[3]] = c[4]
             elif c[0] is 'checkbox':
                 self.checkbox_create(index, c[1])
                 self.update_idletasks()

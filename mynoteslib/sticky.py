@@ -63,7 +63,7 @@ class Sticky(Toplevel):
         self.links_click_id = {}  # delay click effect to avoid triggering <1> with <Double-1>
         self.files = {}
         self.files_click_id = {}  # delay click effect to avoid triggering <1> with <Double-1>
-        self.latex = {}
+#        self.latex = {}
         self.nb_links = 0
         self.nb_files = 0
         self.title('mynotes%s' % key)
@@ -295,7 +295,7 @@ class Sticky(Toplevel):
                               lambda e, lnb=self.nb_links: self.edit_link(lnb))
 
         for img, latex in kwargs.get("latex", {}).items():
-            self.latex[img] = latex
+            self.txt.latex[img] = latex
             if LATEX:
                 self.txt.tag_bind(img, '<Double-Button-1>',
                                   lambda e, im=img: self.add_latex(im))
@@ -480,7 +480,7 @@ class Sticky(Toplevel):
             if self.txt.tag_ranges("link#%i" % i):
                 data["links"][i] = link
         data["latex"] = {}
-        for img, latex in self.latex.items():
+        for img, latex in self.txt.latex.items():
             if self.txt.tag_ranges(img):
                 data["latex"][img] = latex
         for image in self.txt.image_names():
@@ -937,7 +937,7 @@ class Sticky(Toplevel):
                                       lambda e: self.add_latex(img))
                 else:
                     img = img_name
-                self.latex[img] = latex
+#                 def[img] = latex
                 im = os.path.join(PATH_LATEX, img)
                 try:
                     math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
@@ -952,10 +952,7 @@ class Sticky(Toplevel):
                             self.txt.delete_undoable(index)
                         else:
                             index = self.txt.index("insert")
-                    self.txt.image_create_undoable(index,
-                                                   align='bottom',
-                                                   image=self.images[-1],
-                                                   name=im)
+                    self.txt.latex_create_undoable(index, img, self.images[-1], latex)
                     self.txt.tag_add_undoable(img, index)
                     self.txt.add_undo_sep()
                     top.destroy()
@@ -972,7 +969,7 @@ class Sticky(Toplevel):
         top.title("LaTeX")
         text = Entry(top, justify='center')
         if img_name is not None:
-            text.insert(0, self.latex[img_name])
+            text.insert(0, self.txt.latex[img_name])
             sel = ()
         else:
             if self.txt.tag_ranges('sel'):
@@ -998,16 +995,17 @@ class Sticky(Toplevel):
         else:
             i = 0
         img = "%i.png" % i
-        self.latex[img] = latex
+#        self.latex[img] = latex
         self.txt.tag_bind(img, '<Double-Button-1>',
                           lambda e: self.add_latex(img))
         im = os.path.join(PATH_LATEX, img)
         math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
         self.images.append(PhotoImage(file=im, master=self))
-        self.txt.image_create_undoable(index,
-                                       align='bottom',
-                                       image=self.images[-1],
-                                       name=im)
+#        self.txt.image_create_undoable(index,
+#                                       align='bottom',
+#                                       image=self.images[-1],
+#                                       name=im)
+        self.txt.latex_create_undoable(index, img, self.images[-1], latex)
         self.txt.tag_add_undoable(img, index)
 
     def add_image(self, event=None):
