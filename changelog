@@ -7,9 +7,9 @@ Changelog
 
 - Version 2.4.0
     * Add scrollbars to notes
-    * Improved undo (Ctrl+Z) /redo (Ctrl+Y): works with text, image, links,
+    * Improved undo (Ctrl+Z)/redo (Ctrl+Y): works with text, image, links,
       checkboxes, latex and formatting
-    * Refocus on note after LaTeX / link insertion
+    * Refocus on note after LaTeX/link/image insertion
 
 - Version 2.3.1
     * Fix menu for tk GUI toolkit
