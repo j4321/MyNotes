@@ -127,11 +127,4 @@ class UpdateChecker(Toplevel):
                 latest_version = self.version_parser.feed(page.read().decode())
             self.update = latest_version > __version__
         except error.URLError as e:
-            if e.reason.errno == -2:
-                # no Internet connection
-                self.update = False
-            elif e.reason.errno == 104:
-                # connection timed out
-                self.update_available()
-            else:
-                raise e
+            self.update = False
