@@ -125,7 +125,7 @@ class Manager(Toplevel):
         for cat in categories:
             menu_cat.add_radiobutton(label=cat.capitalize(), value=cat,
                                      variable=self.category,
-                                     command=self.move_selection)
+                                     command=self.change_cat_selection)
             self.notes[cat] = {}
             frame = Frame(self.notebook)
             self.texts[cat] = Text(frame, width=1, height=1, bg=self.cget('bg'),
@@ -232,7 +232,7 @@ class Manager(Toplevel):
                     self.master.delete_note(key)
                     self.notes[cat][key].destroy()
 
-    def move_selection(self):
+    def change_cat_selection(self):
         """Change selected notes category."""
         cat = self.notebook.tab('current', 'text').lower()
         new_cat = self.category.get()
