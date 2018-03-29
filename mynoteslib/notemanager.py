@@ -231,6 +231,7 @@ class Manager(Toplevel):
                 for key in sel:
                     self.master.delete_note(key)
                     self.notes[cat][key].destroy()
+                    del self.notes[cat][key]
 
     def change_cat_selection(self):
         """Change selected notes category."""
