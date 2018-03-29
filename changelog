@@ -10,7 +10,7 @@ Changelog
     * Improved undo (Ctrl+Z)/redo (Ctrl+Y): works with text, image, links,
       checkboxes, latex and formatting
     * Refocus on note after LaTeX/link/image insertion
-    * Improve note manager: group deletion, change category
+    * Improve note manager: group deletion, change category, visibility
 
 - Version 2.3.1
     * Fix menu for tk GUI toolkit
