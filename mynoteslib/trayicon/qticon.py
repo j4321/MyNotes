@@ -127,3 +127,4 @@ class TrayIcon(QApplication):
                 command()
 
         self.tray_icon.activated.connect(action)
+

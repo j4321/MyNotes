@@ -131,3 +131,4 @@ class TrayIcon:
     def bind_left_click(self, command):
         if not APPIND_SUPPORT:
             self.tray_icon.connect('activate', lambda *args: command())
+
