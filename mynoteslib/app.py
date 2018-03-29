@@ -76,7 +76,10 @@ class App(Tk):
         style.configure('Vertical.TScrollbar', background=bg)
         style.configure('Horizontal.TScrollbar', background=bg)
         style.configure('TCheckbutton', background=bg)
-        style.configure('manager.TCheckbutton', font='TkDefaultFont 10 bold')
+        style.layout('manager.TCheckbutton', [('Checkbutton.indicator', {'side': 'left', 'sticky': ''})])
+        active_bg = style.lookup('TCheckbutton', 'background', ('active',))
+        style.map('manager.TLabel', background=[('active', active_bg)])
+        style.map('manager.TFrame', background=[('active', active_bg)])
         style.configure('TSeparator', background=bg)
 
         vmax = self.winfo_rgb('white')[0]
@@ -273,6 +276,7 @@ class App(Tk):
 
     def report_callback_exception(self, *args):
         err = "".join(traceback.format_exception(*args))
+        print(err)
         showerror(_("Error"), str(args[1]), err, True)
 
     # --- class bindings methods
