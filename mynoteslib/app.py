@@ -623,7 +623,9 @@ class App(Tk):
         if nb in self.notes:
             self.notes[nb].change_category(cat)
         else:
-            self.note_data[nb]['category'] = cat
+            self.show_note(nb)
+            self.notes[nb].change_category(cat)
+            self.notes[nb].hide()
 
     def update_notes(self, col_changes={}, name_changes={}):
         """Update the notes after changes in the categories."""
