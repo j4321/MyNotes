@@ -34,7 +34,8 @@ from shutil import copy
 import pickle
 from mynoteslib.trayicon import TrayIcon, SubMenu
 from mynoteslib.constantes import CONFIG, PATH_DATA, PATH_DATA_BACKUP,\
-    LOCAL_PATH, backup, asksaveasfilename, askopenfilename, COLORS, IM_SCROLL_ALPHA
+    LOCAL_PATH, backup, asksaveasfilename, askopenfilename, COLORS, \
+    IM_SCROLL_ALPHA, IM_VISIBLE, IM_HIDDEN
 import mynoteslib.constantes as cst
 from mynoteslib.config import Config
 from mynoteslib.export import Export
@@ -58,10 +59,22 @@ class App(Tk):
         self.notes = {}
         self.im_icon = PhotoImage(master=self, file=cst.IM_ICON_48)
         self.iconphoto(True, self.im_icon)
+        self.im_visible = PhotoImage(file=IM_VISIBLE, master=self)
+        self.im_hidden = PhotoImage(file=IM_HIDDEN, master=self)
 
         style = Style(self)
         style.theme_use("clam")
         style.map('TEntry', selectbackground=[('!focus', '#c3c3c3')])
+        style.element_create('visibility', 'image', self.im_hidden,
+                             ('selected', self.im_visible))
+        style.layout('Toggle',
+                     [('Toggle.border',
+                       {'children': [('Toggle.padding',
+                                      {'children': [('Toggle.visibility',
+                                                     {'sticky': 'nswe'})],
+                                       'sticky': 'nswe'})],
+                        'sticky': 'nswe'})])
+
         style.map('TCheckbutton',
                   indicatorbackground=[('pressed', '#dcdad5'),
                                        ('!disabled', 'alternate', '#ffffff'),
@@ -70,6 +83,7 @@ class App(Tk):
         bg = self.cget('background')
         style.configure('TFrame', background=bg)
         style.configure('TLabel', background=bg)
+        style.configure('Toggle', background=bg)
         style.configure('TButton', background=bg)
         style.configure('TMenubutton', background=bg)
         style.configure('TNotebook', background=bg)
@@ -80,6 +94,7 @@ class App(Tk):
         active_bg = style.lookup('TCheckbutton', 'background', ('active',))
         style.map('manager.TLabel', background=[('active', active_bg)])
         style.map('manager.TFrame', background=[('active', active_bg)])
+        style.map('Toggle', background=[('active', active_bg), ('hover', active_bg)])
         style.configure('TSeparator', background=bg)
 
         vmax = self.winfo_rgb('white')[0]
@@ -529,6 +544,22 @@ class App(Tk):
         for key in keys:
             self.show_note(key)
 
+    def show_note(self, nb):
+        """Display the note corresponding to the 'nb' key in self.note_data."""
+        self.note_data[nb]["visible"] = True
+        cat = self.note_data[nb]["category"]
+        menu = self.menu_notes.get_item_menu(cat.capitalize())
+        index = menu.index(self.hidden_notes[cat][nb])
+        del(self.hidden_notes[cat][nb])
+        self.notes[nb] = Sticky(self, nb, **self.note_data[nb])
+        menu.delete(index)
+        if not menu.index("end"):
+            # the menu is empty
+            self.menu_notes.delete(cat.capitalize())
+            if not self.menu_notes.index('end'):
+                self.icon.menu.disable_item(4)
+        self.make_notes_sticky()
+
     def hide_all(self):
         """Hide all notes."""
         keys = list(self.notes.keys())
@@ -593,22 +624,6 @@ class App(Tk):
             self.notes[nb].change_category(cat)
         else:
             self.note_data[nb]['category'] = cat
-
-    def show_note(self, nb):
-        """Display the note corresponding to the 'nb' key in self.note_data."""
-        self.note_data[nb]["visible"] = True
-        cat = self.note_data[nb]["category"]
-        menu = self.menu_notes.get_item_menu(cat.capitalize())
-        index = menu.index(self.hidden_notes[cat][nb])
-        del(self.hidden_notes[cat][nb])
-        self.notes[nb] = Sticky(self, nb, **self.note_data[nb])
-        menu.delete(index)
-        if not menu.index("end"):
-            # the menu is empty
-            self.menu_notes.delete(cat.capitalize())
-            if not self.menu_notes.index('end'):
-                self.icon.menu.disable_item(4)
-        self.make_notes_sticky()
 
     def update_notes(self, col_changes={}, name_changes={}):
         """Update the notes after changes in the categories."""
