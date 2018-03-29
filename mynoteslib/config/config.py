@@ -28,8 +28,9 @@ from mynoteslib.autocomplete import AutoCompleteCombobox
 from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator
 from tkinter.ttk import Notebook, Combobox, Frame, Menubutton, Checkbutton
 from mynoteslib.constantes import CONFIG, save_config, COLORS, SYMBOLS, LATEX,\
-    LANGUAGES, REV_LANGUAGES, TOOLKITS
-from mynoteslib.categories import CategoryManager
+    LANGUAGES, REV_LANGUAGES, TOOLKITS, AUTO_REPLACE
+from mynoteslib.config.categories import CategoryManager
+from mynoteslib.config.auto_replace import AutoReplaceConfig
 from tkinter import font
 
 
@@ -327,6 +328,11 @@ class Config(Toplevel):
         Button(symbols_settings, text=_('Reset'),
                command=self.reset_symbols).pack(padx=4, pady=4)
 
+        # --- * AutoReplace
+        self.autoreplace_settings = AutoReplaceConfig(self.notebook, master)
+        self.notebook.add(self.autoreplace_settings, text=_("Auto replacement"),
+                          sticky="ewsn", padding=4)
+
         # --- Ok/Cancel buttons
         Button(okcancel_frame, text="Ok",
                command=self.ok).grid(row=1, column=0, padx=4, pady=10, sticky="e")
@@ -425,6 +431,10 @@ class Config(Toplevel):
         # --- symbols
         symbols = [l.strip() for l in self.symbols.get("1.0", "end").splitlines()]
 
+        # --- auto_replace
+        self.autoreplace_settings.ok()
+        auto_replace = "\t".join(["%s %s" % (key, val) for key, val in AUTO_REPLACE.items()])
+
         # --- update CONFIG
         CONFIG.set("General", "default_category",
                    self.category_settings.default_category.get().lower())
@@ -434,6 +444,7 @@ class Config(Toplevel):
         CONFIG.set("General", "buttons_position", self.titlebar_disposition.get())
         CONFIG.set("General", "symbols", "".join(symbols))
         CONFIG.set("General", "trayicon", self.gui.get().lower())
+        CONFIG.set("General", "autoreplace", auto_replace)
         CONFIG.set("Font", "text_size", size)
         CONFIG.set("Font", "text_family", family)
         CONFIG.set("Font", "title_family", familytitle)

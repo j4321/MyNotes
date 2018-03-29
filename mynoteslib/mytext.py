@@ -24,7 +24,7 @@ Text class with improved undo/redo
 from tkinter import Text, TclError
 from tkinter.font import Font
 from tkinter.ttk import Checkbutton
-from mynoteslib.constantes import sorting, CONFIG, TEXT_COLORS, PATH_LATEX
+from mynoteslib.constantes import sorting, CONFIG, TEXT_COLORS, PATH_LATEX, AUTO_REPLACE
 import os
 import re
 
@@ -39,9 +39,6 @@ class Checkbox(Checkbutton):
 
 
 class MyText(Text):
-
-    auto_replace = {'->': '→', '<-': '←', '<->': '↔', '=>': '⇒', '<=': '⇐',
-                    '<=>': '⇔', '=<': '≤', '>=': '≥', ":)": '☺'}
 
     def __init__(self, master=None, mode='note', cb_style="TCheckbutton", **kw):
         Text.__init__(self, master, wrap='word', undo=False,
@@ -286,7 +283,7 @@ class MyText(Text):
 
     def _auto_word_replacement(self):
         if self._current_word == self.get('insert-%ic' % len(self._current_word), 'insert'):
-            replacement = self.auto_replace.get(self._current_word)
+            replacement = AUTO_REPLACE.get(self._current_word)
             if replacement is not None:
                 self.add_undo_sep()
                 self.delete_undoable('insert-%ic' % len(self._current_word), 'insert')
