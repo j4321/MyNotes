@@ -322,90 +322,104 @@ class App(Tk):
             txt.clipboard_append(txt_copy)
             self.clibboard_content.clear()
             self.link_clipboard.clear()
-            deb = cst.sorting(str(sel[0]))
-            fin = cst.sorting(str(sel[1]))
-            for l in range(deb[0], fin[0] + 1):
-                if l == deb[0]:
-                    dc = deb[1]
-                else:
-                    dc = 0
-                if l == fin[0]:
-                    nc = fin[1]
-                else:
-                    nc = cst.sorting(str(txt.index('%i.end' % l)))[1]
 
-                for c in range(dc, nc):
-                    index = '%i.%i' % (l, c)
-                    try:
-                        im = txt.image_cget(index, 'image')
-                        name = txt.image_cget(index, 'name').split('#')[0]
-                        key = os.path.split(name)[1]
-                        latex = txt.latex.get(key, '')
-                        tags = list(txt.tag_names(index))
-                        if latex:
-                            tags.remove(key)
-                        self.clibboard_content.append(('image', (im, name, tags, latex)))
-                    except TclError:
+            if isinstance(txt, MyText):
+                deb = cst.sorting(str(sel[0]))
+                fin = cst.sorting(str(sel[1]))
+                for l in range(deb[0], fin[0] + 1):
+                    if l == deb[0]:
+                        dc = deb[1]
+                    else:
+                        dc = 0
+                    if l == fin[0]:
+                        nc = fin[1]
+                    else:
+                        nc = cst.sorting(str(txt.index('%i.end' % l)))[1]
+
+                    for c in range(dc, nc):
+                        index = '%i.%i' % (l, c)
                         try:
-                            name = txt.window_cget(index, 'window')
-                            ch = txt.children[name.split(".")[-1]]
-                            tags = txt.tag_names(index)
-                            self.clibboard_content.append(('checkbox', (ch.state(), tags)))
+                            im = txt.image_cget(index, 'image')
+                            name = txt.image_cget(index, 'name').split('#')[0]
+                            key = os.path.split(name)[1]
+                            latex = txt.latex.get(key, '')
+                            tags = list(txt.tag_names(index))
+                            if latex:
+                                tags.remove(key)
+                            self.clibboard_content.append(('image', (im, name, tags, latex)))
                         except TclError:
-                            tags = txt.tag_names(index)
-                            link = [t for t in tags if 'link#' in t]
-                            if link:
-                                lnb = int(link[0].split('#')[1])
-                                self.link_clipboard[link[0]] = txt.links[lnb]
-                            self.clibboard_content.append(('char', (txt.get(index), tags)))
-                if l < fin[0]:
-                    self.clibboard_content.append(('char', ('\n', [])))
+                            try:
+                                name = txt.window_cget(index, 'window')
+                                ch = txt.children[name.split(".")[-1]]
+                                tags = txt.tag_names(index)
+                                self.clibboard_content.append(('checkbox', (ch.state(), tags)))
+                            except TclError:
+                                tags = txt.tag_names(index)
+                                link = [t for t in tags if 'link#' in t]
+                                if link:
+                                    lnb = int(link[0].split('#')[1])
+                                    self.link_clipboard[link[0]] = txt.links[lnb]
+                                self.clibboard_content.append(('char', (txt.get(index), tags)))
+                    if l < fin[0]:
+                        self.clibboard_content.append(('char', ('\n', [])))
 
     def cut_text(self, event):
         self.copy_text(event)
-        event.widget.add_undo_sep()
-        event.widget.delete_undoable('sel.first', 'sel.last')
-        event.widget.add_undo_sep()
+        txt = event.widget
+        if isinstance(txt, MyText):
+            txt.add_undo_sep()
+            txt.delete_undoable('sel.first', 'sel.last')
+            txt.add_undo_sep()
+        else:
+            txt.delete('sel.first', 'sel.last')
         return 'break'
 
     def paste_text(self, event):
         txt = event.widget
-        txt.add_undo_sep()
-        if self.clipboard == txt.clipboard_get():
-            links = {}
+        if isinstance(txt, MyText):
+            if txt.tag_ranges("sel"):
+                txt.add_undo_sep()
+                txt.delete_undoable("sel.first", "sel.last")
+            txt.add_undo_sep()
+            if self.clipboard == txt.clipboard_get():
+                links = {}
 
-            for oldtag, link in self.link_clipboard.items():
-                newtag = txt.master.create_link(link)
-                links[oldtag] = newtag
+                for oldtag, link in self.link_clipboard.items():
+                    newtag = txt.master.create_link(link)
+                    links[oldtag] = newtag
 
-            for c in self.clibboard_content:
-                index = txt.index('insert')
-                if c[0] is 'image':
-                    img, name, tags, latex = c[1]
-                    if latex and cst.LATEX:
-                        txt.master.create_latex(latex, index)
+                for c in self.clibboard_content:
+                    index = txt.index('insert')
+                    if c[0] is 'image':
+                        img, name, tags, latex = c[1]
+                        if latex and cst.LATEX:
+                            txt.master.create_latex(latex, index)
+                        else:
+                            txt.image_create_undoable(index, align='bottom', image=img, name=name)
+                    elif c[0] is 'checkbox':
+                        state, tags = c[1]
+                        txt.checkbox_create_undoable(index, state)
+                        txt.update_idletasks()
                     else:
-                        txt.image_create_undoable(index, align='bottom', image=img, name=name)
-                elif c[0] is 'checkbox':
-                    state, tags = c[1]
-                    txt.checkbox_create_undoable(index, state)
-                    txt.update_idletasks()
-                else:
-                    char, tags = c[1]
-                    link = [t for t in tags if 'link#' in t]
-                    if link:
-                        tags = list(tags)
-                        tags.remove(link[0])
-                        tags.append(links[link[0]])
-                    txt.insert_undoable('insert', char)
-                for tag in tags:
-                    txt.tag_add_undoable(tag, index)
-            txt.tag_remove('sel', '1.0', 'end')
-            self.highlight_checkboxes(event)
+                        char, tags = c[1]
+                        link = [t for t in tags if 'link#' in t]
+                        if link:
+                            tags = list(tags)
+                            tags.remove(link[0])
+                            tags.append(links[link[0]])
+                        txt.insert_undoable('insert', char)
+                    for tag in tags:
+                        txt.tag_add_undoable(tag, index)
+                txt.tag_remove('sel', '1.0', 'end')
+                self.highlight_checkboxes(event)
+            else:
+                self.clipboard = ""
+                txt.insert_undoable('insert', txt.clipboard_get())
+            txt.add_undo_sep()
         else:
-            self.clipboard = ""
-            txt.insert_undoable('insert', txt.clipboard_get())
-        txt.add_undo_sep()
+            if txt.tag_ranges("sel"):
+                txt.delete("sel.first", "sel.last")
+            txt.insert('insert', txt.clipboard_get())
 
     def highlight_checkboxes(self, event):
         txt = event.widget

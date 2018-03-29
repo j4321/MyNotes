@@ -11,6 +11,7 @@ Changelog
       checkboxes, latex and formatting
     * Refocus on note after LaTeX/link/image insertion
     * Improve note manager: group deletion, change category, visibility
+    * Add auto replacement of text (e.g. -> becomes →)
 
 - Version 2.3.1
     * Fix menu for tk GUI toolkit
