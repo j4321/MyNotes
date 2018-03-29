@@ -69,6 +69,8 @@ class UpdateChecker(Toplevel):
         self.columnconfigure(1, weight=1)
         self.protocol("WM_DELETE_WINDOW", self.quit)
 
+        self.trial_nb = 0
+
         self.img = PhotoImage(data=IM_QUESTION_DATA, master=self)
 
         frame = Frame(self)
@@ -122,9 +124,21 @@ class UpdateChecker(Toplevel):
         Return True if an update is available, False
         otherwise (and if there is no Internet connection).
         """
-        try:
-            with request.urlopen('https://sourceforge.net/projects/my-notes') as page:
-                latest_version = self.version_parser.feed(page.read().decode())
-            self.update = latest_version > __version__
-        except error.URLError as e:
+        if self.trial_nb < 5:
+            try:
+                with request.urlopen('https://sourceforge.net/projects/my-notes') as page:
+                    latest_version = self.version_parser.feed(page.read().decode())
+                self.update = latest_version > __version__
+            except error.URLError as e:
+                try:
+                    if e.reason.errno == -2:
+                        # no Internet connection
+                        self.update = False
+                    else:
+                        self.trial_nb += 1
+                        self.update_available()
+                except AttributeError:
+                    self.trial_nb += 1
+                    self.update_available()
+        else:
             self.update = False
