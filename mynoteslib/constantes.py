@@ -99,7 +99,7 @@ IM_SCROLL_ALPHA = os.path.join(PATH_IMAGES, "scroll.png")
 
 
 # --- config file
-AUTO_REPLACE = {'->': '→', '<-': '←', '<->': '↔', '=>': '⇒', '<=': '⇐',
+AUTOCORRECT = {'->': '→', '<-': '←', '<->': '↔', '=>': '⇒', '<=': '⇐',
                 '<=>': '⇔', '=<': '≤', '>=': '≥', ":)": '☺'}
 
 CONFIG = ConfigParser()
@@ -118,14 +118,14 @@ if os.path.exists(PATH_CONFIG):
         CONFIG.set("General", "trayicon", "")
     if not CONFIG.has_option("Font", "mono"):
         CONFIG.set("Font", "mono", "")
-    if not CONFIG.has_option("General", "autoreplace"):
-        value = "\t".join(["%s %s" % (key, val) for key, val in AUTO_REPLACE.items()])
-        CONFIG.set("General", "autoreplace", value)
+    if not CONFIG.has_option("General", "autocorrect"):
+        value = "\t".join(["%s %s" % (key, val) for key, val in AUTOCORRECT.items()])
+        CONFIG.set("General", "autocorrect", value)
     else:
-        AUTO_REPLACE = {}
-        for ch in CONFIG.get("General", "autoreplace").split('\t'):
+        AUTOCORRECT = {}
+        for ch in CONFIG.get("General", "autocorrect").split('\t'):
             key, val = ch.split(' ')
-            AUTO_REPLACE[key] = val
+            AUTOCORRECT[key] = val
 else:
     LANGUE = ""
     CONFIG.add_section("General")
@@ -136,8 +136,8 @@ else:
     CONFIG.set("General", "check_update", "True")
     CONFIG.set("General", "symbols", SYMBOLS)
     CONFIG.set("General", "trayicon", "")
-    value = "\t".join(["%s %s" % (key, val) for key, val in AUTO_REPLACE.items()])
-    CONFIG.set("General", "autoreplace", value)
+    value = "\t".join(["%s %s" % (key, val) for key, val in AUTOCORRECT.items()])
+    CONFIG.set("General", "autocorrect", value)
     CONFIG.add_section("Font")
     CONFIG.set("Font", "text_family", "TkDefaultFont")
     CONFIG.set("Font", "text_size", "12")

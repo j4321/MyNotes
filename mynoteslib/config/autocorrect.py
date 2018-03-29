@@ -25,18 +25,18 @@ The icons are modified versions of icons from the elementary project
 (the xfce fork to be precise https://github.com/shimmerproject/elementary-xfce)
 Copyright 2007-2013 elementary LLC.
 
-Configuration window for auto_replace
+Configuration window for autocorrect
 """
 
 
 from tkinter import StringVar, PhotoImage
 from tkinter.ttk import Treeview, Frame, Label, Button, Entry
-from mynoteslib.constantes import CONFIG, AUTO_REPLACE, IM_DELETE_16
+from mynoteslib.constantes import CONFIG, AUTOCORRECT, IM_DELETE_16
 from mynoteslib.constantes import save_config, fill, optionmenu_patch
 
 
-class AutoReplaceConfig(Frame):
-    """Configuration window for auto_replace."""
+class AutoCorrectConfig(Frame):
+    """Configuration window for autocorrect."""
 
     def __init__(self, master, app, **kwargs):
         Frame.__init__(self, master, padding=4, **kwargs)
@@ -127,10 +127,10 @@ class AutoReplaceConfig(Frame):
 
     def reset(self):
         self.tree.delete(*self.tree.get_children(''))
-        keys = list(AUTO_REPLACE.keys())
+        keys = list(AUTOCORRECT.keys())
         keys.sort()
         for key in keys:
-            self.tree.insert('', 'end', key, values=(key, AUTO_REPLACE[key]))
+            self.tree.insert('', 'end', key, values=(key, AUTOCORRECT[key]))
 
     def add(self):
         key = self.replace.get().strip()
@@ -147,9 +147,9 @@ class AutoReplaceConfig(Frame):
 
     def ok(self):
         keys = self.tree.get_children('')
-        AUTO_REPLACE.clear()
+        AUTOCORRECT.clear()
         for key in keys:
-            AUTO_REPLACE[key] = self.tree.set(key, 'by')
+            AUTOCORRECT[key] = self.tree.set(key, 'by')
 
 
 
