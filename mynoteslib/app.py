@@ -43,6 +43,7 @@ from mynoteslib.about import About
 from mynoteslib.notemanager import Manager
 from mynoteslib.version_check import UpdateChecker
 from mynoteslib.messagebox import showerror, askokcancel
+from mynoteslib.mytext import MyText
 
 
 class App(Tk):
@@ -75,6 +76,7 @@ class App(Tk):
         style.configure('Vertical.TScrollbar', background=bg)
         style.configure('Horizontal.TScrollbar', background=bg)
         style.configure('TCheckbutton', background=bg)
+        style.configure('manager.TCheckbutton', font='TkDefaultFont 10 bold')
         style.configure('TSeparator', background=bg)
 
         vmax = self.winfo_rgb('white')[0]
@@ -388,25 +390,26 @@ class App(Tk):
 
     def highlight_checkboxes(self, event):
         txt = event.widget
-        try:
-            deb = cst.sorting(txt.index("sel.first"))
-            fin = cst.sorting(txt.index("sel.last"))
-            for ch in txt.children.values():
-                try:
-                    i = cst.sorting(txt.index(ch))
-                    if i >= deb and i <= fin:
-                        ch.configure(style="sel.%s.TCheckbutton" % txt.master.id)
-                    else:
+        if isinstance(txt, MyText):
+            try:
+                deb = cst.sorting(txt.index("sel.first"))
+                fin = cst.sorting(txt.index("sel.last"))
+                for ch in txt.children.values():
+                    try:
+                        i = cst.sorting(txt.index(ch))
+                        if i >= deb and i <= fin:
+                            ch.configure(style="sel.%s.TCheckbutton" % txt.master.id)
+                        else:
+                            ch.configure(style=txt.master.id + ".TCheckbutton")
+                    except TclError:
+                        pass
+            except TclError:
+                for ch in txt.children.values():
+                    try:
+                        i = cst.sorting(txt.index(ch))
                         ch.configure(style=txt.master.id + ".TCheckbutton")
-                except TclError:
-                    pass
-        except TclError:
-            for ch in txt.children.values():
-                try:
-                    i = cst.sorting(txt.index(ch))
-                    ch.configure(style=txt.master.id + ".TCheckbutton")
-                except TclError:
-                    pass
+                    except TclError:
+                        pass
 
     def select_all_entry(self, event):
         event.widget.selection_range(0, "end")
@@ -537,7 +540,8 @@ class App(Tk):
 
     def manage(self):
         """Launch note manager."""
-        Manager(self)
+        manager = Manager(self)
+        self.wait_window(manager)
 
     def config(self):
         """Launch the setting manager."""
@@ -578,6 +582,13 @@ class App(Tk):
             del(self.hidden_notes[cat][nb])
             del(self.note_data[nb])
             self.save()
+
+    def change_note_category(self, nb, cat):
+        """Change category of note with id nb."""
+        if nb in self.notes:
+            self.notes[nb].change_category(cat)
+        else:
+            self.note_data[nb]['category'] = cat
 
     def show_note(self, nb):
         """Display the note corresponding to the 'nb' key in self.note_data."""

@@ -85,6 +85,8 @@ IM_ROLL_ACTIVE = os.path.join(PATH_IMAGES, "roll_active.png")
 IM_LOCK = os.path.join(PATH_IMAGES, "verr.png")
 IM_PLUS = os.path.join(PATH_IMAGES, "plus.png")
 IM_MOINS = os.path.join(PATH_IMAGES, "moins.png")
+IM_DELETE = os.path.join(PATH_IMAGES, "delete.png")
+IM_CHANGE = os.path.join(PATH_IMAGES, "change.png")
 IM_CLIP = os.path.join(PATH_IMAGES, "clip.png")
 IM_SCROLL_ALPHA = os.path.join(PATH_IMAGES, "scroll.png")
 

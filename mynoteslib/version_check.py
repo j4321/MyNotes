@@ -127,6 +127,7 @@ class UpdateChecker(Toplevel):
                 latest_version = self.version_parser.feed(page.read().decode())
             self.update = latest_version > __version__
         except error.URLError as e:
+            print('%r' % e, '%r' % e.reason, '%r' % e.errno)
             if e.reason.errno == -2:
                 # no Internet connection
                 self.update = False
