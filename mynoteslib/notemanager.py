@@ -22,10 +22,56 @@ Dialog to delete notes
 """
 
 
-from tkinter import Toplevel, PhotoImage, Text
-from tkinter.ttk import Label, Frame, Button, Notebook
-from mynoteslib.constantes import CONFIG, IM_MOINS
+from tkinter import Toplevel, PhotoImage, Text, Menu, StringVar
+from tkinter.ttk import Label, Frame, Button, Notebook, Checkbutton, Menubutton
+from mynoteslib.constantes import CONFIG, IM_DELETE, IM_CHANGE, IM_SELECT_ALL, IM_DESELECT_ALL
 from mynoteslib.autoscrollbar import AutoScrollbar as Scrollbar
+from mynoteslib.messagebox import askokcancel
+
+
+class ManagerItem(Frame):
+    def __init__(self, master, note_data):
+        Frame.__init__(self, master, class_='ManagerItem', style='manager.TFrame')
+        title = note_data['title'][:20]
+        title = title.replace('\t', ' ') + ' ' * (20 - len(title))
+        txt = note_data['txt'].splitlines()
+        if txt:
+            txt = txt[0][:27] + (len(txt[0]) > 27 or len(txt) > 1) * '...'
+        else:
+            txt = ''
+        txt = txt.replace('\t', ' ') + ' ' * (30 - len(txt))
+        self.title = Label(self, text=title, font='TkDefaultFont 10 bold', style='manager.TLabel')
+        self.text = Label(self, text=txt, style='manager.TLabel')
+        self.checkbutton = Checkbutton(self, style='manager.TCheckbutton')
+        self.checkbutton.pack(side='left', padx=4, pady=4, fill='y')
+        self.title.pack(side='left', padx=4, pady=4)
+        self.text.pack(side='left', padx=4, pady=4)
+        self.bind('<Enter>', self._on_enter)
+        self.bind('<Leave>', self._on_leave)
+        self.bind('<ButtonRelease-1>', self._on_click)
+        self.text.bind('<ButtonRelease-1>', self._on_click)
+        self.title.bind('<ButtonRelease-1>', self._on_click)
+
+    def state(self, statespec=None):
+        return self.checkbutton.state(statespec)
+
+    def _on_enter(self, event):
+        self.title.state(('active',))
+        self.text.state(('active',))
+        self.checkbutton.state(('active',))
+        Frame.state(self, ('active',))
+        return "break"
+
+    def _on_leave(self, event):
+        self.title.state(('!active',))
+        self.text.state(('!active',))
+        self.checkbutton.state(('!active',))
+        Frame.state(self, ('!active',))
+        return "break"
+
+    def _on_click(self, event):
+        self.checkbutton.invoke()
+        return "break"
 
 
 class Manager(Toplevel):
@@ -33,21 +79,33 @@ class Manager(Toplevel):
     def __init__(self, master):
         """Create note manager to easily delete multiple notes."""
         Toplevel.__init__(self, master, class_='MyNotes')
-        self.title(_("Delete"))
+        self.title(_("Notes Manager"))
         self.grab_set()
         categories = CONFIG.options("Categories")
         categories.sort()
 
-        self.im_moins = PhotoImage(file=IM_MOINS, master=self)
+        self.im_del = PhotoImage(file=IM_DELETE, master=self)
+        self.im_change = PhotoImage(file=IM_CHANGE, master=self)
+        self.im_sel = PhotoImage(file=IM_SELECT_ALL, master=self)
+        self.im_desel = PhotoImage(file=IM_DESELECT_ALL, master=self)
 
         self.notebook = Notebook(self)
         self.notebook.pack(fill='both', expand=True)
 
         self.texts = {}
-        frames = {}
+        self.frames = {}
         self.notes = {}
+
+        # to change notes category
+        menu_cat = Menu(self, tearoff=False)
+        self.category = StringVar(self)
+
         # create one tab per category
         for cat in categories:
+            menu_cat.add_radiobutton(label=cat.capitalize(), value=cat,
+                                     variable=self.category,
+                                     command=self.move_selection)
+            self.notes[cat] = {}
             frame = Frame(self.notebook)
             self.texts[cat] = Text(frame, width=1, height=1, bg=self.cget('bg'),
                                    relief='flat', highlightthickness=0,
@@ -64,45 +122,89 @@ class Manager(Toplevel):
             scrollx.grid(row=1, column=0, sticky='ew')
             self.texts[cat].configure(xscrollcommand=scrollx.set,
                                       yscrollcommand=scrolly.set)
-            frames[cat] = Frame(self.texts[cat])
-            frames[cat].columnconfigure(0, weight=1, minsize=170)
-            frames[cat].columnconfigure(1, weight=1, minsize=170)
-            frames[cat].columnconfigure(2, minsize=20)
-            self.texts[cat].window_create('1.0', window=frames[cat])
+            self.frames[cat] = Frame(self.texts[cat])
+            self.frames[cat].columnconfigure(0, weight=1, minsize=170)
+            self.texts[cat].window_create('1.0', window=self.frames[cat])
+            b_frame = Frame(frame)
+            b_frame.grid(row=2, columnspan=2)
+            Button(b_frame, image=self.im_sel, padding=1,
+                   command=self.select_all).pack(side='left', padx=4, pady=4)
+            Button(b_frame, image=self.im_desel, padding=1,
+                   command=self.deselect_all).pack(side='left', padx=4, pady=4)
+            Menubutton(b_frame, image=self.im_change, text=_('Change category'),
+                       compound='right', menu=menu_cat,
+                       padding=1).pack(side='left', padx=4, pady=4, fill='y')
+            Button(b_frame, image=self.im_del, command=self.del_selection,
+                   padding=1).pack(side='left', padx=4, pady=4, fill='y')
+
 
             self.notebook.add(frame, text=cat.capitalize(), sticky="ewsn",
                               padding=0)
         # display notes by category
         for key, note_data in self.master.note_data.items():
-            cat = note_data["category"]
-            c, r = frames[cat].grid_size()
-            self.notes[key] = []
-            title = note_data['title'][:20]
-            title = title.replace('\t', ' ') + ' ' * (20 - len(title))
-            self.notes[key].append(Label(frames[cat], text=title,
-                                         font='TkDefaultFont 10 bold'))
-            txt = note_data['txt'].splitlines()
-            if txt:
-                txt = txt[0][:17] + '...'
-            else:
-                txt = ''
-            txt = txt.replace('\t', ' ') + ' ' * (20 - len(txt))
-            self.notes[key].append(Label(frames[cat], text=txt))
-            self.notes[key].append(Button(frames[cat], image=self.im_moins,
-                                          command=lambda iid=key: self.delete_note(iid)))
-            for i, widget in enumerate(self.notes[key]):
-                widget.grid(row=r, column=i, sticky='w', padx=4, pady=4)
+            self.display_note(key, note_data)
 
         for txt in self.texts.values():
             txt.configure(state='disabled')
         self.geometry('410x450')
         self.bind("<Button-4>", lambda e: self.scroll(-1))
         self.bind("<Button-5>", lambda e: self.scroll(1))
+        self.notebook.bind('<<NotebookTabChanged>>', self.on_change_tab)
 
-    def delete_note(self, note_id):
-        self.master.delete_note(note_id)
-        for widget in self.notes[note_id]:
-            widget.destroy()
+    def select_all(self):
+        cat = self.notebook.tab('current', 'text').lower()
+        for widget in self.notes[cat].values():
+            widget.state(('selected',))
+
+    def deselect_all(self):
+        cat = self.notebook.tab('current', 'text').lower()
+        for widget in self.notes[cat].values():
+            widget.state(('!selected',))
+
+    def display_note(self, key, note_data):
+        """Display note in note manager."""
+        cat = note_data["category"]
+        c, r = self.frames[cat].grid_size()
+        self.notes[cat][key] = ManagerItem(self.frames[cat], note_data)
+        self.notes[cat][key].grid(row=r, sticky='ew')
+
+    def on_change_tab(self, event):
+        self.category.set(self.notebook.tab("current", "text").lower())
+
+    def del_selection(self):
+        """Delete selected notes."""
+        cat = self.notebook.tab('current', 'text').lower()
+        sel = self.get_selection(cat)
+        if sel:
+            rep = askokcancel(_("Confirmation"), _("Delete the selected notes?"))
+            if rep:
+                for key in sel:
+                    self.master.delete_note(key)
+                    self.notes[cat][key].destroy()
+
+    def move_selection(self):
+        """Change selected notes category."""
+        cat = self.notebook.tab('current', 'text').lower()
+        new_cat = self.category.get()
+        sel = self.get_selection(cat)
+        if sel and new_cat != cat:
+            rep = askokcancel(_("Confirmation"), _("Change the category of the selected notes?"))
+            if rep:
+                for key in sel:
+                    self.master.change_note_category(key, new_cat)
+                    self.notes[cat][key].destroy()
+                    del self.notes[cat][key]
+                    self.display_note(key, self.master.note_data[key])
+
+            self.category.set(cat)
+        self.grab_set()
+
+    def get_selection(self, cat):
+        sel = []
+        for key, widget in self.notes[cat].items():
+            if 'selected' in widget.state():
+                sel.append(key)
+        return sel
 
     def scroll(self, delta):
         cat = self.notebook.tab("current", "text").lower()
