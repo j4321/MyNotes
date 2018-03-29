@@ -29,6 +29,7 @@ import os
 import re
 
 
+
 class Checkbox(Checkbutton):
     def __init__(self, master, **kw):
         Checkbutton.__init__(self, master, command=self.command, **kw)
@@ -38,6 +39,10 @@ class Checkbox(Checkbutton):
 
 
 class MyText(Text):
+
+    auto_replace = {'->': '→', '<-': '←', '<->': '↔', '=>': '⇒', '<=': '⇐',
+                    '<=>': '⇔', '=<': '≤', '>=': '≥', ":)": '☺'}
+
     def __init__(self, master=None, mode='note', cb_style="TCheckbutton", **kw):
         Text.__init__(self, master, wrap='word', undo=False,
                       autoseparator=False, tabs=(10, 'right', 21, 'left'),
@@ -48,6 +53,8 @@ class MyText(Text):
         self.cb_style = cb_style
         self.links = {}
         self.latex = {}
+
+        self._current_word = ""
 
         # --- undo/redo
         self._undo_stack = [[]]
@@ -107,23 +114,12 @@ class MyText(Text):
         self.bind('<Control-Key>', self._on_ctrl_keypress)
         self.bind('<Control-z>', self.undo)
         self.bind('<Control-y>', self.redo)
-        # add binding to the existing class binding so that the selected text
-        # is erased on pasting
-        self.bind("<Control-v>", self._paste)
-
         self.bind_class('Text', '<Control-y>', lambda e: None)
 
         self.tag_bind("link", "<Enter>",
                       lambda event: self.configure(cursor="hand1"))
         self.tag_bind("link", "<Leave>",
                       lambda event: self.configure(cursor=""))
-
-    def _paste(self, event):
-        """Delete selected text before pasting."""
-        if self.tag_ranges("sel"):
-            self.add_undo_sep()
-            self.delete_undoable("sel.first", "sel.last")
-            self.add_undo_sep()
 
     def mode_change(self, new_mode):
         self._undo_stack[-1].append(('mode', self.mode, new_mode))
@@ -288,10 +284,21 @@ class MyText(Text):
         index2 = self.index('{}+{}c'.format(index1, len(chars)))
         self._undo_stack[-1].append(('insert', index1, index2, chars, args))
 
+    def _auto_word_replacement(self):
+        if self._current_word == self.get('insert-%ic' % len(self._current_word), 'insert'):
+            replacement = self.auto_replace.get(self._current_word)
+            if replacement is not None:
+                self.add_undo_sep()
+                self.delete_undoable('insert-%ic' % len(self._current_word), 'insert')
+                self.insert_undoable('insert', replacement)
+                self.add_undo_sep()
+        self._current_word = ""
+
     def _on_keypress(self, event):
         # --- deletion
         if event.keysym == 'BackSpace':
             self._redo_stack.clear()
+            self._current_word = ""
             self.add_undo_sep()
             deb_line = self.get("insert linestart", "insert")
             tags = self.tag_names("insert")
@@ -327,6 +334,7 @@ class MyText(Text):
             return 'break'
         elif event.keysym == 'Delete':
             self._redo_stack.clear()
+            self._current_word = ""
             sel = self.tag_ranges('sel')
             if sel:
                 self.add_undo_sep()
@@ -336,6 +344,7 @@ class MyText(Text):
         # --- newline
         elif event.keysym == 'Return':
             self._redo_stack.clear()
+            self._auto_word_replacement()
             if self.mode == "list":
                 self.add_undo_sep()
                 self.insert_undoable("insert", "\n\t•\t")
@@ -360,6 +369,7 @@ class MyText(Text):
         elif event.char != '':
             self._redo_stack.clear()
             char = event.char
+            self._current_word += char
             sel = self.tag_ranges('sel')
             if sel:
                 self.add_undo_sep()
@@ -370,6 +380,8 @@ class MyText(Text):
             else:
                 self._undo_stack[-1].append(('insert_char', self.index('insert'), char))
             if event.keysym in ['space', 'Tab']:
+                self._current_word = self._current_word[:-1]
+                self._auto_word_replacement()
                 self.add_undo_sep()
 
     def _copy_text(self, index1, index2):
