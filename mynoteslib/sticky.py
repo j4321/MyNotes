@@ -331,6 +331,8 @@ class Sticky(Toplevel):
         self.title_label.bind("<ButtonRelease-1>", self.stop_move)
         self.title_label.bind("<B1-Motion>", self.move)
         self.title_label.bind('<Button-3>', self.show_menu)
+        self.title_label.bind('<Button-4>', self.mouse_roll)
+        self.title_label.bind('<Button-5>', self.mouse_roll)
 
         self.title_entry.bind("<Return>", lambda e: self.title_entry.place_forget())
         self.title_entry.bind("<FocusOut>", lambda e: self.title_entry.place_forget())
@@ -717,6 +719,18 @@ class Sticky(Toplevel):
         data["visible"] = True
         self.master.note_data[self.id] = data
         self.master.save()
+
+    def mouse_roll(self, event):
+        if event.num == 5 and not self.txt.winfo_ismapped():
+            self.txt.grid(row=1, columnspan=4,
+                          column=0, sticky="ewsn", pady=(1,4), padx=4)
+            self.corner.place(relx=1.0, rely=1.0, anchor="se")
+            self.geometry(self.save_geometry)
+        elif event.num == 4 and self.txt.winfo_ismapped():
+            self.txt.grid_forget()
+            self.corner.place_forget()
+            self.geometry("%sx22" % self.winfo_width())
+        self.save_note()
 
     def rollnote(self, event=None):
         """Roll/unroll note."""
