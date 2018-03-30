@@ -22,12 +22,8 @@ Tests
 """
 
 import unittest
-from mynoteslib.constantes import LANG
 from mynoteslib.app import App
 from mynoteslib.messagebox import OneButtonBox, IM_INFO_DATA
-
-
-_ = LANG.gettext
 
 
 class TestMyNotes(unittest.TestCase):
