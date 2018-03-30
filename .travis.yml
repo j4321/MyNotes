@@ -1,0 +1,15 @@
+language: python
+required: sudo
+python:
+  - "3.4"
+  - "3.5"
+before_install:
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+  - sleep 3
+install:
+  - sudo apt-get install python3-tk tk-tktray gettext python3-setuptools python3-pil python3-pil.imagetk
+  - python3 -m pip install nose coverage ewmh
+script:
+  - python -m pip install .
+  - python -m nose --with-coverage
