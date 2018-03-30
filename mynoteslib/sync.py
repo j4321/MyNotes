@@ -251,35 +251,6 @@ def download_from_server_ftp(password):
         else:
             # first sync
             return True
-#                setlocale(LC_ALL, 'C')
-#                mtime_server = time.mktime(time.strptime(ftp.sendcmd('MDTM '+ filename),
-#                                                         "%Y%m%d%H%M%S"))
-#                mtime_local = time.gmtime(os.path.getmtime(PATH_DATA))
-#                mtime_local = time.strftime("%Y%m%d%H%M%S", mtime_local)
-#                mtime_local = time.mktime(time.strptime(mtime_local, "%Y%m%d%H%M%S"))
-#                if mtime_server // 60 - mtime_local // 60 >= -1:
-#                    # file is more recent on server
-#                    ftp.retrbinary('RETR ' + filename, open(PATH_DATA, 'wb').write)
-#                    return True
-#                else:
-#                    # local file is more recent than the remote one
-#                    ask = SyncConflict()
-#                    ask.wait_window(ask)
-#                    action = ask.get_action()
-#                    if action == "download":
-#                        ftp.retrbinary('RETR ' + filename, open(PATH_DATA, 'wb').write)
-#                        return True
-#                    elif action == "upload":
-#                        ftp.storbinary("STOR " + filename, open(PATH_DATA, "rb"))
-#                        return True
-#                    else:
-#                        return False
-#            else:
-#                # no local notes: download remote notes
-#                ftp.retrbinary('RETR ' + filename, open(PATH_DATA, 'wb').write)
-#        else:
-#            # first sync
-#            return True
     except ftplib.Error as e:
         showerror(_("Error"), str(e))
         return False

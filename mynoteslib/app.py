@@ -40,7 +40,7 @@ from mynoteslib.constants import CONFIG, PATH_DATA, PATH_DATA_BACKUP,\
 import mynoteslib.constants as cst
 from mynoteslib.config import Config
 from mynoteslib.sync import download_from_server, check_login_info, \
-    warn_exist_remote, EASYWEBDAV
+    warn_exist_remote, EASYWEBDAV, upload_to_server
 from mynoteslib.export import Export
 from mynoteslib.sticky import Sticky
 from mynoteslib.about import About
@@ -197,6 +197,11 @@ class App(Tk):
         self.icon.menu.add_command(label=_("Export"), command=self.export_notes)
         self.icon.menu.add_command(label=_("Import"), command=self.import_notes)
         self.icon.menu.add_separator()
+        self.icon.menu.add_command(label=_("Upload local notes on server"),
+                                   command=self.upload)
+        self.icon.menu.add_command(label=_("Download notes from server"),
+                                   command=lambda: download_from_server(self.password))
+        self.icon.menu.add_separator()
         self.icon.menu.add_command(label=_('Check for Updates'),
                                    command=lambda: UpdateChecker(self))
         self.icon.menu.add_command(label=_('About'), command=lambda: About(self))
@@ -227,6 +232,9 @@ class App(Tk):
             else:
                 CONFIG.set("Sync", "on", "False")
         self.time = time.time()
+        if not CONFIG.getboolean("Sync", "on"):
+            self.icon.menu.disable_item(19)
+            self.icon.menu.disable_item(18)
 
         # --- Restore notes
         self.note_data = {}
@@ -280,10 +288,6 @@ class App(Tk):
         self.make_notes_sticky()
 
         # --- class bindings
-#        # newline depending on mode
-#        self.bind_class("Text", "<Return>", self.insert_newline)
-#        # char deletion taking into account list type
-#        self.bind_class("Text", "<BackSpace>", self.delete_char)
         # change Ctrl+A to select all instead of go to the beginning of the line
         self.bind_class('Text', '<Control-a>', self.select_all_text)
         self.bind_class('TEntry', '<Control-a>', self.select_all_entry)
@@ -480,6 +484,11 @@ class App(Tk):
         self.highlight_checkboxes(event)
 
     # --- Other methods
+    def upload(self):
+        """Upload notes on server."""
+        self.save()
+        upload_to_server(self.password, time.time())
+
     def make_notes_sticky(self):
         for w in cst.EWMH.getClientList():
             try:
@@ -634,6 +643,12 @@ class App(Tk):
             note.update_title_font()
             note.update_text_font()
             note.update_titlebar()
+        if CONFIG.getboolean("Sync", "on"):
+            self.icon.menu.enable_item(19)
+            self.icon.menu.enable_item(18)
+        else:
+            self.icon.menu.disable_item(19)
+            self.icon.menu.disable_item(18)
 
     def delete_cat(self, category):
         """Delete all notes belonging to category."""

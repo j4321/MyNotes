@@ -25,14 +25,14 @@ from webbrowser import open as url_open
 from tkinter import Toplevel, PhotoImage, Text
 from tkinter.ttk import Label, Button, Frame, Style
 from mynoteslib.autoscrollbar import AutoScrollbar as Scrollbar
-from mynoteslib.constants import ICONS, IM_ERROR_DATA
+from mynoteslib.constants import ICONS, IM_WARNING_DATA
 
 
 class SyncConflict(Toplevel):
     def __init__(self, master=None,
                  text=_("There is a synchronization conflict. What do you want to do?")):
         Toplevel.__init__(self, master, class_='MyNotes')
-        self.icon = PhotoImage(data=IM_ERROR_DATA)
+        self.icon = PhotoImage(data=IM_WARNING_DATA)
         self.title(_("Sync Conflict"))
         self.grab_set()
         self.columnconfigure(0, weight=1)
