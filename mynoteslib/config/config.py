@@ -31,6 +31,7 @@ from mynoteslib.constantes import CONFIG, save_config, COLORS, SYMBOLS, LATEX,\
     LANGUAGES, REV_LANGUAGES, TOOLKITS, AUTOCORRECT
 from mynoteslib.config.categories import CategoryManager
 from mynoteslib.config.autocorrect import AutoCorrectConfig
+from mynoteslib.sync import SyncSettings
 from tkinter import font
 
 
@@ -44,6 +45,8 @@ class Config(Toplevel):
         self.resizable(False, False)
         self.protocol("WM_DELETE_WINDOW", self.quit)
         self.changes = {}, {}, False
+
+        self.old_sync_on = CONFIG.getboolean("Sync", "on")
 
         # --- style
         style = Style(self)
@@ -333,6 +336,11 @@ class Config(Toplevel):
         self.notebook.add(self.autocorrect_settings, text=_("AutoCorrect"),
                           sticky="ewsn", padding=4)
 
+        # --- * Sync
+        self.sync_settings = SyncSettings(self.notebook, self.master.get_password())
+        self.notebook.add(self.sync_settings, text=_("Sync"),
+                          sticky="ewsn", padding=4)
+
         # --- Ok/Cancel buttons
         Button(okcancel_frame, text="Ok",
                command=self.ok).grid(row=1, column=0, padx=4, pady=10, sticky="e")
@@ -451,6 +459,8 @@ class Config(Toplevel):
         CONFIG.set("Font", "title_size", sizetitle)
         CONFIG.set("Font", "title_style", style)
         CONFIG.set("Font", "mono", mono)
+        self.master.set_password(self.sync_settings.save_sync_settings(),
+                                 not self.old_sync_on)
 
         # --- notes config
         col_changes = {}
