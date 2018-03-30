@@ -90,15 +90,23 @@ IM_ROLL_ACTIVE = os.path.join(PATH_IMAGES, "roll_active.png")
 IM_LOCK = os.path.join(PATH_IMAGES, "verr.png")
 IM_PLUS = os.path.join(PATH_IMAGES, "plus.png")
 IM_MOINS = os.path.join(PATH_IMAGES, "moins.png")
+IM_DELETE_16 = os.path.join(PATH_IMAGES, "delete_16.png")
 IM_DELETE = os.path.join(PATH_IMAGES, "delete.png")
 IM_SELECT_ALL = os.path.join(PATH_IMAGES, "select_all.png")
 IM_DESELECT_ALL = os.path.join(PATH_IMAGES, "deselect_all.png")
 IM_CHANGE = os.path.join(PATH_IMAGES, "change.png")
+IM_VISIBLE = os.path.join(PATH_IMAGES, "visible.png")
+IM_HIDDEN = os.path.join(PATH_IMAGES, "hidden.png")
+IM_VISIBLE_24 = os.path.join(PATH_IMAGES, "visible_24.png")
+IM_HIDDEN_24 = os.path.join(PATH_IMAGES, "hidden_24.png")
 IM_CLIP = os.path.join(PATH_IMAGES, "clip.png")
 IM_SCROLL_ALPHA = os.path.join(PATH_IMAGES, "scroll.png")
 
 
 # --- config file
+AUTOCORRECT = {'->': '→', '<-': '←', '<->': '↔', '=>': '⇒', '<=': '⇐',
+                '<=>': '⇔', '=<': '≤', '>=': '≥', ":)": '☺'}
+
 CONFIG = ConfigParser()
 if os.path.exists(PATH_CONFIG):
     CONFIG.read(PATH_CONFIG)
@@ -115,6 +123,14 @@ if os.path.exists(PATH_CONFIG):
         CONFIG.set("General", "trayicon", "")
     if not CONFIG.has_option("Font", "mono"):
         CONFIG.set("Font", "mono", "")
+    if not CONFIG.has_option("General", "autocorrect"):
+        value = "\t".join(["%s %s" % (key, val) for key, val in AUTOCORRECT.items()])
+        CONFIG.set("General", "autocorrect", value)
+    else:
+        AUTOCORRECT = {}
+        for ch in CONFIG.get("General", "autocorrect").split('\t'):
+            key, val = ch.split(' ')
+            AUTOCORRECT[key] = val
     if not CONFIG.has_section("Sync"):
         CONFIG.add_section("Sync")
         CONFIG.set("Sync", "on", "False")
@@ -134,6 +150,8 @@ else:
     CONFIG.set("General", "check_update", "True")
     CONFIG.set("General", "symbols", SYMBOLS)
     CONFIG.set("General", "trayicon", "")
+    value = "\t".join(["%s %s" % (key, val) for key, val in AUTOCORRECT.items()])
+    CONFIG.set("General", "autocorrect", value)
     CONFIG.add_section("Font")
     CONFIG.set("Font", "text_family", "TkDefaultFont")
     CONFIG.set("Font", "text_size", "12")
@@ -150,7 +168,6 @@ else:
     CONFIG.set("Sync", "protocol", "https")
     CONFIG.set("Sync", "port", "443")
     CONFIG.set("Sync", "file", "")
-
 
 # --- system tray icon
 def get_available_gui_toolkits():

@@ -22,43 +22,61 @@ Dialog to delete notes
 """
 
 
-from tkinter import Toplevel, PhotoImage, Text, Menu, StringVar
+from tkinter import Toplevel, PhotoImage, Text, Menu, StringVar, BooleanVar
 from tkinter.ttk import Label, Frame, Button, Notebook, Checkbutton, Menubutton
-from mynoteslib.constantes import CONFIG, IM_DELETE, IM_CHANGE, IM_SELECT_ALL, IM_DESELECT_ALL
+from mynoteslib.constantes import CONFIG, IM_DELETE, IM_CHANGE, IM_SELECT_ALL, \
+    IM_DESELECT_ALL, IM_VISIBLE_24, IM_HIDDEN_24
 from mynoteslib.autoscrollbar import AutoScrollbar as Scrollbar
 from mynoteslib.messagebox import askokcancel
 
 
 class ManagerItem(Frame):
-    def __init__(self, master, note_data):
+    def __init__(self, master, note_data, toggle_visibility_cmd):
         Frame.__init__(self, master, class_='ManagerItem', style='manager.TFrame')
+        self.columnconfigure(0, weight=0, minsize=10)
+        self.columnconfigure(1, weight=1, minsize=175)
+        self.columnconfigure(2, weight=1, minsize=175)
+        self.toggle_visibility_cmd = toggle_visibility_cmd
         title = note_data['title'][:20]
         title = title.replace('\t', ' ') + ' ' * (20 - len(title))
         txt = note_data['txt'].splitlines()
         if txt:
-            txt = txt[0][:27] + (len(txt[0]) > 27 or len(txt) > 1) * '...'
+            txt = txt[0][:17] + (len(txt[0]) > 17 or len(txt) > 1) * '...'
         else:
             txt = ''
-        txt = txt.replace('\t', ' ') + ' ' * (30 - len(txt))
-        self.title = Label(self, text=title, font='TkDefaultFont 10 bold', style='manager.TLabel')
+        txt = txt.replace('\t', ' ') + ' ' * (20 - len(txt))
+        self.title = Label(self, text=title, font='TkDefaultFont 9 bold', style='manager.TLabel')
         self.text = Label(self, text=txt, style='manager.TLabel')
         self.checkbutton = Checkbutton(self, style='manager.TCheckbutton')
-        self.checkbutton.pack(side='left', padx=4, pady=4, fill='y')
-        self.title.pack(side='left', padx=4, pady=4)
-        self.text.pack(side='left', padx=4, pady=4)
+        self.visibility = BooleanVar(self, note_data['visible'])
+        self.toggle_visibility = Checkbutton(self, style='Toggle', variable=self.visibility,
+                                             command=self.toggle_visibility)
+        self.checkbutton.grid(row=0, column=0, padx=(2, 0), pady=4, sticky='ns')
+        self.title.grid(row=0, column=1, padx=4, pady=4, sticky='w')
+        self.text.grid(row=0, column=2, padx=4, pady=4, sticky='w')
+        self.toggle_visibility.grid(row=0, column=3, padx=(0, 2), pady=4, sticky='ens')
         self.bind('<Enter>', self._on_enter)
         self.bind('<Leave>', self._on_leave)
+        self.checkbutton.bind('<Enter>', self._on_enter)  # override class binding
+        self.checkbutton.bind('<Leave>', self._on_leave)  # override class binding
+        self.toggle_visibility.bind('<Enter>', self._on_enter)  # override class binding
+        self.toggle_visibility.bind('<Leave>', self._on_leave)  # override class binding
         self.bind('<ButtonRelease-1>', self._on_click)
         self.text.bind('<ButtonRelease-1>', self._on_click)
         self.title.bind('<ButtonRelease-1>', self._on_click)
+        self.checkbutton.bind('<ButtonRelease-1>', self._on_click)
 
     def state(self, statespec=None):
         return self.checkbutton.state(statespec)
+
+    def toggle_visibility(self):
+        self.toggle_visibility_cmd(self.visibility.get())
 
     def _on_enter(self, event):
         self.title.state(('active',))
         self.text.state(('active',))
         self.checkbutton.state(('active',))
+        self.toggle_visibility.state(('active',))
         Frame.state(self, ('active',))
         return "break"
 
@@ -66,6 +84,7 @@ class ManagerItem(Frame):
         self.title.state(('!active',))
         self.text.state(('!active',))
         self.checkbutton.state(('!active',))
+        self.toggle_visibility.state(('!active',))
         Frame.state(self, ('!active',))
         return "break"
 
@@ -88,6 +107,8 @@ class Manager(Toplevel):
         self.im_change = PhotoImage(file=IM_CHANGE, master=self)
         self.im_sel = PhotoImage(file=IM_SELECT_ALL, master=self)
         self.im_desel = PhotoImage(file=IM_DESELECT_ALL, master=self)
+        self.im_visible = PhotoImage(file=IM_VISIBLE_24, master=self)
+        self.im_hidden = PhotoImage(file=IM_HIDDEN_24, master=self)
 
         self.notebook = Notebook(self)
         self.notebook.pack(fill='both', expand=True)
@@ -104,12 +125,12 @@ class Manager(Toplevel):
         for cat in categories:
             menu_cat.add_radiobutton(label=cat.capitalize(), value=cat,
                                      variable=self.category,
-                                     command=self.move_selection)
+                                     command=self.change_cat_selection)
             self.notes[cat] = {}
             frame = Frame(self.notebook)
             self.texts[cat] = Text(frame, width=1, height=1, bg=self.cget('bg'),
                                    relief='flat', highlightthickness=0,
-                                   padx=4, pady=4, cursor='arrow')
+                                   padx=2, pady=2, cursor='arrow')
             frame.columnconfigure(0, weight=1)
             frame.rowconfigure(0, weight=1)
 
@@ -134,9 +155,12 @@ class Manager(Toplevel):
             Menubutton(b_frame, image=self.im_change, text=_('Change category'),
                        compound='right', menu=menu_cat,
                        padding=1).pack(side='left', padx=4, pady=4, fill='y')
+            Button(b_frame, image=self.im_visible, padding=1,
+                   command=self.show_selection).pack(side='left', padx=4, pady=4)
+            Button(b_frame, image=self.im_hidden, padding=1,
+                   command=self.hide_selection).pack(side='left', padx=4, pady=4)
             Button(b_frame, image=self.im_del, command=self.del_selection,
                    padding=1).pack(side='left', padx=4, pady=4, fill='y')
-
 
             self.notebook.add(frame, text=cat.capitalize(), sticky="ewsn",
                               padding=0)
@@ -151,6 +175,22 @@ class Manager(Toplevel):
         self.bind("<Button-5>", lambda e: self.scroll(1))
         self.notebook.bind('<<NotebookTabChanged>>', self.on_change_tab)
 
+    def show_selection(self):
+        cat = self.notebook.tab('current', 'text').lower()
+        sel = self.get_selection(cat)
+        if sel:
+            for key in sel:
+                self.notes[cat][key].visibility.set(True)
+                self.toggle_visibility(key, True)
+
+    def hide_selection(self):
+        cat = self.notebook.tab('current', 'text').lower()
+        sel = self.get_selection(cat)
+        if sel:
+            for key in sel:
+                self.notes[cat][key].visibility.set(False)
+                self.toggle_visibility(key, False)
+
     def select_all(self):
         cat = self.notebook.tab('current', 'text').lower()
         for widget in self.notes[cat].values():
@@ -161,11 +201,21 @@ class Manager(Toplevel):
         for widget in self.notes[cat].values():
             widget.state(('!selected',))
 
+    def toggle_visibility(self, key, visible):
+        if visible:
+            if key not in self.master.notes:
+                self.master.show_note(key)
+        else:
+            if key in self.master.notes:
+                self.master.notes[key].hide()
+        self.grab_set()
+
     def display_note(self, key, note_data):
         """Display note in note manager."""
         cat = note_data["category"]
         c, r = self.frames[cat].grid_size()
-        self.notes[cat][key] = ManagerItem(self.frames[cat], note_data)
+        self.notes[cat][key] = ManagerItem(self.frames[cat], note_data,
+                                           lambda vis: self.toggle_visibility(key, vis))
         self.notes[cat][key].grid(row=r, sticky='ew')
 
     def on_change_tab(self, event):
@@ -181,8 +231,9 @@ class Manager(Toplevel):
                 for key in sel:
                     self.master.delete_note(key)
                     self.notes[cat][key].destroy()
+                    del self.notes[cat][key]
 
-    def move_selection(self):
+    def change_cat_selection(self):
         """Change selected notes category."""
         cat = self.notebook.tab('current', 'text').lower()
         new_cat = self.category.get()

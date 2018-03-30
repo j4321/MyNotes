@@ -24,7 +24,8 @@ Text class with improved undo/redo
 from tkinter import Text, TclError
 from tkinter.font import Font
 from tkinter.ttk import Checkbutton
-from mynoteslib.constantes import sorting, CONFIG, TEXT_COLORS, PATH_LATEX
+from mynoteslib.constantes import sorting, CONFIG, TEXT_COLORS, PATH_LATEX, \
+    AUTOCORRECT, text_ranges
 import os
 import re
 
@@ -38,6 +39,7 @@ class Checkbox(Checkbutton):
 
 
 class MyText(Text):
+
     def __init__(self, master=None, mode='note', cb_style="TCheckbutton", **kw):
         Text.__init__(self, master, wrap='word', undo=False,
                       autoseparator=False, tabs=(10, 'right', 21, 'left'),
@@ -48,6 +50,8 @@ class MyText(Text):
         self.cb_style = cb_style
         self.links = {}
         self.latex = {}
+
+        self._current_word = ""
 
         # --- undo/redo
         self._undo_stack = [[]]
@@ -107,23 +111,12 @@ class MyText(Text):
         self.bind('<Control-Key>', self._on_ctrl_keypress)
         self.bind('<Control-z>', self.undo)
         self.bind('<Control-y>', self.redo)
-        # add binding to the existing class binding so that the selected text
-        # is erased on pasting
-        self.bind("<Control-v>", self._paste)
-
         self.bind_class('Text', '<Control-y>', lambda e: None)
 
         self.tag_bind("link", "<Enter>",
                       lambda event: self.configure(cursor="hand1"))
         self.tag_bind("link", "<Leave>",
                       lambda event: self.configure(cursor=""))
-
-    def _paste(self, event):
-        """Delete selected text before pasting."""
-        if self.tag_ranges("sel"):
-            self.add_undo_sep()
-            self.delete_undoable("sel.first", "sel.last")
-            self.add_undo_sep()
 
     def mode_change(self, new_mode):
         self._undo_stack[-1].append(('mode', self.mode, new_mode))
@@ -288,10 +281,21 @@ class MyText(Text):
         index2 = self.index('{}+{}c'.format(index1, len(chars)))
         self._undo_stack[-1].append(('insert', index1, index2, chars, args))
 
+    def _auto_word_replacement(self):
+        if self._current_word == self.get('insert-%ic' % len(self._current_word), 'insert'):
+            replacement = AUTOCORRECT.get(self._current_word)
+            if replacement is not None:
+                self.add_undo_sep()
+                self.delete_undoable('insert-%ic' % len(self._current_word), 'insert')
+                self.insert_undoable('insert', replacement)
+                self.add_undo_sep()
+        self._current_word = ""
+
     def _on_keypress(self, event):
         # --- deletion
         if event.keysym == 'BackSpace':
             self._redo_stack.clear()
+            self._current_word = ""
             self.add_undo_sep()
             deb_line = self.get("insert linestart", "insert")
             tags = self.tag_names("insert")
@@ -327,6 +331,7 @@ class MyText(Text):
             return 'break'
         elif event.keysym == 'Delete':
             self._redo_stack.clear()
+            self._current_word = ""
             sel = self.tag_ranges('sel')
             if sel:
                 self.add_undo_sep()
@@ -336,6 +341,7 @@ class MyText(Text):
         # --- newline
         elif event.keysym == 'Return':
             self._redo_stack.clear()
+            self._auto_word_replacement()
             if self.mode == "list":
                 self.add_undo_sep()
                 self.insert_undoable("insert", "\n\t•\t")
@@ -360,6 +366,7 @@ class MyText(Text):
         elif event.char != '':
             self._redo_stack.clear()
             char = event.char
+            self._current_word += char
             sel = self.tag_ranges('sel')
             if sel:
                 self.add_undo_sep()
@@ -370,6 +377,8 @@ class MyText(Text):
             else:
                 self._undo_stack[-1].append(('insert_char', self.index('insert'), char))
             if event.keysym in ['space', 'Tab']:
+                self._current_word = self._current_word[:-1]
+                self._auto_word_replacement()
                 self.add_undo_sep()
 
     def _copy_text(self, index1, index2):
@@ -432,3 +441,120 @@ class MyText(Text):
             for tag in c[2]:
                 self.tag_add(tag, index)
         self.tag_remove('sel', '1.0', 'end')
+
+    # --- Text style
+    def toggle_text_style(self, style):
+        """Toggle the style of the selected text."""
+        if self.tag_ranges("sel"):
+            current_tags = self.tag_names("sel.first")
+            self.add_undo_sep()
+            if style in current_tags:
+                # first char is in style so 'unstyle' the range
+                self.tag_remove_undoable(style, "sel.first", "sel.last")
+            elif style is "bold" and "bold-italic" in current_tags:
+                self.tag_remove_undoable("bold-italic", "sel.first", "sel.last")
+                self.tag_add_undoable("italic", "sel.first", "sel.last")
+            elif style is "italic" and "bold-italic" in current_tags:
+                self.tag_remove_undoable("bold-italic", "sel.first", "sel.last")
+                self.tag_add_undoable("bold", "sel.first", "sel.last")
+            elif style is "bold" and "italic" in current_tags:
+                self.tag_remove_undoable("italic", "sel.first", "sel.last")
+                self.tag_add_undoable("bold-italic", "sel.first", "sel.last")
+            elif style is "italic" and "bold" in current_tags:
+                self.tag_remove_undoable("bold", "sel.first", "sel.last")
+                self.tag_add_undoable("bold-italic", "sel.first", "sel.last")
+            else:
+                # first char is normal, so apply style to the whole selection
+                self.tag_add_undoable(style, "sel.first", "sel.last")
+            self.add_undo_sep()
+
+    def toggle_underline(self):
+        """Toggle underline property of the selected text."""
+        if self.tag_ranges("sel"):
+            current_tags = self.tag_names("sel.first")
+            self.add_undo_sep()
+            if "underline" in current_tags:
+                # first char is in style so 'unstyle' the range
+                self.tag_remove_undoable("underline", "sel.first", "sel.last")
+                for coul in TEXT_COLORS.values():
+                    self.tag_remove_undoable(coul + "-underline", "sel.first", "sel.last")
+            else:
+                self.tag_add_undoable("underline", "sel.first", "sel.last")
+                for coul in TEXT_COLORS.values():
+                    r = text_ranges(self.txt, coul, "sel.first", "sel.last")
+                    if r:
+                        for deb, fin in zip(r[::2], r[1::2]):
+                            self.tag_add_undoable(coul + "-underline", "sel.first", "sel.last")
+            self.add_undo_sep()
+
+    def toggle_overstrike(self):
+        """Toggle overstrike property of the selected text."""
+        if self.tag_ranges("sel"):
+            self.add_undo_sep()
+            current_tags = self.tag_names("sel.first")
+            if "overstrike" in current_tags:
+                # first char is in style so 'unstyle' the range
+                self.tag_remove_undoable("overstrike", "sel.first", "sel.last")
+                for coul in TEXT_COLORS.values():
+                    self.tag_remove_undoable(coul + "-overstrike", "sel.first", "sel.last")
+            else:
+                self.tag_add_undoable("overstrike", "sel.first", "sel.last")
+                for coul in TEXT_COLORS.values():
+                    r = text_ranges(self.txt, coul, "sel.first", "sel.last")
+                    if r:
+                        for deb, fin in zip(r[::2], r[1::2]):
+                            self.tag_add_undoable(coul + "-overstrike", "sel.first", "sel.last")
+            self.add_undo_sep()
+
+    def change_sel_color(self, color):
+        """Change the color of the selection."""
+        if self.tag_ranges("sel"):
+            self.add_undo_sep()
+            for coul in TEXT_COLORS.values():
+                self.tag_remove_undoable(coul, "sel.first", "sel.last")
+                self.tag_remove_undoable(coul + "-overstrike", "sel.first", "sel.last")
+                self.tag_remove_undoable(coul + "-underline", "sel.first", "sel.last")
+            if not color == "black":
+                self.tag_add_undoable(color, "sel.first", "sel.last")
+                underline = text_ranges(self.txt, "underline", "sel.first", "sel.last")
+                overstrike = text_ranges(self.txt, "overstrike", "sel.first", "sel.last")
+
+                for deb, fin in zip(underline[::2], underline[1::2]):
+                    self.tag_add_undoable(color + "-underline", deb, fin)
+                for deb, fin in zip(overstrike[::2], overstrike[1::2]):
+                    self.tag_add_undoable(color + "-overstrike", deb, fin)
+            self.add_undo_sep()
+
+    def set_align(self, alignment):
+        """Align the text according to alignment (left, right, center)."""
+        if self.tag_ranges("sel"):
+            line = self.index("sel.first").split(".")[0]
+            line2 = self.index("sel.last").split(".")[0]
+            deb, fin = line + ".0", line2 + ".end"
+            if "\t" not in self.get(deb, fin):
+                self.add_undo_sep()
+                # tabulations don't support right/center alignment
+                # remove old alignment tag
+                self.tag_remove_undoable("left", deb, fin)
+                self.tag_remove_undoable("right", deb, fin)
+                self.tag_remove_undoable("center", deb, fin)
+                # set new alignment tag
+                self.tag_add_undoable(alignment, deb, fin)
+                self.add_undo_sep()
+
+    def update_enum(self):
+        """Update enumeration numbers."""
+        lines = self.get("1.0", "end").splitlines()
+        indexes = []
+        for i, l in enumerate(lines):
+            res = re.match('^\t[0-9]+\.\t', l)
+            res2 = re.match('^\t[0-9]+\.', l)
+            if res:
+                indexes.append((i, res.end()))
+            elif res2:
+                indexes.append((i, res2.end()))
+        for j, (i, end) in enumerate(indexes):
+            self.delete_undoable("%i.0" % (i + 1), "%i.%i" % (i + 1, end))
+            self.insert_undoable("%i.0" % (i + 1), "\t%i.\t" % (j + 1))
+        self.tag_add_undoable("enum", "1.0", "end")
+        self.add_undo_sep()

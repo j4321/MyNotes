@@ -21,20 +21,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Main class
 """
 
-from tkinter import Tk, TclError
+from tkinter import Tk, TclError, Toplevel
 from tkinter import PhotoImage as tkPhotoImage
-from tkinter.ttk import Style
+from tkinter.ttk import Style, Label, Button, Entry, Checkbutton
 from tkinter.font import families
 from PIL import Image
 from PIL.ImageTk import PhotoImage
 import os
+import time
 import re
 import traceback
 from shutil import copy
 import pickle
 from mynoteslib.trayicon import TrayIcon, SubMenu
 from mynoteslib.constantes import CONFIG, PATH_DATA, PATH_DATA_BACKUP,\
-    LOCAL_PATH, backup, asksaveasfilename, askopenfilename, COLORS, IM_SCROLL_ALPHA
+    LOCAL_PATH, backup, asksaveasfilename, askopenfilename, COLORS, \
+    IM_SCROLL_ALPHA, IM_VISIBLE, IM_HIDDEN, save_modif_info
 import mynoteslib.constantes as cst
 from mynoteslib.config import Config
 from mynoteslib.sync import download_from_server, check_login_info, warn_exist_remote
@@ -43,7 +45,7 @@ from mynoteslib.sticky import Sticky
 from mynoteslib.about import About
 from mynoteslib.notemanager import Manager
 from mynoteslib.version_check import UpdateChecker
-from mynoteslib.messagebox import showerror, askokcancel
+from mynoteslib.messagebox import showerror, askokcancel, showinfo
 from mynoteslib.mytext import MyText
 
 
@@ -59,10 +61,22 @@ class App(Tk):
         self.notes = {}
         self.im_icon = PhotoImage(master=self, file=cst.IM_ICON_48)
         self.iconphoto(True, self.im_icon)
+        self.im_visible = PhotoImage(file=IM_VISIBLE, master=self)
+        self.im_hidden = PhotoImage(file=IM_HIDDEN, master=self)
 
         style = Style(self)
         style.theme_use("clam")
         style.map('TEntry', selectbackground=[('!focus', '#c3c3c3')])
+        style.element_create('visibility', 'image', self.im_hidden,
+                             ('selected', self.im_visible))
+        style.layout('Toggle',
+                     [('Toggle.border',
+                       {'children': [('Toggle.padding',
+                                      {'children': [('Toggle.visibility',
+                                                     {'sticky': 'nswe'})],
+                                       'sticky': 'nswe'})],
+                        'sticky': 'nswe'})])
+
         style.map('TCheckbutton',
                   indicatorbackground=[('pressed', '#dcdad5'),
                                        ('!disabled', 'alternate', '#ffffff'),
@@ -71,6 +85,7 @@ class App(Tk):
         bg = self.cget('background')
         style.configure('TFrame', background=bg)
         style.configure('TLabel', background=bg)
+        style.configure('Toggle', background=bg)
         style.configure('TButton', background=bg)
         style.configure('TMenubutton', background=bg)
         style.configure('TNotebook', background=bg)
@@ -81,6 +96,7 @@ class App(Tk):
         active_bg = style.lookup('TCheckbutton', 'background', ('active',))
         style.map('manager.TLabel', background=[('active', active_bg)])
         style.map('manager.TFrame', background=[('active', active_bg)])
+        style.map('Toggle', background=[('active', active_bg), ('hover', active_bg)])
         style.configure('TSeparator', background=bg)
 
         vmax = self.winfo_rgb('white')[0]
@@ -207,7 +223,6 @@ class App(Tk):
                 CONFIG.set("Sync", "on", "False")
         self.time = time.time()
 
-
         # --- Restore notes
         self.note_data = {}
         if os.path.exists(PATH_DATA):
@@ -330,90 +345,104 @@ class App(Tk):
             txt.clipboard_append(txt_copy)
             self.clibboard_content.clear()
             self.link_clipboard.clear()
-            deb = cst.sorting(str(sel[0]))
-            fin = cst.sorting(str(sel[1]))
-            for l in range(deb[0], fin[0] + 1):
-                if l == deb[0]:
-                    dc = deb[1]
-                else:
-                    dc = 0
-                if l == fin[0]:
-                    nc = fin[1]
-                else:
-                    nc = cst.sorting(str(txt.index('%i.end' % l)))[1]
 
-                for c in range(dc, nc):
-                    index = '%i.%i' % (l, c)
-                    try:
-                        im = txt.image_cget(index, 'image')
-                        name = txt.image_cget(index, 'name').split('#')[0]
-                        key = os.path.split(name)[1]
-                        latex = txt.latex.get(key, '')
-                        tags = list(txt.tag_names(index))
-                        if latex:
-                            tags.remove(key)
-                        self.clibboard_content.append(('image', (im, name, tags, latex)))
-                    except TclError:
+            if isinstance(txt, MyText):
+                deb = cst.sorting(str(sel[0]))
+                fin = cst.sorting(str(sel[1]))
+                for l in range(deb[0], fin[0] + 1):
+                    if l == deb[0]:
+                        dc = deb[1]
+                    else:
+                        dc = 0
+                    if l == fin[0]:
+                        nc = fin[1]
+                    else:
+                        nc = cst.sorting(str(txt.index('%i.end' % l)))[1]
+
+                    for c in range(dc, nc):
+                        index = '%i.%i' % (l, c)
                         try:
-                            name = txt.window_cget(index, 'window')
-                            ch = txt.children[name.split(".")[-1]]
-                            tags = txt.tag_names(index)
-                            self.clibboard_content.append(('checkbox', (ch.state(), tags)))
+                            im = txt.image_cget(index, 'image')
+                            name = txt.image_cget(index, 'name').split('#')[0]
+                            key = os.path.split(name)[1]
+                            latex = txt.latex.get(key, '')
+                            tags = list(txt.tag_names(index))
+                            if latex:
+                                tags.remove(key)
+                            self.clibboard_content.append(('image', (im, name, tags, latex)))
                         except TclError:
-                            tags = txt.tag_names(index)
-                            link = [t for t in tags if 'link#' in t]
-                            if link:
-                                lnb = int(link[0].split('#')[1])
-                                self.link_clipboard[link[0]] = txt.links[lnb]
-                            self.clibboard_content.append(('char', (txt.get(index), tags)))
-                if l < fin[0]:
-                    self.clibboard_content.append(('char', ('\n', [])))
+                            try:
+                                name = txt.window_cget(index, 'window')
+                                ch = txt.children[name.split(".")[-1]]
+                                tags = txt.tag_names(index)
+                                self.clibboard_content.append(('checkbox', (ch.state(), tags)))
+                            except TclError:
+                                tags = txt.tag_names(index)
+                                link = [t for t in tags if 'link#' in t]
+                                if link:
+                                    lnb = int(link[0].split('#')[1])
+                                    self.link_clipboard[link[0]] = txt.links[lnb]
+                                self.clibboard_content.append(('char', (txt.get(index), tags)))
+                    if l < fin[0]:
+                        self.clibboard_content.append(('char', ('\n', [])))
 
     def cut_text(self, event):
         self.copy_text(event)
-        event.widget.add_undo_sep()
-        event.widget.delete_undoable('sel.first', 'sel.last')
-        event.widget.add_undo_sep()
+        txt = event.widget
+        if isinstance(txt, MyText):
+            txt.add_undo_sep()
+            txt.delete_undoable('sel.first', 'sel.last')
+            txt.add_undo_sep()
+        else:
+            txt.delete('sel.first', 'sel.last')
         return 'break'
 
     def paste_text(self, event):
         txt = event.widget
-        txt.add_undo_sep()
-        if self.clipboard == txt.clipboard_get():
-            links = {}
+        if isinstance(txt, MyText):
+            if txt.tag_ranges("sel"):
+                txt.add_undo_sep()
+                txt.delete_undoable("sel.first", "sel.last")
+            txt.add_undo_sep()
+            if self.clipboard == txt.clipboard_get():
+                links = {}
 
-            for oldtag, link in self.link_clipboard.items():
-                newtag = txt.master.create_link(link)
-                links[oldtag] = newtag
+                for oldtag, link in self.link_clipboard.items():
+                    newtag = txt.master.create_link(link)
+                    links[oldtag] = newtag
 
-            for c in self.clibboard_content:
-                index = txt.index('insert')
-                if c[0] is 'image':
-                    img, name, tags, latex = c[1]
-                    if latex and cst.LATEX:
-                        txt.master.create_latex(latex, index)
+                for c in self.clibboard_content:
+                    index = txt.index('insert')
+                    if c[0] is 'image':
+                        img, name, tags, latex = c[1]
+                        if latex and cst.LATEX:
+                            txt.master.create_latex(latex, index)
+                        else:
+                            txt.image_create_undoable(index, align='bottom', image=img, name=name)
+                    elif c[0] is 'checkbox':
+                        state, tags = c[1]
+                        txt.checkbox_create_undoable(index, state)
+                        txt.update_idletasks()
                     else:
-                        txt.image_create_undoable(index, align='bottom', image=img, name=name)
-                elif c[0] is 'checkbox':
-                    state, tags = c[1]
-                    txt.checkbox_create_undoable(index, state)
-                    txt.update_idletasks()
-                else:
-                    char, tags = c[1]
-                    link = [t for t in tags if 'link#' in t]
-                    if link:
-                        tags = list(tags)
-                        tags.remove(link[0])
-                        tags.append(links[link[0]])
-                    txt.insert_undoable('insert', char)
-                for tag in tags:
-                    txt.tag_add_undoable(tag, index)
-            txt.tag_remove('sel', '1.0', 'end')
-            self.highlight_checkboxes(event)
+                        char, tags = c[1]
+                        link = [t for t in tags if 'link#' in t]
+                        if link:
+                            tags = list(tags)
+                            tags.remove(link[0])
+                            tags.append(links[link[0]])
+                        txt.insert_undoable('insert', char)
+                    for tag in tags:
+                        txt.tag_add_undoable(tag, index)
+                txt.tag_remove('sel', '1.0', 'end')
+                self.highlight_checkboxes(event)
+            else:
+                self.clipboard = ""
+                txt.insert_undoable('insert', txt.clipboard_get())
+            txt.add_undo_sep()
         else:
-            self.clipboard = ""
-            txt.insert_undoable('insert', txt.clipboard_get())
-        txt.add_undo_sep()
+            if txt.tag_ranges("sel"):
+                txt.delete("sel.first", "sel.last")
+            txt.insert('insert', txt.clipboard_get())
 
     def highlight_checkboxes(self, event):
         txt = event.widget
@@ -552,6 +581,22 @@ class App(Tk):
         for key in keys:
             self.show_note(key)
 
+    def show_note(self, nb):
+        """Display the note corresponding to the 'nb' key in self.note_data."""
+        self.note_data[nb]["visible"] = True
+        cat = self.note_data[nb]["category"]
+        menu = self.menu_notes.get_item_menu(cat.capitalize())
+        index = menu.index(self.hidden_notes[cat][nb])
+        del(self.hidden_notes[cat][nb])
+        self.notes[nb] = Sticky(self, nb, **self.note_data[nb])
+        menu.delete(index)
+        if not menu.index("end"):
+            # the menu is empty
+            self.menu_notes.delete(cat.capitalize())
+            if not self.menu_notes.index('end'):
+                self.icon.menu.disable_item(4)
+        self.make_notes_sticky()
+
     def hide_all(self):
         """Hide all notes."""
         keys = list(self.notes.keys())
@@ -615,23 +660,9 @@ class App(Tk):
         if nb in self.notes:
             self.notes[nb].change_category(cat)
         else:
-            self.note_data[nb]['category'] = cat
-
-    def show_note(self, nb):
-        """Display the note corresponding to the 'nb' key in self.note_data."""
-        self.note_data[nb]["visible"] = True
-        cat = self.note_data[nb]["category"]
-        menu = self.menu_notes.get_item_menu(cat.capitalize())
-        index = menu.index(self.hidden_notes[cat][nb])
-        del(self.hidden_notes[cat][nb])
-        self.notes[nb] = Sticky(self, nb, **self.note_data[nb])
-        menu.delete(index)
-        if not menu.index("end"):
-            # the menu is empty
-            self.menu_notes.delete(cat.capitalize())
-            if not self.menu_notes.index('end'):
-                self.icon.menu.disable_item(4)
-        self.make_notes_sticky()
+            self.show_note(nb)
+            self.notes[nb].change_category(cat)
+            self.notes[nb].hide()
 
     def update_notes(self, col_changes={}, name_changes={}):
         """Update the notes after changes in the categories."""
