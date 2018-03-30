@@ -23,8 +23,14 @@ Tests
 
 import unittest
 from mynoteslib.app import App
+from mynoteslib.messagebox import OneButtonBox, IM_INFO_DATA
 
 
 class TestMyNotes(unittest.TestCase):
     def test_mynotes_app(self):
         app = App()
+
+    def test_mynotes_messagebox(self):
+        box = OneButtonBox(title="Test", message="This is a test", button="Ok",
+                           image=IM_INFO_DATA)
+        self.assertEqual(box.title(), "Test")
