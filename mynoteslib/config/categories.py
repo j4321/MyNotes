@@ -109,9 +109,9 @@ class CategoryManager(Frame):
             self.style.configure("%s.TMenubutton" % cat, background=color)
             self.cat_menus[cat].grid(row=i + 2, column=1, sticky="w", padx=4, pady=4)
             self.cat_buttons[cat] = Button(self.frame_cat, image=self.im_delete,
-                                           padding=1,
+                                           padding=0,
                                            command=lambda c=cat: self.del_cat(c))
-            self.cat_buttons[cat].grid(row=i + 2, column=2, padx=4, pady=4)
+            self.cat_buttons[cat].grid(row=i + 2, column=2, padx=4, pady=4, sticky='ns')
 
         if len(self.categories) == 1:
             self.cat_buttons[self.categories[0]].configure(state="disabled")
@@ -224,9 +224,9 @@ effect immediately and cannot be undone.") % {"category": category})
                 optionmenu_patch(self.cat_menus[cat], self.cat_colors[cat])
                 self.cat_menus[cat].grid(row=i, column=1, padx=4, pady=4)
                 self.cat_buttons[cat] = Button(self.frame_cat, image=self.im_delete,
-                                               padding=1,
+                                               padding=0,
                                                command=lambda c=cat: self.del_cat(c))
-                self.cat_buttons[cat].grid(row=i, column=2, padx=4, pady=4)
+                self.cat_buttons[cat].grid(row=i, column=2, padx=4, pady=4, sticky='ns')
                 self.cat_buttons[self.categories[0]].configure(state="normal")
                 self.categories.append(cat)
                 self.categories.sort()
