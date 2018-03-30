@@ -25,7 +25,7 @@ from webbrowser import open as url_open
 from tkinter import Toplevel, PhotoImage, Text
 from tkinter.ttk import Label, Button, Frame, Style
 from mynoteslib.autoscrollbar import AutoScrollbar as Scrollbar
-from mynoteslib.constantes import ICONS, IM_ERROR_DATA
+from mynoteslib.constants import ICONS, IM_ERROR_DATA
 
 
 class SyncConflict(Toplevel):

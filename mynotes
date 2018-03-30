@@ -27,7 +27,7 @@ import sys
 import traceback
 from tkinter import Tk
 from tkinter.ttk import Style
-from mynoteslib.constantes import save_config, PIDFILE
+from mynoteslib.constants import save_config, PIDFILE
 from mynoteslib.app import App
 from mynoteslib.messagebox import showerror
 import logging

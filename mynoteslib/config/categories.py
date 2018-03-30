@@ -22,8 +22,8 @@ Category Manager
 """
 
 from tkinter import StringVar, PhotoImage, Toplevel
-from mynoteslib.constantes import CONFIG, COLORS, INV_COLORS, IM_PLUS, IM_MOINS
-from mynoteslib.constantes import save_config, fill, optionmenu_patch
+from mynoteslib.constants import CONFIG, COLORS, INV_COLORS, IM_PLUS, IM_MOINS
+from mynoteslib.constants import save_config, fill, optionmenu_patch
 from tkinter.ttk import Label, Button, OptionMenu, Style, Separator, Entry, Frame
 from mynoteslib.messagebox import askyesnocancel
 
