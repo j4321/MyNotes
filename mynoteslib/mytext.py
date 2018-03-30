@@ -481,7 +481,7 @@ class MyText(Text):
             else:
                 self.tag_add_undoable("underline", "sel.first", "sel.last")
                 for coul in TEXT_COLORS.values():
-                    r = text_ranges(self.txt, coul, "sel.first", "sel.last")
+                    r = text_ranges(self, coul, "sel.first", "sel.last")
                     if r:
                         for deb, fin in zip(r[::2], r[1::2]):
                             self.tag_add_undoable(coul + "-underline", "sel.first", "sel.last")
@@ -500,7 +500,7 @@ class MyText(Text):
             else:
                 self.tag_add_undoable("overstrike", "sel.first", "sel.last")
                 for coul in TEXT_COLORS.values():
-                    r = text_ranges(self.txt, coul, "sel.first", "sel.last")
+                    r = text_ranges(self, coul, "sel.first", "sel.last")
                     if r:
                         for deb, fin in zip(r[::2], r[1::2]):
                             self.tag_add_undoable(coul + "-overstrike", "sel.first", "sel.last")
@@ -516,8 +516,8 @@ class MyText(Text):
                 self.tag_remove_undoable(coul + "-underline", "sel.first", "sel.last")
             if not color == "black":
                 self.tag_add_undoable(color, "sel.first", "sel.last")
-                underline = text_ranges(self.txt, "underline", "sel.first", "sel.last")
-                overstrike = text_ranges(self.txt, "overstrike", "sel.first", "sel.last")
+                underline = text_ranges(self, "underline", "sel.first", "sel.last")
+                overstrike = text_ranges(self, "overstrike", "sel.first", "sel.last")
 
                 for deb, fin in zip(underline[::2], underline[1::2]):
                     self.tag_add_undoable(color + "-underline", deb, fin)
