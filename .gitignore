@@ -1,5 +1,6 @@
 *.pyc
 build/
+__pycache__
 dist/
 backup/
 latex/
@@ -9,3 +10,5 @@ mynotes.py
 mynoteslib/notes
 mynotes.egg-info
 mynotes.pid
+.coverage
+htmlcov/
