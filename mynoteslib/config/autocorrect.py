@@ -17,22 +17,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-The scroll.png image is a modified version of the slider-vert.png assets from
-the arc-theme https://github.com/horst3180/arc-theme
-Copyright 2015 horst3180 (https://github.com/horst3180)
-
-The icons are modified versions of icons from the elementary project
-(the xfce fork to be precise https://github.com/shimmerproject/elementary-xfce)
-Copyright 2007-2013 elementary LLC.
 
 Configuration window for autocorrect
 """
 
 
-from tkinter import StringVar, PhotoImage
+from tkinter import StringVar
 from tkinter.ttk import Treeview, Frame, Label, Button, Entry
-from mynoteslib.constants import CONFIG, AUTOCORRECT, IM_DELETE_16
-from mynoteslib.constants import save_config, fill, optionmenu_patch
+from mynoteslib.constants import AUTOCORRECT
+from mynoteslib.autoscrollbar import AutoScrollbar
 
 
 class AutoCorrectConfig(Frame):
@@ -46,6 +39,10 @@ class AutoCorrectConfig(Frame):
 
         self.tree = Treeview(self, columns=('replace', 'by'), show='',
                              selectmode='browse')
+        scroll_x = AutoScrollbar(self, orient='horizontal', command=self.tree.xview)
+        scroll_y = AutoScrollbar(self, orient='vertical', command=self.tree.yview)
+        self.tree.configure(xscrollcommand=scroll_x.set,
+                            yscrollcommand=scroll_y.set)
 
         self.reset()
 
@@ -66,14 +63,16 @@ class AutoCorrectConfig(Frame):
         self.b_rem.state(('disabled',))
         self.b_add.pack(pady=4, fill='x')
         self.b_rem.pack(pady=4, fill='x')
+        Button(b_frame, text=_('Reset'), command=self.reset).pack(pady=8, fill='x')
 
         Label(self, text=_('Replace')).grid(row=0, column=0, sticky='w', pady=4)
         Label(self, text=_('By')).grid(row=0, column=1, sticky='w', pady=4)
         Entry(self, textvariable=self.replace).grid(row=1, column=0, sticky='ew', pady=4, padx=(0, 4))
         Entry(self, textvariable=self.by).grid(row=1, column=1, sticky='ew', pady=4)
-        self.tree.grid(row=2, columnspan=2, sticky='ewsn', pady=4)
-        b_frame.grid(row=1, rowspan=2, padx=(4, 0), sticky='nw', column=2)
-        Button(self, text=_('Reset'), command=self.reset).grid(row=3, pady=4, columnspan=3)
+        self.tree.grid(row=2, columnspan=2, sticky='ewsn', pady=(4, 0))
+        scroll_x.grid(row=3, columnspan=2, sticky='ew', pady=(0, 4))
+        scroll_y.grid(row=2, column=2, sticky='ns', pady=(4, 0))
+        b_frame.grid(row=1, rowspan=2, padx=(4, 0), sticky='nw', column=3)
 
         self.tree.bind('<<TreeviewSelect>>', self._on_treeview_select)
 

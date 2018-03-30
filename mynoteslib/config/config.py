@@ -31,6 +31,7 @@ from mynoteslib.constants import CONFIG, save_config, COLORS, SYMBOLS, LATEX,\
     LANGUAGES, REV_LANGUAGES, TOOLKITS, AUTOCORRECT
 from mynoteslib.config.categories import CategoryManager
 from mynoteslib.config.autocorrect import AutoCorrectConfig
+from mynoteslib.autoscrollbar import AutoScrollbar
 from tkinter import font
 
 
@@ -41,9 +42,9 @@ class Config(Toplevel):
         Toplevel.__init__(self, master, class_='MyNotes')
         self.title(_("Preferences"))
         self.grab_set()
-        self.resizable(False, False)
         self.protocol("WM_DELETE_WINDOW", self.quit)
         self.changes = {}, {}, False
+        self.minsize(width=430, height=450)
 
         # --- style
         style = Style(self)
@@ -66,16 +67,16 @@ class Config(Toplevel):
         okcancel_frame = Frame(self)
         okcancel_frame.columnconfigure(0, weight=1)
         okcancel_frame.columnconfigure(1, weight=1)
+        okcancel_frame.pack(fill="x", side='bottom')
         self.notebook.pack(expand=True, fill="both")
-        okcancel_frame.pack(fill="x", expand=True)
 
         # --- * General settings
-        general_settings = Frame(self.notebook)
+        general_settings = Frame(self.notebook, padding=4)
         general_settings.columnconfigure(0, weight=1)
         self.notebook.add(general_settings, text=_("General"),
                           sticky="ewsn", padding=4)
 
-        # --- *-- language
+        # --- * ---- language
 
         self.lang = StringVar(self, LANGUAGES[CONFIG.get("General", "language")])
         lang_frame = Frame(general_settings)
@@ -87,7 +88,7 @@ class Config(Toplevel):
         for lang in LANGUAGES.values():
             menu_lang.add_radiobutton(variable=self.lang, label=lang,
                                       value=lang, command=self.translate)
-        # --- *-- gui toolkit
+        # --- * ---- gui toolkit
         self.gui = StringVar(self, CONFIG.get("General", "trayicon").capitalize())
         gui_frame = Frame(general_settings)
         Label(gui_frame,
@@ -104,7 +105,7 @@ class Config(Toplevel):
                                          value=toolkit.capitalize(),
                                          variable=self.gui,
                                          command=self.change_gui)
-        # --- *-- opacity
+        # --- * ---- opacity
         opacity_frame = Frame(general_settings)
         opacity_frame.columnconfigure(1, weight=1)
         self.opacity_scale = Scale(opacity_frame, orient="horizontal", length=200,
@@ -118,7 +119,7 @@ class Config(Toplevel):
         self.opacity_scale.grid(row=0, column=1, padx=(4, 50), pady=4)
         self.opacity_label.place(in_=self.opacity_scale, relx=1, rely=0.5,
                                  anchor="w", bordermode="outside")
-        # --- *-- position
+        # --- * ---- position
         frame_position = Frame(general_settings)
         self.position = StringVar(self, CONFIG.get("General", "position"))
         Label(frame_position,
@@ -132,7 +133,7 @@ class Config(Toplevel):
                     variable=self.position).grid(row=1, column=1)
         Radiobutton(frame_position, text=_("Normal"), value="normal",
                     variable=self.position).grid(row=1, column=2)
-        # --- *-- titlebar
+        # --- * ---- titlebar
         self.titlebar_disposition = StringVar(self, CONFIG.get("General",
                                                                "buttons_position"))
         font_title = "%s %s" % (CONFIG.get("Font", "title_family").replace(" ", "\ "),
@@ -176,7 +177,7 @@ class Config(Toplevel):
               font=font_title).pack(side="right", fill="x", expand=True)
         for ch in left.children.values():
             ch.bind("<Button-1>", select_left)
-        # --- *-- placement
+        # --- * ---- placement
         lang_frame.grid(sticky="w")
         Separator(general_settings,
                   orient="horizontal").grid(sticky="ew", pady=10)
@@ -198,12 +199,12 @@ class Config(Toplevel):
                    command=self.cleanup).grid(padx=4, pady=4, sticky='w')
 
         # --- * Font settings
-        font_settings = Frame(self.notebook)
-        font_settings.columnconfigure(0, weight=1)
+        font_settings = Frame(self.notebook, padding=4)
+        font_settings.columnconfigure(1, weight=1)
         self.notebook.add(font_settings, text=_("Font"),
                           sticky="ewsn", padding=4)
 
-        # --- *-- title
+        # --- * ---- title
         fonttitle_frame = Frame(font_settings)
 
         title_size = CONFIG.get("Font", "title_size")
@@ -254,7 +255,7 @@ class Config(Toplevel):
         self.is_italic.pack(side="left")
         self.is_underlined.pack(side="left")
 
-        # --- *-- text
+        # --- * ---- text
         size = CONFIG.get("Font", "text_size")
         family = CONFIG.get("Font", "text_family")
 
@@ -277,7 +278,7 @@ class Config(Toplevel):
         self.font_size.current(self.sizes.index(size))
         self.font_size.grid(row=0, column=1, padx=4, pady=4)
 
-        # --- *-- mono
+        # --- * ---- mono
         self.mono_fonts = [f for f in self.fonts if 'Mono' in f]
         mono_family = CONFIG.get("Font", "mono")
 
@@ -293,18 +294,20 @@ class Config(Toplevel):
         self.mono_family.current(self.mono_fonts.index(mono_family))
         self.mono_family.grid(row=0, column=0, padx=4, pady=4)
 
-        # --- *-- placement
+        # --- * ---- placement
         Label(font_settings,
-              text=_("Title")).grid(padx=4, pady=4, sticky="w")
-        fonttitle_frame.grid()
-        Separator(font_settings, orient="horizontal").grid(row=2, sticky="ew", pady=10)
+              text=_("Title")).grid(row=0, column=0, padx=4, pady=4, sticky="nw")
+        fonttitle_frame.grid(row=0, column=1, sticky="w", padx=20)
+        Separator(font_settings, orient="horizontal").grid(row=1, columnspan=2,
+                                                           sticky="ew", pady=10)
         Label(font_settings,
-              text=_("Text")).grid(padx=4, pady=4, sticky="w")
-        font_frame.grid()
-        Separator(font_settings, orient="horizontal").grid(row=2, sticky="ew", pady=10)
+              text=_("Text")).grid(row=2, column=0, padx=4, pady=4, sticky="nw")
+        font_frame.grid(row=2, column=1, sticky="w", padx=20)
+        Separator(font_settings, orient="horizontal").grid(row=3, columnspan=2,
+                                                           sticky="ew", pady=10)
         Label(font_settings,
-              text=_("Mono")).grid(padx=4, pady=4, sticky="w")
-        mono_frame.grid()
+              text=_("Mono")).grid(row=4, column=0, padx=4, pady=4, sticky="nw")
+        mono_frame.grid(row=4, column=1, sticky="w", padx=20)
         self.update_preview()
         self.update_preview_title()
 
@@ -313,18 +316,25 @@ class Config(Toplevel):
         self.notebook.add(self.category_settings, text=_("Categories"),
                           sticky="ewsn", padding=4)
         # --- * Symbols
-        symbols_settings = Frame(self.notebook)
+        symbols_settings = Frame(self.notebook, padding=4)
         self.notebook.add(symbols_settings, text=_("Symbols"),
                           sticky="ewsn", padding=4)
         txt_frame = Frame(symbols_settings, relief="sunken", borderwidth=1,
                           style="text.TFrame")
+        txt_frame.rowconfigure(0, weight=1)
+        txt_frame.columnconfigure(0, weight=1)
         self.symbols = Text(txt_frame, width=1, height=1, highlightthickness=0,
                             spacing2=5, spacing1=5, relief="flat", padx=4, pady=4,
                             font="%s %s" % (family.replace(" ", "\ "), size))
+        scroll_y = AutoScrollbar(txt_frame, orient='vertical',
+                                 command=self.symbols.yview)
+        self.symbols.configure(yscrollcommand=scroll_y.set)
+
         self.symbols.insert("1.0", CONFIG.get("General", "symbols"))
         Label(symbols_settings, text=_("Available symbols")).pack(padx=4, pady=4)
         txt_frame.pack(fill="both", expand=True, padx=4, pady=4)
-        self.symbols.pack(fill="both", expand=True)
+        self.symbols.grid(sticky='ewns')
+        scroll_y.grid(row=0, column=1, sticky='ns')
         Button(symbols_settings, text=_('Reset'),
                command=self.reset_symbols).pack(padx=4, pady=4)
 
