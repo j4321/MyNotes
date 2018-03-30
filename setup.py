@@ -52,4 +52,4 @@ can be inserted in the notes. The style of the text can be changed
 """,
       requires=["tkinter", "sys", "os", "locale", "gettext", 're', 'pillow',
                 'configparser', 'subprocess', 'time', 'shutil', 'html',
-                'pickle', 'setuptools', 'ewmh'])
+                'pickle', 'setuptools', 'ewmh', 'easywebdav', 'ftplib'])
