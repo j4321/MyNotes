@@ -21,11 +21,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Category Manager
 """
 
-from tkinter import StringVar, PhotoImage, Toplevel
-from mynoteslib.constants import CONFIG, COLORS, INV_COLORS, IM_PLUS, IM_MOINS
+from tkinter import StringVar, PhotoImage, Toplevel, Text
+from mynoteslib.constants import CONFIG, COLORS, INV_COLORS, IM_PLUS, IM_DELETE
 from mynoteslib.constants import save_config, fill, optionmenu_patch
 from tkinter.ttk import Label, Button, OptionMenu, Style, Separator, Entry, Frame
 from mynoteslib.messagebox import askyesnocancel
+from mynoteslib.autoscrollbar import AutoScrollbar
 
 
 class CategoryManager(Frame):
@@ -33,8 +34,9 @@ class CategoryManager(Frame):
 
     def __init__(self, master, app, **kwargs):
         """Create category manager."""
-        Frame.__init__(self, master, **kwargs)
+        Frame.__init__(self, master, padding=4, **kwargs)
         self.columnconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
 
         self.app = app
 
@@ -42,7 +44,7 @@ class CategoryManager(Frame):
         self.style.theme_use("clam")
 
         self.im_plus = PhotoImage(file=IM_PLUS)
-        self.im_moins = PhotoImage(file=IM_MOINS)
+        self.im_delete = PhotoImage(file=IM_DELETE)
 
         # --- Default category
         self.frame_def_cat = Frame(self)
@@ -63,7 +65,24 @@ class CategoryManager(Frame):
         self.def_cat_menu.grid(row=0, column=1, sticky="w", padx=4, pady=4)
 
         # --- Category colors, names ...
-        self.frame_cat = Frame(self)
+        style = Style(self)
+        style.configure('txt.TFrame', relief='ridge', border=2)
+        bg = style.lookup('TFrame', 'background')
+        frame = Frame(self, style='txt.TFrame', padding=1)
+        frame.columnconfigure(0, weight=1)
+        frame.rowconfigure(0, weight=1)
+        txt = Text(frame, width=1, height=1, bg=bg, relief='flat',
+                   highlightthickness=0, padx=6, pady=6, cursor='arrow')
+        scroll_x = AutoScrollbar(frame, orient='horizontal', command=txt.xview)
+        scroll_y = AutoScrollbar(frame, orient='vertical', command=txt.yview)
+        txt.configure(xscrollcommand=scroll_x.set, yscrollcommand=scroll_y.set)
+
+        txt.grid(row=0, column=0, sticky='ewns')
+        scroll_x.grid(row=1, column=0, sticky='ew')
+        scroll_y.grid(row=0, column=1, sticky='ns')
+
+        self.frame_cat = Frame(txt)
+        txt.window_create('1.0', window=self.frame_cat)
         self.colors = list(COLORS.keys())
         self.colors.sort()
         self.images = []
@@ -89,22 +108,19 @@ class CategoryManager(Frame):
             optionmenu_patch(self.cat_menus[cat], self.cat_colors[cat])
             self.style.configure("%s.TMenubutton" % cat, background=color)
             self.cat_menus[cat].grid(row=i + 2, column=1, sticky="w", padx=4, pady=4)
-            self.cat_buttons[cat] = Button(self.frame_cat, image=self.im_moins,
+            self.cat_buttons[cat] = Button(self.frame_cat, image=self.im_delete,
+                                           padding=1,
                                            command=lambda c=cat: self.del_cat(c))
             self.cat_buttons[cat].grid(row=i + 2, column=2, padx=4, pady=4)
-
-        self.add_cat_button = Button(self.frame_cat, image=self.im_plus,
-                                     command=self.add_cat)
-        self.add_cat_button.grid(row=i + 3, column=0, pady=(0, 4))
 
         if len(self.categories) == 1:
             self.cat_buttons[self.categories[0]].configure(state="disabled")
 
         # --- placement
-        self.frame_def_cat.grid(row=0, column=0, sticky="eswn")
-        Separator(self, orient="horizontal").grid(row=1, columnspan=3,
-                                                  pady=10, sticky="ew")
-        self.frame_cat.grid(row=2, column=0, sticky="eswn")
+        self.frame_def_cat.grid(row=0, column=0, sticky="eswn", pady=4)
+        frame.grid(row=1, column=0, sticky="eswn")
+        Button(self, image=self.im_plus,
+               command=self.add_cat).grid(row=2, column=0, sticky='w', pady=8)
 
     def change_name(self, event):
         """Change category name."""
@@ -195,8 +211,7 @@ effect immediately and cannot be undone.") % {"category": category})
             cats = [l.cget('text').lower() for l in self.cat_labels.values()]
             cat = name.get().strip().lower()
             if cat and cat not in cats:
-                i = self.add_cat_button.grid_info()['row']
-                self.add_cat_button.grid_configure(row=i + 1)
+                c, i = self.frame_cat.grid_size()
                 self.cat_labels[cat] = Label(self.frame_cat,
                                              text="%s" % cat.capitalize())
                 self.cat_labels[cat].grid(row=i, column=0, sticky="e")
@@ -208,7 +223,8 @@ effect immediately and cannot be undone.") % {"category": category})
                 self.style.configure("%s.TMenubutton" % cat, background=COLORS[_("Yellow")])
                 optionmenu_patch(self.cat_menus[cat], self.cat_colors[cat])
                 self.cat_menus[cat].grid(row=i, column=1, padx=4, pady=4)
-                self.cat_buttons[cat] = Button(self.frame_cat, image=self.im_moins,
+                self.cat_buttons[cat] = Button(self.frame_cat, image=self.im_delete,
+                                               padding=1,
                                                command=lambda c=cat: self.del_cat(c))
                 self.cat_buttons[cat].grid(row=i, column=2, padx=4, pady=4)
                 self.cat_buttons[self.categories[0]].configure(state="normal")
@@ -220,6 +236,7 @@ effect immediately and cannot be undone.") % {"category": category})
         name = Entry(top, justify="center")
         name.grid(row=0, column=0, columnspan=2, sticky="ew")
         name.bind("<Return>", valide)
+        name.bind("<Escape>", lambda e: top.destroy())
         name.focus_set()
         Button(top, text="Ok", command=valide).grid(row=1, column=0, sticky="nswe")
         Button(top, text=_("Cancel"),
