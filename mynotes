@@ -27,8 +27,9 @@ import sys
 import traceback
 from tkinter import Tk
 from tkinter.ttk import Style
-from mynoteslib.constantes import save_config, PIDFILE
+from mynoteslib.constants import save_config, PIDFILE, CONFIG
 from mynoteslib.app import App
+from mynoteslib.sync import upload_to_server
 from mynoteslib.messagebox import showerror
 import logging
 
@@ -59,6 +60,8 @@ finally:
     try:
         app.save()
         save_config()
+        if CONFIG.getboolean("Sync", "on"):
+            upload_to_server(app.get_password(), app.get_time())
         os.unlink(PIDFILE)
         logging.shutdown()
     except Exception:

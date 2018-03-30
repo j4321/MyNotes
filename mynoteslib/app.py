@@ -34,12 +34,13 @@ import traceback
 from shutil import copy
 import pickle
 from mynoteslib.trayicon import TrayIcon, SubMenu
-from mynoteslib.constantes import CONFIG, PATH_DATA, PATH_DATA_BACKUP,\
+from mynoteslib.constants import CONFIG, PATH_DATA, PATH_DATA_BACKUP,\
     LOCAL_PATH, backup, asksaveasfilename, askopenfilename, COLORS, \
     IM_SCROLL_ALPHA, IM_VISIBLE, IM_HIDDEN, save_modif_info
-import mynoteslib.constantes as cst
+import mynoteslib.constants as cst
 from mynoteslib.config import Config
-from mynoteslib.sync import download_from_server, check_login_info, warn_exist_remote
+from mynoteslib.sync import download_from_server, check_login_info, \
+    warn_exist_remote, EASYWEBDAV
 from mynoteslib.export import Export
 from mynoteslib.sticky import Sticky
 from mynoteslib.about import About
@@ -157,7 +158,7 @@ class App(Tk):
         self.link_clipboard = {}
 
         # --- Mono font
-        # tkinter.font.families needs a GUI so cannot be run in constantes.py
+        # tkinter.font.families needs a GUI so cannot be run in constants.py
         if not CONFIG.get('Font', 'mono'):
             fonts = [f for f in families() if 'Mono' in f]
             if 'FreeMono' in fonts:
@@ -206,20 +207,24 @@ class App(Tk):
         self.password = ""
 
         if CONFIG.getboolean("Sync", "on"):
-            self.get_server_pwd()
-            if self.password:
-                while (not check_login_info(self.password)) and self.password:
-                    self.get_server_login()
+            server_type = CONFIG.get("Sync", "server_type")
+            if (server_type == "WebDav" and EASYWEBDAV) or server_type == "FTP":
+                self.get_server_pwd()
                 if self.password:
-                    self.configure(cursor="watch")
-                    res = download_from_server(self.password)
-                    if not res:
-                        showinfo(_("Information"),
-                                 _("There was an error during the synchronization so synchronization has been disabled."))
-                        CONFIG.set("Sync", "on", "False")
+                    while (not check_login_info(self.password)) and self.password:
+                        self.get_server_login()
+                    if self.password:
+                        self.configure(cursor="watch")
+                        res = download_from_server(self.password)
+                        if not res:
+                            showinfo(_("Information"),
+                                     _("There was an error during the synchronization so synchronization has been disabled."))
+                            CONFIG.set("Sync", "on", "False")
+                else:
+                    showinfo(_("Information"),
+                             _("No password has been given so synchronization has been disabled."))
+                    CONFIG.set("Sync", "on", "False")
             else:
-                showinfo(_("Information"),
-                         _("No password has been given so synchronization has been disabled."))
                 CONFIG.set("Sync", "on", "False")
         self.time = time.time()
 
@@ -890,12 +895,14 @@ class App(Tk):
 
         top = Toplevel(self)
         top.title(_("Sync"))
+        top.update_idletasks()
         top.grab_set()
-        top.resizable(False, False)
+        top.resizable(True, False)
+        top.columnconfigure(1, weight=1)
 
-        user = Entry(top)
+        user = Entry(top, width=20)
         user.insert(0, CONFIG.get("Sync", "username"))
-        pwd = Entry(top, show="*")
+        pwd = Entry(top, show="*", width=20)
 
         ch = Checkbutton(top, text=_("Synchronize notes with server"), command=toggle)
         ch.state(("selected",))
@@ -904,8 +911,8 @@ class App(Tk):
                                             sticky='e')
         Label(top, text=_("Password")).grid(row=2, column=0, padx=4, pady=4,
                                             sticky='e')
-        user.grid(row=1, column=1, padx=4, pady=4)
-        pwd.grid(row=2, column=1, padx=4, pady=4)
+        user.grid(row=1, column=1, padx=4, pady=4, sticky='ew')
+        pwd.grid(row=2, column=1, padx=4, pady=4, sticky='ew')
         Button(top, text="Ok", command=ok).grid(row=3, columnspan=2)
         pwd.bind("<Return>", ok)
         pwd.focus_set()

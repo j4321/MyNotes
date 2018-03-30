@@ -21,7 +21,7 @@ System tray icon.
 """
 
 
-from mynoteslib.constantes import GUI
+from mynoteslib.constants import GUI
 
 if GUI == 'gtk':
     from mynoteslib.trayicon.gtkicon import TrayIcon, SubMenu

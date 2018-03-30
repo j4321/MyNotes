@@ -12,6 +12,7 @@ Changelog
     * Refocus on note after LaTeX/link/image insertion
     * Improve note manager: group deletion, change category, visibility
     * Add AutoCorrect feature: automatic replacement of text (e.g. -> becomes →)
+    * Re-create missing LaTeX formulas
 
 - Version 2.3.1
     * Fix menu for tk GUI toolkit

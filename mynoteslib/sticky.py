@@ -29,7 +29,7 @@ from PIL.ImageTk import PhotoImage
 import os
 import re
 from time import strftime
-from mynoteslib.constantes import TEXT_COLORS, askopenfilename,\
+from mynoteslib.constants import TEXT_COLORS, askopenfilename,\
     PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK, IM_CLIP, sorting,\
     math_to_image, EWMH, INV_COLORS
 from mynoteslib.autoscrollbar import AutoScrollbar
@@ -54,6 +54,9 @@ class Sticky(Toplevel):
         """
         Toplevel.__init__(self, master, class_='MyNotes')
         self.withdraw()
+
+        self.x = None
+        self.y = None
 
         # --- window properties
         self.id = key
@@ -259,6 +262,8 @@ class Sticky(Toplevel):
         indexes = list(kwargs.get("inserted_objects", {}).keys())
         indexes.sort(key=sorting)
 
+        latex_data = kwargs.get("latex", {})
+
         for index in indexes:
             kind, val = kwargs["inserted_objects"][index]
             if kind == "checkbox":
@@ -274,6 +279,15 @@ class Sticky(Toplevel):
                                           image=self.images[-1],
                                           align='bottom',
                                           name=val)
+                else:
+                    path, img = os.path.split(val)
+                    if LATEX and path == PATH_LATEX and img in latex_data:
+                        math_to_image(latex_data[img], val,
+                                      fontsize=CONFIG.getint("Font", "text_size") - 2)
+                        self.images.append(PhotoImage(file=val, master=self))
+                        self.txt.image_create(index, image=self.images[-1],
+                                              align='bottom', name=val)
+                        self.txt.tag_add(img, index)
 
         # restore tags
         for tag, indices in kwargs.get("tags", {}).items():
@@ -292,11 +306,12 @@ class Sticky(Toplevel):
                               "<Double-Button-1>",
                               lambda e, lnb=self.nb_links: self.edit_link(lnb))
 
-        for img, latex in kwargs.get("latex", {}).items():
+        for img, latex in latex_data.items():
             self.txt.latex[img] = latex
             if LATEX:
                 self.txt.tag_bind(img, '<Double-Button-1>',
                                   lambda e, im=img: self.add_latex(im))
+
         mode = self.mode.get()
         if mode != "note":
             self.txt.tag_add(mode, "1.0", "end")
@@ -1011,7 +1026,7 @@ class Sticky(Toplevel):
         self.txt.tag_bind(img, '<Double-Button-1>',
                           lambda e: self.add_latex(img))
         im = os.path.join(PATH_LATEX, img)
-        math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
+        math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size") - 2)
         self.images.append(PhotoImage(file=im, master=self))
         self.txt.latex_create_undoable(index, img, self.images[-1], latex)
         self.txt.tag_add_undoable(img, index)

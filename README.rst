@@ -35,6 +35,7 @@ Install
         - Tkinter (Python wrapper for Tk)
         - Tktray https://code.google.com/archive/p/tktray/downloads
         - ewmh https://pypi.python.org/pypi/ewmh
+        - optional dependency: matplotlib + texlive for basic LaTeX formula support
     For instance, in Ubuntu/Debian you will need to install the following packages:
     python3-tk, tk-tktray, python3-ewmh (available in >= 17.04 only),
     python3-pil, python3-pil.imagetk
