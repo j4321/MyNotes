@@ -9,6 +9,6 @@ before_install:
   - sleep 3
 install:
   - sudo apt-get install python3-tk tk-tktray gettext python3-setuptools python3-pil python3-pil.imagetk
-  - python3 -m pip install --update nose coverage ewmh pillow
+  - python3 -m pip install nose coverage ewmh pillow
 script:
   - python -m nose --with-coverage
