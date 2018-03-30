@@ -23,7 +23,7 @@ About dialog
 from webbrowser import open as webOpen
 from tkinter import Text, Toplevel, PhotoImage
 from tkinter.ttk import Button, Label, Style
-from mynoteslib.constantes import IM_ICON_48
+from mynoteslib.constants import IM_ICON_48
 from mynoteslib.version import __version__
 
 

@@ -24,7 +24,7 @@ Text class with improved undo/redo
 from tkinter import Text, TclError
 from tkinter.font import Font
 from tkinter.ttk import Checkbutton
-from mynoteslib.constantes import sorting, CONFIG, TEXT_COLORS, PATH_LATEX, \
+from mynoteslib.constants import sorting, CONFIG, TEXT_COLORS, PATH_LATEX, \
     AUTOCORRECT, text_ranges
 import os
 import re

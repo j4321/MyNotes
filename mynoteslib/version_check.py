@@ -29,8 +29,7 @@ from html.parser import HTMLParser
 from webbrowser import open as webOpen
 from tkinter import Toplevel, PhotoImage
 from tkinter.ttk import Label, Button, Frame, Checkbutton
-from mynoteslib.constantes import CONFIG, save_config
-from mynoteslib.messagebox import IM_QUESTION_DATA
+from mynoteslib.constants import CONFIG, save_config, IM_QUESTION_DATA
 from mynoteslib.version import __version__
 
 

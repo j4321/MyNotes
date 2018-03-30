@@ -29,7 +29,7 @@ from PIL.ImageTk import PhotoImage
 import os
 import re
 from time import strftime
-from mynoteslib.constantes import TEXT_COLORS, askopenfilename,\
+from mynoteslib.constants import TEXT_COLORS, askopenfilename,\
     PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK, IM_CLIP, sorting,\
     math_to_image, EWMH, INV_COLORS
 from mynoteslib.autoscrollbar import AutoScrollbar

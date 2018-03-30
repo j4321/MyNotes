@@ -31,8 +31,8 @@ Configuration window for autocorrect
 
 from tkinter import StringVar, PhotoImage
 from tkinter.ttk import Treeview, Frame, Label, Button, Entry
-from mynoteslib.constantes import CONFIG, AUTOCORRECT, IM_DELETE_16
-from mynoteslib.constantes import save_config, fill, optionmenu_patch
+from mynoteslib.constants import CONFIG, AUTOCORRECT, IM_DELETE_16
+from mynoteslib.constants import save_config, fill, optionmenu_patch
 
 
 class AutoCorrectConfig(Frame):

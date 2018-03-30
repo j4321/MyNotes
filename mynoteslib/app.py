@@ -33,10 +33,10 @@ import traceback
 from shutil import copy
 import pickle
 from mynoteslib.trayicon import TrayIcon, SubMenu
-from mynoteslib.constantes import CONFIG, PATH_DATA, PATH_DATA_BACKUP,\
+from mynoteslib.constants import CONFIG, PATH_DATA, PATH_DATA_BACKUP,\
     LOCAL_PATH, backup, asksaveasfilename, askopenfilename, COLORS, \
     IM_SCROLL_ALPHA, IM_VISIBLE, IM_HIDDEN
-import mynoteslib.constantes as cst
+import mynoteslib.constants as cst
 from mynoteslib.config import Config
 from mynoteslib.export import Export
 from mynoteslib.sticky import Sticky
@@ -155,7 +155,7 @@ class App(Tk):
         self.link_clipboard = {}
 
         # --- Mono font
-        # tkinter.font.families needs a GUI so cannot be run in constantes.py
+        # tkinter.font.families needs a GUI so cannot be run in constants.py
         if not CONFIG.get('Font', 'mono'):
             fonts = [f for f in families() if 'Mono' in f]
             if 'FreeMono' in fonts:
