@@ -434,7 +434,7 @@ try:
     from matplotlib.image import imsave
     parser = MathTextParser('bitmap')
     LATEX = True
-except ImportError:
+except Exception:
     LATEX = False
 
 
