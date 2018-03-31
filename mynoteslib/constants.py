@@ -52,6 +52,7 @@ from subprocess import check_output, CalledProcessError
 from tkinter import Text
 import ewmh
 import warnings
+from PIL import Image, ImageDraw
 
 
 EWMH = ewmh.EWMH()
@@ -426,6 +427,13 @@ def active_color(color, output='HTML'):
         return (round(r), round(g), round(b))
 
 
+def color_box(color):
+    im = Image.new('RGBA', (18, 16), (0,0,0,0))
+    draw = ImageDraw.Draw(im)
+    draw.rectangle([3, 3, 13, 13], color, 'black')
+    return im
+
+
 # --- latex (optional):  insertion of latex formulas via matplotlib
 try:
     from matplotlib import rc
@@ -559,14 +567,6 @@ def asksaveasfilename(defaultextension, filetypes, initialdir=".", initialfile="
 
 
 # --- miscellaneous functions
-def fill(image, color):
-    """Fill image with a color=#hex."""
-    width = image.width()
-    height = image.height()
-    horizontal_line = "{" + " ".join([color] * width) + "}"
-    image.put(" ".join([horizontal_line] * height))
-
-
 def sorting(index):
     """Sorting key for text indexes."""
     line, char = index.split(".")

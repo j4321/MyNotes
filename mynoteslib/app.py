@@ -35,7 +35,7 @@ import pickle
 from mynoteslib.trayicon import TrayIcon, SubMenu
 from mynoteslib.constants import CONFIG, PATH_DATA, PATH_DATA_BACKUP,\
     LOCAL_PATH, backup, asksaveasfilename, askopenfilename, COLORS, \
-    IM_SCROLL_ALPHA, IM_VISIBLE, IM_HIDDEN
+    IM_SCROLL_ALPHA, IM_VISIBLE, IM_HIDDEN, TEXT_COLORS, color_box
 import mynoteslib.constants as cst
 from mynoteslib.config import Config
 from mynoteslib.export import Export
@@ -61,6 +61,14 @@ class App(Tk):
         self.iconphoto(True, self.im_icon)
         self.im_visible = PhotoImage(file=IM_VISIBLE, master=self)
         self.im_hidden = PhotoImage(file=IM_HIDDEN, master=self)
+
+        # color boxes for menus
+        self.im_text_color = {}
+        for name, value in TEXT_COLORS.items():
+            self.im_text_color[name] = PhotoImage(color_box(value), master=self)
+        self.im_color = {}
+        for name, value in COLORS.items():
+            self.im_color[name] = PhotoImage(color_box(value), master=self)
 
         style = Style(self)
         style.theme_use("clam")

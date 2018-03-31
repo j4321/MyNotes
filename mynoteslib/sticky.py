@@ -26,6 +26,7 @@ from tkinter import Toplevel, StringVar, Menu, TclError
 from tkinter.ttk import  Style, Sizegrip, Entry, Label, Button, Frame
 from tkinter.font import Font
 from PIL.ImageTk import PhotoImage
+from PIL import Image
 import os
 import re
 from time import strftime
@@ -142,8 +143,10 @@ class Sticky(Toplevel):
         colors = list(COLORS.keys())
         colors.sort()
         for coul in colors:
-            menu_note_color.add_command(label=coul,
-                                           command=lambda key=coul: self.change_color(key))
+            menu_note_color.add_command(label=coul, image=self.master.im_color[coul],
+                                        compound='left',
+                                        command=lambda key=coul: self.change_color(key))
+
         # category
         self.category = StringVar(self, kwargs.get("category",
                                                    CONFIG.get("General",
@@ -229,7 +232,8 @@ class Sticky(Toplevel):
         colors = list(TEXT_COLORS.keys())
         colors.sort()
         for coul in colors:
-            menu_colors.add_command(label=coul,
+            menu_colors.add_command(label=coul, image=self.master.im_text_color[coul],
+                                    compound='left',
                                     command=lambda key=coul: self.txt.change_sel_color(TEXT_COLORS[key]))
 
         # insert
