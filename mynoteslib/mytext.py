@@ -360,13 +360,13 @@ class MyText(Text):
             if self.mode == "list":
                 self.add_undo_sep()
                 self.insert_undoable("insert", "\n\t•\t")
-                self.tag_add_undoable("list", "1.0", "end")
+                self.tag_add("list", "1.0", "end")
                 self.add_undo_sep()
             elif self.mode == "todolist":
                 self.add_undo_sep()
                 self.insert_undoable("insert", "\n")
                 self.checkbox_create_undoable("insert", ('!alternate',))
-                self.tag_add_undoable("todolist", "1.0", "end")
+                self.tag_add("todolist", "1.0", "end")
                 self.add_undo_sep()
             elif self.mode == "enum":
                 self.add_undo_sep()

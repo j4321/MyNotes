@@ -208,7 +208,7 @@ class Manager(Toplevel):
         else:
             if key in self.master.notes:
                 self.master.notes[key].hide()
-        self.grab_set()
+        self.after(4, self.grab_set)
 
     def display_note(self, key, note_data):
         """Display note in note manager."""
