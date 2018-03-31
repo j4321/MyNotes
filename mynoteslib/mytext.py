@@ -157,6 +157,7 @@ class MyText(Text):
                 self._undo_single(item)
             if not self._undo_stack:
                 self._undo_stack.append([])
+            print(self.mode, [(t, self.tag_ranges(t)) for t in self.tag_names() if self.tag_ranges(t)])
         return "break"
 
     def redo(self, event=None):
@@ -321,12 +322,12 @@ class MyText(Text):
                     update = False
                 self.delete_undoable("sel.first", "sel.last")
                 if update:
-                    self.master.update_enum()
+                    self.update_enum()
             elif self.index("insert") != "1.0":
                 if re.match('^\t[0-9]+\.\t$', deb_line) and 'enum' in tags:
                     self.delete_undoable("insert linestart", "insert")
                     self.insert_undoable("insert", "\t\t")
-                    self.master.update_enum()
+                    self.update_enum()
                 elif deb_line == "\t•\t" and 'list' in tags:
                     self.delete_undoable("insert linestart", "insert")
                     self.insert_undoable("insert", "\t\t")
@@ -371,7 +372,7 @@ class MyText(Text):
             elif self.mode == "enum":
                 self.add_undo_sep()
                 self.insert_undoable("insert", "\n\t0.\t")
-                self.master.update_enum()
+                self.update_enum()
                 self.add_undo_sep()
             else:
                 self.insert_undoable("insert", "\n")
@@ -614,5 +615,5 @@ class MyText(Text):
         for j, (i, end) in enumerate(indexes):
             self.delete_undoable("%i.0" % (i + 1), "%i.%i" % (i + 1, end))
             self.insert_undoable("%i.0" % (i + 1), "\t%i.\t" % (j + 1))
-        self.tag_add_undoable("enum", "1.0", "end")
+        self.tag_add("enum", "1.0", "end")
         self.add_undo_sep()
