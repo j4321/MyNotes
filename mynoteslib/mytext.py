@@ -475,35 +475,43 @@ class MyText(Text):
             self.add_undo_sep()
             if "underline" in current_tags:
                 # first char is in style so 'unstyle' the range
-                self.tag_remove_undoable("underline", "sel.first", "sel.last")
+                tag_ranges = text_ranges(self, "underline", "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable("underline", d, f)
                 for coul in TEXT_COLORS.values():
-                    self.tag_remove_undoable(coul + "-underline", "sel.first", "sel.last")
+                    tag_ranges = text_ranges(self, coul + "-underline", "sel.first", "sel.last")
+                    for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                        self.tag_remove_undoable(coul + "-underline", d, f)
             else:
                 self.tag_add_undoable("underline", "sel.first", "sel.last")
                 for coul in TEXT_COLORS.values():
                     r = text_ranges(self, coul, "sel.first", "sel.last")
                     if r:
                         for deb, fin in zip(r[::2], r[1::2]):
-                            self.tag_add_undoable(coul + "-underline", "sel.first", "sel.last")
+                            self.tag_add_undoable(coul + "-underline", deb, fin)
             self.add_undo_sep()
 
     def toggle_overstrike(self):
         """Toggle overstrike property of the selected text."""
         if self.tag_ranges("sel"):
-            self.add_undo_sep()
             current_tags = self.tag_names("sel.first")
+            self.add_undo_sep()
             if "overstrike" in current_tags:
                 # first char is in style so 'unstyle' the range
-                self.tag_remove_undoable("overstrike", "sel.first", "sel.last")
+                tag_ranges = text_ranges(self, "overstrike", "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable("overstrike", d, f)
                 for coul in TEXT_COLORS.values():
-                    self.tag_remove_undoable(coul + "-overstrike", "sel.first", "sel.last")
+                    tag_ranges = text_ranges(self, coul + "-overstrike", "sel.first", "sel.last")
+                    for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                        self.tag_remove_undoable(coul + "-overstrike", d, f)
             else:
                 self.tag_add_undoable("overstrike", "sel.first", "sel.last")
                 for coul in TEXT_COLORS.values():
                     r = text_ranges(self, coul, "sel.first", "sel.last")
                     if r:
                         for deb, fin in zip(r[::2], r[1::2]):
-                            self.tag_add_undoable(coul + "-overstrike", "sel.first", "sel.last")
+                            self.tag_add_undoable(coul + "-overstrike", deb, fin)
             self.add_undo_sep()
 
     def change_sel_color(self, color):
