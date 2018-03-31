@@ -118,6 +118,21 @@ class MyText(Text):
         self.tag_bind("link", "<Leave>",
                       lambda event: self.configure(cursor=""))
 
+    def update_font(self):
+        """Update font after configuration change."""
+        size = CONFIG.get("Font", "text_size")
+        font = "%s %s" % (CONFIG.get("Font", "text_family").replace(" ", "\ "),
+                          size)
+        mono = "%s %s" % (CONFIG.get("Font", "mono").replace(" ", "\ "), size)
+        self.configure(font=font)
+        self.tag_configure("mono", font=mono)
+        self.tag_configure("bold", font="%s bold" % font)
+        self.tag_configure("italic", font="%s italic" % font)
+        self.tag_configure("bold-italic", font="%s bold italic" % font)
+        margin = 2 * Font(self, font=font).measure("m")
+        self.tag_configure("enum", lmargin1=0, lmargin2=margin + 5,
+                           tabs=(margin, 'right', margin + 5, 'left'))
+
     def mode_change(self, new_mode):
         self._undo_stack[-1].append(('mode', self.mode, new_mode))
         self.mode = new_mode

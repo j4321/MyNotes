@@ -788,18 +788,7 @@ class Sticky(Toplevel):
 
     def update_text_font(self):
         """Update text font after configuration change."""
-        size = CONFIG.get("Font", "text_size")
-        font = "%s %s" %(CONFIG.get("Font", "text_family").replace(" ", "\ "),
-                         size)
-        mono = "%s %s" % (CONFIG.get("Font", "mono").replace(" ", "\ "), size)
-        self.txt.configure(font=font)
-        self.txt.tag_configure("mono", font=mono)
-        self.txt.tag_configure("bold", font="%s bold" % font)
-        self.txt.tag_configure("italic", font="%s italic" % font)
-        self.txt.tag_configure("bold-italic", font="%s bold italic" % font)
-        margin = 2*Font(self, font=font).measure("m")
-        self.txt.tag_configure("enum", lmargin1=0, lmargin2=margin + 5,
-                               tabs=(margin, 'right', margin + 5, 'left'))
+        self.txt.update_font()
 
     def update_menu_cat(self, categories):
         """Update the category submenu."""
