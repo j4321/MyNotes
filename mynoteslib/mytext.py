@@ -463,24 +463,48 @@ class MyText(Text):
         if self.tag_ranges("sel"):
             current_tags = self.tag_names("sel.first")
             self.add_undo_sep()
+            # remove tag
             if style in current_tags:
                 # first char is in style so 'unstyle' the range
-                self.tag_remove_undoable(style, "sel.first", "sel.last")
+                tag_ranges = text_ranges(self, style, "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable(style, d, f)
+                tag_ranges = text_ranges(self, "bold-italic", "sel.first", "sel.last")
+                style2 = "bold" if style is "italic" else "italic"
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable("bold-italic", d, f)
+                    self.tag_add_undoable(style2, d, f)
             elif style is "bold" and "bold-italic" in current_tags:
-                self.tag_remove_undoable("bold-italic", "sel.first", "sel.last")
-                self.tag_add_undoable("italic", "sel.first", "sel.last")
+                tag_ranges = text_ranges(self, "bold-italic", "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable("bold-italic", d, f)
+                    self.tag_add_undoable("italic", d, f)
+                tag_ranges = text_ranges(self, "bold", "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable("bold", d, f)
             elif style is "italic" and "bold-italic" in current_tags:
-                self.tag_remove_undoable("bold-italic", "sel.first", "sel.last")
+                tag_ranges = text_ranges(self, "bold-italic", "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable("bold-italic", d, f)
+                    self.tag_add_undoable("bold", d, f)
+                tag_ranges = text_ranges(self, "italic", "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable("italic", d, f)
+            # add tag
+            elif style is "bold":
                 self.tag_add_undoable("bold", "sel.first", "sel.last")
-            elif style is "bold" and "italic" in current_tags:
-                self.tag_remove_undoable("italic", "sel.first", "sel.last")
-                self.tag_add_undoable("bold-italic", "sel.first", "sel.last")
-            elif style is "italic" and "bold" in current_tags:
-                self.tag_remove_undoable("bold", "sel.first", "sel.last")
-                self.tag_add_undoable("bold-italic", "sel.first", "sel.last")
-            else:
-                # first char is normal, so apply style to the whole selection
-                self.tag_add_undoable(style, "sel.first", "sel.last")
+                tag_ranges = text_ranges(self, "italic", "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_add_undoable("bold-italic", d, f)
+                    self.tag_remove_undoable("italic", d, f)
+                    self.tag_remove_undoable("bold", d, f)
+            elif style is "italic":
+                self.tag_add_undoable("italic", "sel.first", "sel.last")
+                tag_ranges = text_ranges(self, "bold", "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_add_undoable("bold-italic", d, f)
+                    self.tag_remove_undoable("italic", d, f)
+                    self.tag_remove_undoable("bold", d, f)
             self.add_undo_sep()
 
     def toggle_underline(self):
