@@ -157,7 +157,6 @@ class MyText(Text):
                 self._undo_single(item)
             if not self._undo_stack:
                 self._undo_stack.append([])
-            print(self.mode, [(t, self.tag_ranges(t)) for t in self.tag_names() if self.tag_ranges(t)])
         return "break"
 
     def redo(self, event=None):
@@ -587,7 +586,6 @@ class MyText(Text):
         else:
             deb = self.index("insert linestart")
             fin = self.index("insert lineend")
-        print(alignment, deb, fin)
         if "\t" not in self.get(deb, fin):
             self.add_undo_sep()
             # tabulations don't support right/center alignment

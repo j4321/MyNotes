@@ -410,6 +410,7 @@ class App(Tk):
                         txt.update_idletasks()
                     else:
                         char, tags = c[1]
+                        print(char)
                         link = [t for t in tags if 'link#' in t]
                         if link:
                             tags = list(tags)

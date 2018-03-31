@@ -580,45 +580,69 @@ class Sticky(Toplevel):
         self.txt.add_undo_sep()
         self.txt.mode_change('note')
         tags = self.txt.tag_names('1.0')
+        end = int(self.txt.index("end").split(".")[0])
         if "list" in tags:
             self.txt.tag_remove_undoable("list", "1.0", "end")
-        if "todolist" in tags:
+            for i in range(1, end):
+                if self.txt.get("%i.0"  % i, "%i.3"  % i) == "\t•\t":
+                    self.txt.delete_undoable("%i.0"  % i, "%i.3"  % i)
+        elif "todolist" in tags:
             self.txt.tag_remove_undoable("todolist", "1.0", "end")
-        if "enum" in tags:
+            for i in range(1, end):
+                try:
+                    ch = self.txt.window_cget("%i.0"  % i, "window")
+                    self.txt.delete_undoable("%i.0"  % i)
+                    self.txt.children[ch.split('.')[-1]].destroy()
+                except TclError:
+                    pass
+        elif "enum" in tags:
+            lines  = self.txt.get("1.0", "end").splitlines()
             self.txt.tag_remove_undoable("enum", "1.0", "end")
+            for i, l in zip(range(1, end), lines):
+                res = re.match('^\t[0-9]+\.\t', l)
+                if res:
+                    self.txt.delete_undoable("%i.0"  % i, "%i.%i"  % (i, res.end()))
         self.txt.add_undo_sep()
         self.save_note()
-        print(self.mode.get(), [(t, self.txt.tag_ranges(t)) for t in self.txt.tag_names() if self.txt.tag_ranges(t)])
 
     def set_mode_list(self):
         """Set mode to list (bullet point list)."""
         end = int(self.txt.index("end").split(".")[0])
-        lines  = self.txt.get("1.0", "end").splitlines()
         self.txt.add_undo_sep()
         self.txt.mode_change('list')
         tags = self.txt.tag_names('1.0')
-        if "todolist" in tags:
+        if "list" in tags:
+            return
+        elif "todolist" in tags:
             self.txt.tag_remove_undoable("todolist", "1.0", "end")
-        if "enum" in tags:
+            for i in range(1, end):
+                # remove checkboxes
+                try:
+                    ch = self.txt.window_cget("%i.0"  % i, "window")
+                    self.txt.delete_undoable("%i.0"  % i)
+                    self.txt.children[ch.split('.')[-1]].destroy()
+                except TclError:
+                    # there is no checkbox
+                    pass
+                if self.txt.get("%i.0"  % i, "%i.3"  % i) != "\t•\t":
+                    self.txt.insert_undoable("%i.0" % i, "\t•\t")
+        elif "enum" in tags:
+            lines  = self.txt.get("1.0", "end").splitlines()
             self.txt.tag_remove_undoable("enum", "1.0", "end")
-        for i, l in zip(range(1, end), lines):
-            # remove checkboxes
-            try:
-                ch = self.txt.window_cget("%i.0"  % i, "window")
-                self.txt.delete_undoable("%i.0"  % i)
-                self.txt.children[ch.split('.')[-1]].destroy()
-            except TclError:
-                # there is no checkbox
+            for i, l in zip(range(1, end), lines):
                 # remove enumeration
                 res = re.match('^\t[0-9]+\.\t', l)
                 if res:
                     self.txt.delete_undoable("%i.0"  % i, "%i.%i"  % (i, res.end()))
-            if self.txt.get("%i.0"  % i, "%i.3"  % i) != "\t•\t":
-                self.txt.insert_undoable("%i.0" % i, "\t•\t")
+                if self.txt.get("%i.0"  % i, "%i.3"  % i) != "\t•\t":
+                    self.txt.insert_undoable("%i.0" % i, "\t•\t")
+        else:
+            for i in range(1, end):
+                if self.txt.get("%i.0"  % i, "%i.3"  % i) != "\t•\t":
+                    self.txt.insert_undoable("%i.0" % i, "\t•\t")
         self.txt.tag_add_undoable("list", "1.0", "end")
         self.txt.add_undo_sep()
         self.save_note()
-        print(self.mode.get(), [(t, self.txt.tag_ranges(t)) for t in self.txt.tag_names() if self.txt.tag_ranges(t)])
 
     def set_mode_enum(self):
         """Set mode to enum (enumeration)."""
@@ -627,55 +651,74 @@ class Sticky(Toplevel):
         end = int(self.txt.index("end").split(".")[0])
         lines  = self.txt.get("1.0", "end").splitlines()
         tags = self.txt.tag_names('1.0')
-        if "list" in tags:
+        if "enum" in tags:
+            return
+        elif "list" in tags:
             self.txt.tag_remove_undoable("list", "1.0", "end")
-        if "todolist" in tags:
-            self.txt.tag_remove_undoable("todolist", "1.0", "end")
-        for i, l in zip(range(1, end), lines):
-            # remove checkboxes
-            try:
-                ch = self.txt.window_cget("%i.0"  % i, "window")
-                self.txt.delete_undoable("%i.0"  % i)
-                self.txt.children[ch.split('.')[-1]].destroy()
-            except TclError:
-                # there is no checkbox
-                # remove bullets
+            for i, l in zip(range(1, end), lines):
                 if self.txt.get("%i.0"  % i, "%i.3"  % i) == "\t•\t":
                     self.txt.delete_undoable("%i.0"  % i, "%i.3"  % i)
-            if not re.match('^\t[0-9]+\.', l):
-                self.txt.insert_undoable("%i.0" % i, "\t0.\t")
+                if not re.match('^\t[0-9]+\.', l):
+                    self.txt.insert_undoable("%i.0" % i, "\t0.\t")
+        elif "todolist" in tags:
+            self.txt.tag_remove_undoable("todolist", "1.0", "end")
+            for i, l in zip(range(1, end), lines):
+                # remove checkboxes
+                try:
+                    ch = self.txt.window_cget("%i.0"  % i, "window")
+                    self.txt.delete_undoable("%i.0"  % i)
+                    self.txt.children[ch.split('.')[-1]].destroy()
+                except TclError:
+                    # no checkbox
+                    pass
+                if not re.match('^\t[0-9]+\.', l):
+                    self.txt.insert_undoable("%i.0" % i, "\t0.\t")
+        else:
+            for i, l in zip(range(1, end), lines):
+                if not re.match('^\t[0-9]+\.', l):
+                    self.txt.insert_undoable("%i.0" % i, "\t0.\t")
         self.txt.tag_add_undoable("enum", "1.0", "end")
         self.txt.update_enum()
         self.txt.add_undo_sep()
         self.save_note()
-        print(self.mode.get(), [(t, self.txt.tag_ranges(t)) for t in self.txt.tag_names() if self.txt.tag_ranges(t)])
 
     def set_mode_todolist(self):
         """Set mode to todolist (checkbox list)."""
         end = int(self.txt.index("end").split(".")[0])
-        lines  = self.txt.get("1.0", "end").splitlines()
         self.txt.add_undo_sep()
         self.txt.mode_change('todolist')
         tags = self.txt.tag_names('1.0')
-        if "list" in tags:
+        if "todolist" in tags:
+            return
+        elif "list" in tags:
             self.txt.tag_remove_undoable("list", "1.0", "end")
-        if "enum" in tags:
+            for i in range(1, end):
+                if self.txt.get("%i.0"  % i, "%i.3"  % i) == "\t•\t":
+                    self.txt.delete_undoable("%i.0"  % i, "%i.3"  % i)
+                try:
+                    self.txt.window_cget("%i.0"  % i, "window")
+                except TclError:
+                    self.txt.checkbox_create_undoable("%i.0"  % i)
+        elif "enum" in tags:
+            lines  = self.txt.get("1.0", "end").splitlines()
             self.txt.tag_remove_undoable("enum", "1.0", "end")
-
-        for i,l in zip(range(1, end), lines):
-            res = re.match('^\t[0-9]+\.\t', l)
-            if res:
-                self.txt.delete_undoable("%i.0"  % i, "%i.%i"  % (i, res.end()))
-            elif self.txt.get("%i.0"  % i, "%i.3"  % i) == "\t•\t":
-                self.txt.delete_undoable("%i.0"  % i, "%i.3"  % i)
-            try:
-                self.txt.window_cget("%i.0"  % i, "window")
-            except TclError:
-                self.txt.checkbox_create_undoable("%i.0"  % i)
+            for i,l in zip(range(1, end), lines):
+                res = re.match('^\t[0-9]+\.\t', l)
+                if res:
+                    self.txt.delete_undoable("%i.0"  % i, "%i.%i"  % (i, res.end()))
+                try:
+                    self.txt.window_cget("%i.0"  % i, "window")
+                except TclError:
+                    self.txt.checkbox_create_undoable("%i.0"  % i)
+        else:
+            for i in range(1, end):
+                try:
+                    self.txt.window_cget("%i.0"  % i, "window")
+                except TclError:
+                    self.txt.checkbox_create_undoable("%i.0"  % i)
         self.txt.tag_add_undoable("todolist", "1.0", "end")
         self.txt.add_undo_sep()
         self.save_note()
-        print(self.mode.get(), [(t, self.txt.tag_ranges(t)) for t in self.txt.tag_names() if self.txt.tag_ranges(t)])
 
     # --- bindings
     def enter_roll(self, event):
