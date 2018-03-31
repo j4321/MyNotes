@@ -23,8 +23,8 @@ Category Manager
 
 from tkinter import StringVar, PhotoImage, Toplevel, Text
 from mynoteslib.constants import CONFIG, COLORS, INV_COLORS, IM_PLUS, IM_DELETE
-from mynoteslib.constants import save_config, fill, optionmenu_patch
-from tkinter.ttk import Label, Button, OptionMenu, Style, Separator, Entry, Frame
+from mynoteslib.constants import save_config, optionmenu_patch
+from tkinter.ttk import Label, Button, OptionMenu, Style, Entry, Frame
 from mynoteslib.messagebox import askyesnocancel
 from mynoteslib.autoscrollbar import AutoScrollbar
 
@@ -83,12 +83,10 @@ class CategoryManager(Frame):
 
         self.frame_cat = Frame(txt)
         txt.window_create('1.0', window=self.frame_cat)
+        txt.configure(state='disabled')
         self.colors = list(COLORS.keys())
         self.colors.sort()
         self.images = []
-        for key in self.colors:
-            self.images.append(PhotoImage(key, master=self, width=16, height=16))
-            fill(self.images[-1], COLORS[key])
         self.cat_colors = {}
         self.cat_labels = {}
         self.cat_menus = {}
