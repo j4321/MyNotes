@@ -511,9 +511,15 @@ class MyText(Text):
         if self.tag_ranges("sel"):
             self.add_undo_sep()
             for coul in TEXT_COLORS.values():
-                self.tag_remove_undoable(coul, "sel.first", "sel.last")
-                self.tag_remove_undoable(coul + "-overstrike", "sel.first", "sel.last")
-                self.tag_remove_undoable(coul + "-underline", "sel.first", "sel.last")
+                tag_ranges = text_ranges(self, coul, "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable(coul, d, f)
+                tag_ranges = text_ranges(self, coul + "-overstrike", "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable(coul + "-overstrike", d, f)
+                tag_ranges = text_ranges(self, coul + "-underline", "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable(coul + "-underline", d, f)
             if not color == "black":
                 self.tag_add_undoable(color, "sel.first", "sel.last")
                 underline = text_ranges(self, "underline", "sel.first", "sel.last")
@@ -541,7 +547,6 @@ class MyText(Text):
             for align in ['left', 'right', 'center']:
                 if align != alignment:
                     tag_ranges = text_ranges(self, align, deb, fin)
-                    print(alignment, align, tag_ranges)
                     for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
                         self.tag_remove_undoable(align, d, f)
             # set new alignment tag
