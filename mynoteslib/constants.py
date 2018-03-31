@@ -625,8 +625,13 @@ def text_ranges(widget, tag, index1="1.0", index2="end"):
         j -= 1
     tag_ranges = r[2 * i:2 * j + 2]
     if i > 0 and sorting(fin[i - 1]) > sorting(i1):
-        tag_ranges.insert(0, fin[i - 1])
-        tag_ranges.insert(0, i1)
+        if i - 1 <= j:
+            tag_ranges.insert(0, fin[i - 1])
+            tag_ranges.insert(0, i1)
+        else:
+            tag_ranges.insert(0, i2)
+            tag_ranges.insert(0, i1)
+            return tag_ranges
     if j < len(fin) - 1 and sorting(deb[j + 1]) < sorting(i2):
         tag_ranges.append(deb[j + 1])
         tag_ranges.append(i2)

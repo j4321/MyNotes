@@ -533,13 +533,17 @@ class MyText(Text):
         else:
             deb = self.index("insert linestart")
             fin = self.index("insert lineend")
+        print(alignment, deb, fin)
         if "\t" not in self.get(deb, fin):
             self.add_undo_sep()
             # tabulations don't support right/center alignment
             # remove old alignment tag
-            self.tag_remove_undoable("left", deb, fin)
-            self.tag_remove_undoable("right", deb, fin)
-            self.tag_remove_undoable("center", deb, fin)
+            for align in ['left', 'right', 'center']:
+                if align != alignment:
+                    tag_ranges = text_ranges(self, align, deb, fin)
+                    print(alignment, align, tag_ranges)
+                    for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                        self.tag_remove_undoable(align, d, f)
             # set new alignment tag
             self.tag_add_undoable(alignment, deb, fin)
             self.add_undo_sep()
