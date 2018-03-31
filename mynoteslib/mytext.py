@@ -528,19 +528,21 @@ class MyText(Text):
     def set_align(self, alignment):
         """Align the text according to alignment (left, right, center)."""
         if self.tag_ranges("sel"):
-            line = self.index("sel.first").split(".")[0]
-            line2 = self.index("sel.last").split(".")[0]
-            deb, fin = line + ".0", line2 + ".end"
-            if "\t" not in self.get(deb, fin):
-                self.add_undo_sep()
-                # tabulations don't support right/center alignment
-                # remove old alignment tag
-                self.tag_remove_undoable("left", deb, fin)
-                self.tag_remove_undoable("right", deb, fin)
-                self.tag_remove_undoable("center", deb, fin)
-                # set new alignment tag
-                self.tag_add_undoable(alignment, deb, fin)
-                self.add_undo_sep()
+            deb = self.index("sel.first linestart")
+            fin = self.index("sel.last lineend")
+        else:
+            deb = self.index("insert linestart")
+            fin = self.index("insert lineend")
+        if "\t" not in self.get(deb, fin):
+            self.add_undo_sep()
+            # tabulations don't support right/center alignment
+            # remove old alignment tag
+            self.tag_remove_undoable("left", deb, fin)
+            self.tag_remove_undoable("right", deb, fin)
+            self.tag_remove_undoable("center", deb, fin)
+            # set new alignment tag
+            self.tag_add_undoable(alignment, deb, fin)
+            self.add_undo_sep()
 
     def update_enum(self):
         """Update enumeration numbers."""
