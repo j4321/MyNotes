@@ -31,16 +31,16 @@ import os
 import time
 import re
 import traceback
+import ftplib
 from shutil import copy
 import pickle
 from mynoteslib.trayicon import TrayIcon, SubMenu
 from mynoteslib.constants import CONFIG, PATH_DATA, PATH_DATA_BACKUP,\
     LOCAL_PATH, backup, asksaveasfilename, askopenfilename, COLORS, \
-    IM_SCROLL_ALPHA, IM_VISIBLE, IM_HIDDEN, save_modif_info, TEXT_COLORS, color_box
+    IM_SCROLL_ALPHA, IM_VISIBLE, IM_HIDDEN, TEXT_COLORS, color_box, \
+    PATH_DATA_REMOTE, EASYWEBDAV
 import mynoteslib.constants as cst
 from mynoteslib.config import Config
-from mynoteslib.sync import download_from_server, check_login_info, \
-    warn_exist_remote, EASYWEBDAV, upload_to_server
 from mynoteslib.export import Export
 from mynoteslib.sticky import Sticky
 from mynoteslib.about import About
@@ -48,6 +48,9 @@ from mynoteslib.notemanager import Manager
 from mynoteslib.version_check import UpdateChecker
 from mynoteslib.messagebox import showerror, askokcancel, showinfo
 from mynoteslib.mytext import MyText
+from mynoteslib.sync import check_login_info, warn_exist_remote
+if EASYWEBDAV:
+    import easywebdav
 
 
 class App(Tk):
@@ -205,10 +208,8 @@ class App(Tk):
         self.icon.menu.add_command(label=_("Export"), command=self.export_notes)
         self.icon.menu.add_command(label=_("Import"), command=self.import_notes)
         self.icon.menu.add_separator()
-        self.icon.menu.add_command(label=_("Upload local notes on server"),
-                                   command=self.upload)
-        self.icon.menu.add_command(label=_("Download notes from server"),
-                                   command=lambda: download_from_server(self.password))
+        self.icon.menu.add_command(label=_("Synchronize"),
+                                   command=self.sync)
         self.icon.menu.add_separator()
         self.icon.menu.add_command(label=_('Check for Updates'),
                                    command=lambda: UpdateChecker(self))
@@ -228,7 +229,7 @@ class App(Tk):
                         self.get_server_login()
                     if self.password:
                         self.configure(cursor="watch")
-                        res = download_from_server(self.password)
+                        res = self.sync()
                         if not res:
                             showinfo(_("Information"),
                                      _("There was an error during the synchronization so synchronization has been disabled."))
@@ -239,7 +240,6 @@ class App(Tk):
                     CONFIG.set("Sync", "on", "False")
             else:
                 CONFIG.set("Sync", "on", "False")
-        self.time = time.time()
         if not CONFIG.getboolean("Sync", "on"):
             self.icon.menu.disable_item(19)
             self.icon.menu.disable_item(18)
@@ -537,12 +537,108 @@ class App(Tk):
         event.widget.tag_add("sel", "1.0", "end-1c")
         self.highlight_checkboxes(event)
 
-    # --- Other methods
-    def upload(self):
-        """Upload notes on server."""
-        self.save()
-        upload_to_server(self.password, time.time())
+    # --- sync
+    def sync(self):
+        server_type = CONFIG.get("Sync", "server_type")
+        if server_type == "FTP":
+            return self._sync_ftp()
+        elif server_type == "WebDav":
+            return self._sync_webdav()
+        else:
+            raise ValueError("Wrong server type %s" % server_type)
+            return False
 
+    def merge_note_data(self):
+        """Merge note data."""
+        try:
+            with open(PATH_DATA_REMOTE, "rb") as fich:
+                dp = pickle.Unpickler(fich)
+                data_remote = dp.load()
+        except Exception as e:
+            showerror(_('Error'), str(type(e)), traceback.format_exc())
+        else:
+            for key in self.note_data:
+                if key in data_remote and data_remote.get('mtime', 0) > self.note_data.get('mtime', 0):
+                    self.note_data[key] = data_remote[key].copy()
+            for key in data_remote:
+                if key not in self.note_data:
+                    self.note_data[key] = data_remote[key].copy()
+            self.save()
+
+    def _sync_ftp(self):
+        """Sync local and remote notes (ftp), return True if it worked."""
+        remote_path = CONFIG.get("Sync", "file")
+        try:
+            if CONFIG.get("Sync", "protocol") == "FTP":
+                ftp = ftplib.FTP()
+                ftp.connect(CONFIG.get("Sync", "server"),
+                            CONFIG.getint("Sync", "port"))
+                ftp.login(user=CONFIG.get("Sync", "username"), passwd=self.password)
+            else:
+                ftp = ftplib.FTP_TLS()
+                ftp.connect(CONFIG.get("Sync", "server"),
+                            CONFIG.getint("Sync", "port"))
+                ftp.login(user=CONFIG.get("Sync", "username"), passwd=self.password)
+                ftp.prot_p()
+            directory, filename = os.path.split(remote_path)
+            if directory:
+                ftp.cwd(directory)
+            files = ftp.nlst()
+            if filename in files:
+                if os.path.exists(PATH_DATA):
+                    # download remote notes
+                    ftp.retrbinary('RETR ' + filename, open(PATH_DATA_REMOTE, 'wb').write)
+                    # merge local and remote notes
+                    self.merge_note_data()
+                    # upload merged data
+                    ftp.storbinary("STOR " + filename, open(PATH_DATA, "rb"))
+                    return True
+                else:
+                    # no local notes: download remote notes
+                    ftp.retrbinary('RETR ' + filename, open(PATH_DATA, 'wb').write)
+                    return True
+            else:
+                # no remote notes: upload local notes
+                ftp.storbinary("STOR " + filename, open(PATH_DATA, "rb"))
+                return True
+        except Exception as e:
+            showerror(_("Error"), str(type(e)), traceback.format_exc())
+            return False
+        finally:
+            ftp.quit()
+
+    def _sync_webdav(self):
+        """Sync local and remote notes (WebDav), return True if it worked."""
+        remote_path = CONFIG.get("Sync", "file")
+        webdav = easywebdav.connect(CONFIG.get("Sync", "server"),
+                                    username=CONFIG.get("Sync", "username"),
+                                    password=self.password,
+                                    protocol=CONFIG.get("Sync", "protocol"),
+                                    port=CONFIG.get("Sync", "port"),
+                                    verify_ssl=True)
+        try:
+            if webdav.exists(remote_path):
+                if os.path.exists(PATH_DATA):
+                    # download remote notes
+                    webdav.download(remote_path, PATH_DATA_REMOTE)
+                    # merge local and remote notes
+                    self.merge_note_data()
+                    # upload merged data
+                    webdav.upload(PATH_DATA, remote_path)
+                    return True
+                else:
+                    # no local notes: download remote notes
+                    webdav.download(remote_path, PATH_DATA)
+                    return True
+            else:
+                # no remote notes: upload local notes
+                webdav.upload(PATH_DATA, remote_path)
+                return True
+        except Exception as e:
+            showerror(_("Error"), str(type(e)), traceback.format_exc(), False)
+            return False
+
+    # --- Other methods
     def make_notes_sticky(self):
         for w in cst.EWMH.getClientList():
             try:
@@ -793,7 +889,6 @@ class App(Tk):
         with open(PATH_DATA, "wb") as fich:
             dp = pickle.Pickler(fich)
             dp.dump(self.note_data)
-        save_modif_info()
 
     def new(self):
         """Create a new note."""

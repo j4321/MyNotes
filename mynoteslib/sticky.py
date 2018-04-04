@@ -38,6 +38,7 @@ from mynoteslib.symbols import pick_symbol
 from mynoteslib.mytext import MyText
 from mynoteslib.messagebox import showerror, askokcancel
 from webbrowser import open as open_url
+from time import time
 
 
 class Sticky(Toplevel):
@@ -795,6 +796,9 @@ class Sticky(Toplevel):
         """Save note."""
         data = self.save_info()
         data["visible"] = True
+        data2 = {key:self.master.note_data[self.id][key] for key in data}
+        if data != data2:
+            data['mtime'] = int(time())  # last modification time in seconds since epoch
         self.master.note_data[self.id] = data
         self.master.save()
 

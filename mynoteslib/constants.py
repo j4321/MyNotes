@@ -44,9 +44,6 @@ Constants and functions
 """
 
 
-
-import time
-import platform
 import os
 import gettext
 from configparser import ConfigParser
@@ -56,6 +53,11 @@ from tkinter import Text
 import ewmh
 import warnings
 from PIL import Image, ImageDraw
+try:
+    import easywebdav
+    EASYWEBDAV = True
+except ImportError:
+    EASYWEBDAV = False
 
 
 EWMH = ewmh.EWMH()
@@ -73,7 +75,7 @@ if os.access(PATH, os.W_OK) and os.path.exists(os.path.join(PATH, "images")):
     PATH_IMAGES = os.path.join(PATH, "images")
     PATH_DATA_BACKUP = os.path.join(LOCAL_PATH, "backup", "notes.backup%i")
     PATH_DATA = os.path.join(LOCAL_PATH, "backup", "notes")
-    PATH_DATA_INFO = os.path.join(LOCAL_PATH, "backup", "notes.info")
+    PATH_DATA_REMOTE = os.path.join(LOCAL_PATH, "backup", "notes_remote")
     if not os.path.exists(os.path.join(LOCAL_PATH, "backup")):
         os.mkdir(os.path.join(LOCAL_PATH, "backup"))
 else:
@@ -85,7 +87,7 @@ else:
     PATH_IMAGES = "/usr/share/mynotes/images"
     PATH_DATA_BACKUP = os.path.join(LOCAL_PATH, "notes.backup%i")
     PATH_DATA = os.path.join(LOCAL_PATH, "notes")
-    PATH_DATA_INFO = os.path.join(LOCAL_PATH, "notes.info")
+    PATH_DATA_REMOTE = os.path.join(LOCAL_PATH, "notes_remote")
 
 PATH_CONFIG = os.path.join(LOCAL_PATH, "mynotes.ini")
 PATH_LATEX = os.path.join(LOCAL_PATH, "latex")
@@ -660,16 +662,6 @@ def text_ranges(widget, tag, index1="1.0", index2="end"):
 
     return tag_ranges
 
-def save_modif_info(tps=None):
-    """ save info about last modifications (machine and time) """
-    if tps is None:
-        tps = time.time()
-    info = platform.uname()
-    info = "%s %s %s %s %s\n" % (info.system, info.node, info.release,
-                               info.version, info.machine)
-    lines = [info, str(tps)]
-    with open(PATH_DATA_INFO, 'w') as fich:
-        fich.writelines(lines)
 
 # --- export
 BALISES_OPEN = {"bold": "<b>",

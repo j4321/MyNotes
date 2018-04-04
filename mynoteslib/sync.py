@@ -24,157 +24,11 @@ Sync note with server
 
 import traceback
 import os
-import shutil
-from tkinter import Menu, StringVar
-from tkinter.ttk import Frame, Label, Entry, Checkbutton, Menubutton
 from mynoteslib.messagebox import showerror, SyncConflict
-from mynoteslib.constants import CONFIG, PATH_DATA, PATH_DATA_INFO, save_modif_info
+from mynoteslib.constants import CONFIG, PATH_DATA, EASYWEBDAV
 import ftplib
-try:
+if EASYWEBDAV:
     import easywebdav
-    EASYWEBDAV = True
-except ImportError:
-    EASYWEBDAV = False
-
-
-class SyncSettings(Frame):
-    def __init__(self, master, password=""):
-        Frame.__init__(self, master)
-        self.columnconfigure(1, weight=1)
-
-        self.sync_state = Checkbutton(self,
-                                      text=_("Synchronize notes with server"),
-                                      command=self.toggle_sync)
-        if CONFIG.getboolean("Sync", "on"):
-            self.sync_state.state(("selected",))
-        else:
-            self.sync_state.state(("!selected",))
-        self.server_type = StringVar(self, CONFIG.get("Sync", "server_type"))
-        menu_type = Menu(self, tearoff=False)
-        self.button_type = Menubutton(self, textvariable=self.server_type,
-                                      menu=menu_type)
-        menu_type.add_radiobutton(label="FTP", value="FTP",
-                                  command=self.set_type_ftp,
-                                  variable=self.server_type)
-        if EASYWEBDAV:
-            menu_type.add_radiobutton(label="WebDav", value="WebDav",
-                                      command=self.set_type_webdav,
-                                      variable=self.server_type)
-        elif self.server_type.get() == "WebDav":
-            self.server_type.set("FTP")
-        self.server = Entry(self)
-        self.server.insert(0, CONFIG.get("Sync", "server"))
-        self.user = Entry(self)
-        self.user.insert(0, CONFIG.get("Sync", "username"))
-        self.password = Entry(self, show="*")
-        self.password.insert(0, password)
-        self.protocol = StringVar(self, CONFIG.get("Sync", "protocol"))
-        self.menu_protocol = Menu(self, tearoff=False)
-        self.button_protocol = Menubutton(self, textvariable=self.protocol,
-                                          menu=self.menu_protocol)
-        if self.server_type.get() == "FTP":
-            self.menu_protocol.add_radiobutton(label="Simple FTP", value="FTP",
-                                               variable=self.protocol)
-            self.menu_protocol.add_radiobutton(label="FTP over TLS", value="FTPS",
-                                               variable=self.protocol)
-        else:
-            self.menu_protocol.add_radiobutton(label="HTTP", value="http",
-                                               command=self.set_protocol_http,
-                                               variable=self.protocol)
-            self.menu_protocol.add_radiobutton(label="HTTPS", value="https",
-                                               command=self.set_protocol_https,
-                                               variable=self.protocol)
-        self.port = Entry(self)
-        self.port.insert(0, CONFIG.get("Sync", "port"))
-        self.file = Entry(self)
-        self.file.insert(0, CONFIG.get("Sync", "file"))
-
-        self.sync_state.grid(row=0, columnspan=2, sticky="w", padx=4, pady=4)
-        Label(self, text=_("Server type")).grid(row=1, column=0,
-                                                sticky="e", padx=4, pady=4)
-        Label(self, text=_("Server address")).grid(row=2, column=0,
-                                                   sticky="e", padx=4, pady=4)
-        Label(self, text=_("Username")).grid(row=3, column=0,
-                                             sticky="e", padx=4, pady=4)
-        Label(self, text=_("Password")).grid(row=4, column=0,
-                                             sticky="e", padx=4, pady=4)
-        Label(self, text=_("Protocol")).grid(row=5, column=0,
-                                             sticky="e", padx=4, pady=4)
-        Label(self, text=_("Port")).grid(row=6, column=0,
-                                         sticky="e", padx=4, pady=4)
-        Label(self, text=_("Server file")).grid(row=7, column=0,
-                                                sticky="e", padx=4, pady=4)
-        self.button_type.grid(row=1, column=1, sticky="w", padx=4, pady=4)
-        self.server.grid(row=2, column=1, sticky="ew", padx=4, pady=4)
-        self.user.grid(row=3, column=1, sticky="ew", padx=4, pady=4)
-        self.password.grid(row=4, column=1, sticky="ew", padx=4, pady=4)
-        self.button_protocol.grid(row=5, column=1, sticky="ew", padx=4, pady=4)
-        self.port.grid(row=6, column=1, sticky="ew", padx=4, pady=4)
-        self.file.grid(row=7, column=1, sticky="ew", padx=4, pady=4)
-
-        self.toggle_sync()
-
-    def toggle_sync(self):
-        if "selected" in self.sync_state.state():
-            state = "!disabled"
-            if not self.port.get():
-                server_type = self.server_type.get()
-                if server_type == "FTP":
-                    self.port.insert(0, str(ftplib.FTP_PORT))
-                elif server_type == "WebDav":
-                    if self.protocol.get() == "http":
-                        self.port.insert(0, "80")
-                    else:
-                        self.port.insert(0, "443")
-        else:
-            state = "disabled"
-        self.button_type.state((state,))
-        self.server.state((state,))
-        self.user.state((state,))
-        self.password.state((state,))
-        self.port.state((state,))
-        self.button_protocol.state((state,))
-        self.file.state((state,))
-
-    def set_protocol_http(self):
-        self.port.delete(0, "end")
-        self.port.insert(0, "80")
-
-    def set_protocol_https(self):
-        self.port.delete(0, "end")
-        self.port.insert(0, "443")
-
-    def set_type_ftp(self):
-        self.port.delete(0, "end")
-        self.port.insert(0, str(ftplib.FTP_PORT))
-        self.menu_protocol.delete(0, "end")
-        self.menu_protocol.add_radiobutton(label="Simple FTP", value="FTP",
-                                           variable=self.protocol)
-        self.menu_protocol.add_radiobutton(label="FTP over TLS", value="FTPS",
-                                           variable=self.protocol)
-        self.protocol.set("FTPS")
-
-    def set_type_webdav(self):
-        self.port.delete(0, "end")
-        self.port.insert(0, "443")
-        self.menu_protocol.delete(0, "end")
-        self.menu_protocol.add_radiobutton(label="HTTP", value="http",
-                                           command=self.set_protocol_http,
-                                           variable=self.protocol)
-        self.menu_protocol.add_radiobutton(label="HTTPS", value="https",
-                                           command=self.set_protocol_https,
-                                           variable=self.protocol)
-        self.protocol.set("https")
-
-    def save_sync_settings(self):
-        CONFIG.set("Sync", "on", str("selected" in self.sync_state.state()))
-        CONFIG.set("Sync", "server_type", self.server_type.get())
-        CONFIG.set("Sync", "server", self.server.get())
-        CONFIG.set("Sync", "username", self.user.get())
-        CONFIG.set("Sync", "protocol", self.protocol.get())
-        CONFIG.set("Sync", "port", self.port.get())
-        CONFIG.set("Sync", "file", self.file.get())
-        return self.password.get()
 
 
 # ---  FTP
@@ -197,7 +51,7 @@ def sync_conflict_ftp(remote_path, local_path, ftp, exists_remote_info, text=Non
 
 
 def download_from_server_ftp(password):
-    """ Try to download notes from server, return True if it worked. """
+    """Download notes from server."""
     remote_path = CONFIG.get("Sync", "file")
     try:
         if CONFIG.get("Sync", "protocol") == "FTP":
@@ -214,57 +68,20 @@ def download_from_server_ftp(password):
         directory, filename = os.path.split(remote_path)
         if directory:
             ftp.cwd(directory)
-        files = ftp.nlst()
-        if filename in files:
-            exists_remote_info = (filename + ".info") in files
-            if os.path.exists(PATH_DATA):
-                exists_local_info = os.path.exists(PATH_DATA_INFO)
-                if exists_local_info:
-                    with open(PATH_DATA_INFO) as fich:
-                        tps_local = float(fich.readlines()[1])
-                else:
-                    tps_local = os.path.getmtime(PATH_DATA)
-                    save_modif_info(tps_local)
-                if exists_remote_info:
-                    ftp.retrlines('RETR %s.info' % filename, open("/tmp/notes.info", 'w').write)
-                    with open("/tmp/notes.info") as fich:
-                        tps_remote = float(fich.readlines()[1])
-                    if int(tps_remote) // 60 >= int(tps_local) // 60:
-                        # file is more recent on server
-                        ftp.retrbinary('RETR ' + filename, open(PATH_DATA, 'wb').write)
-                        shutil.move("/tmp/notes.info", PATH_DATA_INFO)
-                        return True
-                    else:
-                        res = sync_conflict_ftp(filename, PATH_DATA, ftp, True,
-                                                text=_("Local notes are more recent than on server. What do you want to do?"))
-                        return res != ""
-                else:
-                    res = sync_conflict_ftp(filename, PATH_DATA, ftp, False)
-                    return res != ""
-
-            else:
-                # no local notes: download remote notes
-                ftp.retrbinary('RETR ' + filename, open(PATH_DATA, 'wb').write)
-                if exists_remote_info:
-                    ftp.retrlines('RETR %s.info' % filename, open(PATH_DATA_INFO, 'w').write)
-                return True
-        else:
-            # first sync
-            return True
-    except ftplib.Error as e:
-        showerror(_("Error"), str(e))
-        return False
-    except Exception:
-        showerror(_("Error"), traceback.format_exc())
-        return False
+#        files = ftp.nlst()
+#        if filename in files:
+        ftp.retrbinary('RETR ' + filename, open(PATH_DATA, 'wb').write)
+#        else:
+#            raise FileNotFoundError("{remote_data_path} does not exists".format(remote_data_path=remote_path))
+    except Exception as e:
+        showerror(_("Error"), str(type(e)), traceback.format_exc(), False)
     finally:
         ftp.quit()
 
 
 def upload_to_server_ftp(password, last_sync_time):
-    """ upload notes to server. """
+    """Upload notes to server."""
     remote_path = CONFIG.get("Sync", "file")
-
     try:
         if CONFIG.get("Sync", "protocol") == "FTP":
             ftp = ftplib.FTP()
@@ -280,36 +97,12 @@ def upload_to_server_ftp(password, last_sync_time):
         directory, filename = os.path.split(remote_path)
         if directory:
             ftp.cwd(directory)
-        files = ftp.nlst()
-        if filename in files:
-            exists_remote_info = (filename + ".info") in files
-            save_modif_info()
-            with open(PATH_DATA_INFO) as fich:
-                info_local = fich.readlines()
-            if exists_remote_info:
-                ftp.retrlines('RETR %s.info' % filename, open("/tmp/notes.info", 'w').write)
-                with open("/tmp/notes.info") as fich:
-                    info_remote = fich.readlines()
-                if info_local[0] != info_remote[0] and last_sync_time // 60 < float(info_remote[1]) // 60:
-                    # there was an update from another computer in the mean time
-                    sync_conflict_ftp(filename, PATH_DATA, ftp, True)
-                else:
-                    ftp.storbinary("STOR " + filename, open(PATH_DATA, "rb"))
-                    ftp.storlines("STOR %s.info" % filename, open(PATH_DATA_INFO, "r"))
-            else:
-                sync_conflict_ftp(filename, PATH_DATA, ftp, False)
-
-        else:
-            # first sync
-            ftp.storbinary("STOR " + filename, open(PATH_DATA, "rb"))
-            ftp.storlines("STOR %s.info" % filename, open(PATH_DATA_INFO, "r"))
-    except ftplib.Error as e:
-        showerror(_("Error"), str(e))
+        ftp.storbinary("STOR " + filename, open(PATH_DATA, "rb"))
     except FileNotFoundError:
         showerror(_("Error"),
                   _("Local notes not found."))
-    except Exception:
-        showerror(_("Error"), traceback.format_exc())
+    except Exception as e:
+        showerror(_("Error"), str(type(e)), traceback.format_exc)
     finally:
         ftp.quit()
 
@@ -338,9 +131,10 @@ def check_login_info_ftp(password):
 
 
 def warn_exist_remote_ftp(password):
-    """ When sync is activated, if a remote note file exists, it will
-        be erased when the local file will be sync when app is closed. So
-        warn user and ask him what to do.
+    """
+    When sync is activated, if a remote note file exists, it will
+    be erased when the local file will be sync when app is closed. So
+    warn user and ask him what to do.
     """
     remote_path = CONFIG.get("Sync", "file")
 
@@ -385,7 +179,7 @@ def warn_exist_remote_ftp(password):
 # ---  WebDav
 def sync_conflict_webdav(remote_path, local_path, webdav, exists_remote_info,
                          text=None):
-    """ handle sync conflict. Return the chosen action. """
+    """Handle sync conflict. Return the chosen action."""
     if text:
         ask = SyncConflict(text=text)
     else:
@@ -403,9 +197,8 @@ def sync_conflict_webdav(remote_path, local_path, webdav, exists_remote_info,
 
 
 def download_from_server_webdav(password):
-    """ Try to download notes from server, return True if it worked. """
+    """Download notes from server."""
     remote_path = CONFIG.get("Sync", "file")
-    remote_info_path = remote_path + ".info"
     webdav = easywebdav.connect(CONFIG.get("Sync", "server"),
                                 username=CONFIG.get("Sync", "username"),
                                 password=password,
@@ -413,52 +206,14 @@ def download_from_server_webdav(password):
                                 port=CONFIG.get("Sync", "port"),
                                 verify_ssl=True)
     try:
-        if webdav.exists(remote_path):
-            exists_remote_info = webdav.exists(remote_info_path)
-            if os.path.exists(PATH_DATA):
-                exists_local_info = os.path.exists(PATH_DATA_INFO)
-                if exists_local_info:
-                    with open(PATH_DATA_INFO) as fich:
-                        tps_local = float(fich.readlines()[1])
-                else:
-                    tps_local = os.path.getmtime(PATH_DATA)
-                    save_modif_info(tps_local)
-                if exists_remote_info:
-                    webdav.download(remote_info_path, "/tmp/notes.info")
-                    with open("/tmp/notes.info") as fich:
-                        tps_remote = float(fich.readlines()[1])
-                    if int(tps_remote) // 60 >= int(tps_local) // 60:
-                        # file is more recent on server
-                        webdav.download(remote_path, PATH_DATA)
-                        shutil.move("/tmp/notes.info", PATH_DATA_INFO)
-                        return True
-                    else:
-                        res = sync_conflict_webdav(remote_path, PATH_DATA,
-                                                   webdav, exists_remote_info,
-                                                   text=_("Local notes are more recent than on server. What do you want to do?"))
-                        return res != ""
-                else:
-                    res = sync_conflict_webdav(remote_path, PATH_DATA, webdav, False)
-                    return res != ""
-
-            else:
-                # no local notes: download remote notes
-                webdav.download(remote_path, PATH_DATA)
-                if exists_remote_info:
-                    webdav.download(remote_info_path, PATH_DATA_INFO)
-                return True
-        else:
-            # first sync
-            return True
+        webdav.download(remote_path, PATH_DATA)
     except Exception as e:
         showerror(_("Error"), str(type(e)), traceback.format_exc())
-        return False
 
 
 def upload_to_server_webdav(password, last_sync_time):
     """ upload notes to server. """
     remote_path = CONFIG.get("Sync", "file")
-    remote_info_path = remote_path + ".info"
     webdav = easywebdav.connect(CONFIG.get("Sync", "server"),
                                 username=CONFIG.get("Sync", "username"),
                                 password=password,
@@ -466,27 +221,7 @@ def upload_to_server_webdav(password, last_sync_time):
                                 port=CONFIG.get("Sync", "port"),
                                 verify_ssl=True)
     try:
-        if webdav.exists(remote_path):
-            exists_remote_info = webdav.exists(remote_info_path)
-            save_modif_info()
-            with open(PATH_DATA_INFO) as fich:
-                info_local = fich.readlines()
-            if exists_remote_info:
-                webdav.download(remote_info_path, "/tmp/notes.info")
-                with open("/tmp/notes.info") as fich:
-                    info_remote = fich.readlines()
-                if info_local[0] != info_remote[0] and last_sync_time // 60 < float(info_remote[1]) // 60:
-                    # there was an update from another computer in the mean time
-                    sync_conflict_webdav(remote_path, PATH_DATA, webdav, exists_remote_info)
-                else:
-                    webdav.upload(PATH_DATA, remote_path)
-                    webdav.upload(PATH_DATA_INFO, remote_info_path)
-            else:
-                sync_conflict_webdav(remote_path, PATH_DATA, webdav, False)
-        else:
-            # first sync
-            webdav.upload(PATH_DATA, remote_path)
-            webdav.upload(PATH_DATA_INFO, remote_info_path)
+        webdav.upload(PATH_DATA, remote_path)
     except FileNotFoundError:
         showerror(_("Error"),
                   _("Local notes not found."))

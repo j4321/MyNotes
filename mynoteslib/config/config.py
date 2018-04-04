@@ -31,7 +31,7 @@ from mynoteslib.constants import CONFIG, save_config, COLORS, SYMBOLS, LATEX,\
     LANGUAGES, REV_LANGUAGES, TOOLKITS, AUTOCORRECT
 from mynoteslib.config.categories import CategoryManager
 from mynoteslib.config.autocorrect import AutoCorrectConfig
-from mynoteslib.sync import SyncSettings
+from mynoteslib.config.sync import SyncSettings
 from mynoteslib.autoscrollbar import AutoScrollbar
 from tkinter import font
 
