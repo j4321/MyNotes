@@ -55,6 +55,7 @@ from subprocess import check_output, CalledProcessError
 from tkinter import Text
 import ewmh
 import warnings
+from PIL import Image, ImageDraw
 
 
 EWMH = ewmh.EWMH()
@@ -392,7 +393,7 @@ setlocale(LC_ALL, '')
 
 APP_NAME = "MyNotes"
 
-LANGUAGES = {"fr": "Français", "en": "English", "nl": "Nederlands"}
+LANGUAGES = {"fr": "Français", "en": "English", "nl": "Nederlands", "de": "Deutsch"}
 REV_LANGUAGES = {val: key for key, val in LANGUAGES.items()}
 
 if LANGUE not in LANGUAGES:
@@ -448,6 +449,13 @@ def active_color(color, output='HTML'):
         return (round(r), round(g), round(b))
 
 
+def color_box(color):
+    im = Image.new('RGBA', (18, 16), (0,0,0,0))
+    draw = ImageDraw.Draw(im)
+    draw.rectangle([3, 3, 13, 13], color, 'black')
+    return im
+
+
 # --- latex (optional):  insertion of latex formulas via matplotlib
 try:
     from matplotlib import rc
@@ -456,7 +464,7 @@ try:
     from matplotlib.image import imsave
     parser = MathTextParser('bitmap')
     LATEX = True
-except ImportError:
+except Exception:
     LATEX = False
 
 
@@ -581,14 +589,6 @@ def asksaveasfilename(defaultextension, filetypes, initialdir=".", initialfile="
 
 
 # --- miscellaneous functions
-def fill(image, color):
-    """Fill image with a color=#hex."""
-    width = image.width()
-    height = image.height()
-    horizontal_line = "{" + " ".join([color] * width) + "}"
-    image.put(" ".join([horizontal_line] * height))
-
-
 def sorting(index):
     """Sorting key for text indexes."""
     line, char = index.split(".")
@@ -647,8 +647,13 @@ def text_ranges(widget, tag, index1="1.0", index2="end"):
         j -= 1
     tag_ranges = r[2 * i:2 * j + 2]
     if i > 0 and sorting(fin[i - 1]) > sorting(i1):
-        tag_ranges.insert(0, fin[i - 1])
-        tag_ranges.insert(0, i1)
+        if i - 1 <= j:
+            tag_ranges.insert(0, fin[i - 1])
+            tag_ranges.insert(0, i1)
+        else:
+            tag_ranges.insert(0, i2)
+            tag_ranges.insert(0, i1)
+            return tag_ranges
     if j < len(fin) - 1 and sorting(deb[j + 1]) < sorting(i2):
         tag_ranges.append(deb[j + 1])
         tag_ranges.append(i2)

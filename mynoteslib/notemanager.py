@@ -98,7 +98,7 @@ class Manager(Toplevel):
     def __init__(self, master):
         """Create note manager to easily delete multiple notes."""
         Toplevel.__init__(self, master, class_='MyNotes')
-        self.title(_("Notes Manager"))
+        self.title(_("Note Manager"))
         self.grab_set()
         categories = CONFIG.options("Categories")
         categories.sort()
@@ -208,7 +208,7 @@ class Manager(Toplevel):
         else:
             if key in self.master.notes:
                 self.master.notes[key].hide()
-        self.grab_set()
+        self.after(4, self.grab_set)
 
     def display_note(self, key, note_data):
         """Display note in note manager."""

@@ -118,6 +118,21 @@ class MyText(Text):
         self.tag_bind("link", "<Leave>",
                       lambda event: self.configure(cursor=""))
 
+    def update_font(self):
+        """Update font after configuration change."""
+        size = CONFIG.get("Font", "text_size")
+        font = "%s %s" % (CONFIG.get("Font", "text_family").replace(" ", "\ "),
+                          size)
+        mono = "%s %s" % (CONFIG.get("Font", "mono").replace(" ", "\ "), size)
+        self.configure(font=font)
+        self.tag_configure("mono", font=mono)
+        self.tag_configure("bold", font="%s bold" % font)
+        self.tag_configure("italic", font="%s italic" % font)
+        self.tag_configure("bold-italic", font="%s bold italic" % font)
+        margin = 2 * Font(self, font=font).measure("m")
+        self.tag_configure("enum", lmargin1=0, lmargin2=margin + 5,
+                           tabs=(margin, 'right', margin + 5, 'left'))
+
     def mode_change(self, new_mode):
         self._undo_stack[-1].append(('mode', self.mode, new_mode))
         self.mode = new_mode
@@ -306,12 +321,12 @@ class MyText(Text):
                     update = False
                 self.delete_undoable("sel.first", "sel.last")
                 if update:
-                    self.master.update_enum()
+                    self.update_enum()
             elif self.index("insert") != "1.0":
                 if re.match('^\t[0-9]+\.\t$', deb_line) and 'enum' in tags:
                     self.delete_undoable("insert linestart", "insert")
                     self.insert_undoable("insert", "\t\t")
-                    self.master.update_enum()
+                    self.update_enum()
                 elif deb_line == "\t•\t" and 'list' in tags:
                     self.delete_undoable("insert linestart", "insert")
                     self.insert_undoable("insert", "\t\t")
@@ -345,18 +360,18 @@ class MyText(Text):
             if self.mode == "list":
                 self.add_undo_sep()
                 self.insert_undoable("insert", "\n\t•\t")
-                self.tag_add_undoable("list", "1.0", "end")
+                self.tag_add("list", "1.0", "end")
                 self.add_undo_sep()
             elif self.mode == "todolist":
                 self.add_undo_sep()
                 self.insert_undoable("insert", "\n")
                 self.checkbox_create_undoable("insert", ('!alternate',))
-                self.tag_add_undoable("todolist", "1.0", "end")
+                self.tag_add("todolist", "1.0", "end")
                 self.add_undo_sep()
             elif self.mode == "enum":
                 self.add_undo_sep()
                 self.insert_undoable("insert", "\n\t0.\t")
-                self.master.update_enum()
+                self.update_enum()
                 self.add_undo_sep()
             else:
                 self.insert_undoable("insert", "\n")
@@ -448,24 +463,48 @@ class MyText(Text):
         if self.tag_ranges("sel"):
             current_tags = self.tag_names("sel.first")
             self.add_undo_sep()
+            # remove tag
             if style in current_tags:
                 # first char is in style so 'unstyle' the range
-                self.tag_remove_undoable(style, "sel.first", "sel.last")
+                tag_ranges = text_ranges(self, style, "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable(style, d, f)
+                tag_ranges = text_ranges(self, "bold-italic", "sel.first", "sel.last")
+                style2 = "bold" if style is "italic" else "italic"
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable("bold-italic", d, f)
+                    self.tag_add_undoable(style2, d, f)
             elif style is "bold" and "bold-italic" in current_tags:
-                self.tag_remove_undoable("bold-italic", "sel.first", "sel.last")
-                self.tag_add_undoable("italic", "sel.first", "sel.last")
+                tag_ranges = text_ranges(self, "bold-italic", "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable("bold-italic", d, f)
+                    self.tag_add_undoable("italic", d, f)
+                tag_ranges = text_ranges(self, "bold", "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable("bold", d, f)
             elif style is "italic" and "bold-italic" in current_tags:
-                self.tag_remove_undoable("bold-italic", "sel.first", "sel.last")
+                tag_ranges = text_ranges(self, "bold-italic", "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable("bold-italic", d, f)
+                    self.tag_add_undoable("bold", d, f)
+                tag_ranges = text_ranges(self, "italic", "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable("italic", d, f)
+            # add tag
+            elif style is "bold":
                 self.tag_add_undoable("bold", "sel.first", "sel.last")
-            elif style is "bold" and "italic" in current_tags:
-                self.tag_remove_undoable("italic", "sel.first", "sel.last")
-                self.tag_add_undoable("bold-italic", "sel.first", "sel.last")
-            elif style is "italic" and "bold" in current_tags:
-                self.tag_remove_undoable("bold", "sel.first", "sel.last")
-                self.tag_add_undoable("bold-italic", "sel.first", "sel.last")
-            else:
-                # first char is normal, so apply style to the whole selection
-                self.tag_add_undoable(style, "sel.first", "sel.last")
+                tag_ranges = text_ranges(self, "italic", "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_add_undoable("bold-italic", d, f)
+                    self.tag_remove_undoable("italic", d, f)
+                    self.tag_remove_undoable("bold", d, f)
+            elif style is "italic":
+                self.tag_add_undoable("italic", "sel.first", "sel.last")
+                tag_ranges = text_ranges(self, "bold", "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_add_undoable("bold-italic", d, f)
+                    self.tag_remove_undoable("italic", d, f)
+                    self.tag_remove_undoable("bold", d, f)
             self.add_undo_sep()
 
     def toggle_underline(self):
@@ -475,35 +514,43 @@ class MyText(Text):
             self.add_undo_sep()
             if "underline" in current_tags:
                 # first char is in style so 'unstyle' the range
-                self.tag_remove_undoable("underline", "sel.first", "sel.last")
+                tag_ranges = text_ranges(self, "underline", "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable("underline", d, f)
                 for coul in TEXT_COLORS.values():
-                    self.tag_remove_undoable(coul + "-underline", "sel.first", "sel.last")
+                    tag_ranges = text_ranges(self, coul + "-underline", "sel.first", "sel.last")
+                    for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                        self.tag_remove_undoable(coul + "-underline", d, f)
             else:
                 self.tag_add_undoable("underline", "sel.first", "sel.last")
                 for coul in TEXT_COLORS.values():
                     r = text_ranges(self, coul, "sel.first", "sel.last")
                     if r:
                         for deb, fin in zip(r[::2], r[1::2]):
-                            self.tag_add_undoable(coul + "-underline", "sel.first", "sel.last")
+                            self.tag_add_undoable(coul + "-underline", deb, fin)
             self.add_undo_sep()
 
     def toggle_overstrike(self):
         """Toggle overstrike property of the selected text."""
         if self.tag_ranges("sel"):
-            self.add_undo_sep()
             current_tags = self.tag_names("sel.first")
+            self.add_undo_sep()
             if "overstrike" in current_tags:
                 # first char is in style so 'unstyle' the range
-                self.tag_remove_undoable("overstrike", "sel.first", "sel.last")
+                tag_ranges = text_ranges(self, "overstrike", "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable("overstrike", d, f)
                 for coul in TEXT_COLORS.values():
-                    self.tag_remove_undoable(coul + "-overstrike", "sel.first", "sel.last")
+                    tag_ranges = text_ranges(self, coul + "-overstrike", "sel.first", "sel.last")
+                    for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                        self.tag_remove_undoable(coul + "-overstrike", d, f)
             else:
                 self.tag_add_undoable("overstrike", "sel.first", "sel.last")
                 for coul in TEXT_COLORS.values():
                     r = text_ranges(self, coul, "sel.first", "sel.last")
                     if r:
                         for deb, fin in zip(r[::2], r[1::2]):
-                            self.tag_add_undoable(coul + "-overstrike", "sel.first", "sel.last")
+                            self.tag_add_undoable(coul + "-overstrike", deb, fin)
             self.add_undo_sep()
 
     def change_sel_color(self, color):
@@ -511,9 +558,15 @@ class MyText(Text):
         if self.tag_ranges("sel"):
             self.add_undo_sep()
             for coul in TEXT_COLORS.values():
-                self.tag_remove_undoable(coul, "sel.first", "sel.last")
-                self.tag_remove_undoable(coul + "-overstrike", "sel.first", "sel.last")
-                self.tag_remove_undoable(coul + "-underline", "sel.first", "sel.last")
+                tag_ranges = text_ranges(self, coul, "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable(coul, d, f)
+                tag_ranges = text_ranges(self, coul + "-overstrike", "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable(coul + "-overstrike", d, f)
+                tag_ranges = text_ranges(self, coul + "-underline", "sel.first", "sel.last")
+                for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                    self.tag_remove_undoable(coul + "-underline", d, f)
             if not color == "black":
                 self.tag_add_undoable(color, "sel.first", "sel.last")
                 underline = text_ranges(self, "underline", "sel.first", "sel.last")
@@ -528,19 +581,23 @@ class MyText(Text):
     def set_align(self, alignment):
         """Align the text according to alignment (left, right, center)."""
         if self.tag_ranges("sel"):
-            line = self.index("sel.first").split(".")[0]
-            line2 = self.index("sel.last").split(".")[0]
-            deb, fin = line + ".0", line2 + ".end"
-            if "\t" not in self.get(deb, fin):
-                self.add_undo_sep()
-                # tabulations don't support right/center alignment
-                # remove old alignment tag
-                self.tag_remove_undoable("left", deb, fin)
-                self.tag_remove_undoable("right", deb, fin)
-                self.tag_remove_undoable("center", deb, fin)
-                # set new alignment tag
-                self.tag_add_undoable(alignment, deb, fin)
-                self.add_undo_sep()
+            deb = self.index("sel.first linestart")
+            fin = self.index("sel.last lineend")
+        else:
+            deb = self.index("insert linestart")
+            fin = self.index("insert lineend")
+        if "\t" not in self.get(deb, fin):
+            self.add_undo_sep()
+            # tabulations don't support right/center alignment
+            # remove old alignment tag
+            for align in ['left', 'right', 'center']:
+                if align != alignment:
+                    tag_ranges = text_ranges(self, align, deb, fin)
+                    for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
+                        self.tag_remove_undoable(align, d, f)
+            # set new alignment tag
+            self.tag_add_undoable(alignment, deb, fin)
+            self.add_undo_sep()
 
     def update_enum(self):
         """Update enumeration numbers."""
@@ -556,5 +613,5 @@ class MyText(Text):
         for j, (i, end) in enumerate(indexes):
             self.delete_undoable("%i.0" % (i + 1), "%i.%i" % (i + 1, end))
             self.insert_undoable("%i.0" % (i + 1), "\t%i.\t" % (j + 1))
-        self.tag_add_undoable("enum", "1.0", "end")
+        self.tag_add("enum", "1.0", "end")
         self.add_undo_sep()

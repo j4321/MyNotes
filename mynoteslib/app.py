@@ -36,7 +36,7 @@ import pickle
 from mynoteslib.trayicon import TrayIcon, SubMenu
 from mynoteslib.constants import CONFIG, PATH_DATA, PATH_DATA_BACKUP,\
     LOCAL_PATH, backup, asksaveasfilename, askopenfilename, COLORS, \
-    IM_SCROLL_ALPHA, IM_VISIBLE, IM_HIDDEN, save_modif_info
+    IM_SCROLL_ALPHA, IM_VISIBLE, IM_HIDDEN, save_modif_info, TEXT_COLORS, color_box
 import mynoteslib.constants as cst
 from mynoteslib.config import Config
 from mynoteslib.sync import download_from_server, check_login_info, \
@@ -64,6 +64,14 @@ class App(Tk):
         self.iconphoto(True, self.im_icon)
         self.im_visible = PhotoImage(file=IM_VISIBLE, master=self)
         self.im_hidden = PhotoImage(file=IM_HIDDEN, master=self)
+
+        # color boxes for menus
+        self.im_text_color = {}
+        for name, value in TEXT_COLORS.items():
+            self.im_text_color[name] = PhotoImage(color_box(value), master=self)
+        self.im_color = {}
+        for name, value in COLORS.items():
+            self.im_color[name] = PhotoImage(color_box(value), master=self)
 
         style = Style(self)
         style.theme_use("clam")
@@ -154,7 +162,7 @@ class App(Tk):
 
         # --- Clipboards
         self.clipboard = ''
-        self.clibboard_content = []  # (type, props)
+        self.clipboard_content = []  # (type, props)
         self.link_clipboard = {}
 
         # --- Mono font
@@ -352,7 +360,7 @@ class App(Tk):
             txt_copy = txt.get(sel[0], sel[1])
             self.clipboard = txt_copy
             txt.clipboard_append(txt_copy)
-            self.clibboard_content.clear()
+            self.clipboard_content.clear()
             self.link_clipboard.clear()
 
             if isinstance(txt, MyText):
@@ -378,22 +386,22 @@ class App(Tk):
                             tags = list(txt.tag_names(index))
                             if latex:
                                 tags.remove(key)
-                            self.clibboard_content.append(('image', (im, name, tags, latex)))
+                            self.clipboard_content.append(('image', (im, name, tags, latex)))
                         except TclError:
                             try:
                                 name = txt.window_cget(index, 'window')
                                 ch = txt.children[name.split(".")[-1]]
                                 tags = txt.tag_names(index)
-                                self.clibboard_content.append(('checkbox', (ch.state(), tags)))
+                                self.clipboard_content.append(('checkbox', (ch.state(), tags)))
                             except TclError:
                                 tags = txt.tag_names(index)
                                 link = [t for t in tags if 'link#' in t]
                                 if link:
                                     lnb = int(link[0].split('#')[1])
                                     self.link_clipboard[link[0]] = txt.links[lnb]
-                                self.clibboard_content.append(('char', (txt.get(index), tags)))
+                                self.clipboard_content.append(('char', (txt.get(index), tags)))
                     if l < fin[0]:
-                        self.clibboard_content.append(('char', ('\n', [])))
+                        self.clipboard_content.append(('char', ('\n', [])))
 
     def cut_text(self, event):
         self.copy_text(event)
@@ -419,8 +427,13 @@ class App(Tk):
                 for oldtag, link in self.link_clipboard.items():
                     newtag = txt.master.create_link(link)
                     links[oldtag] = newtag
-
-                for c in self.clibboard_content:
+                if self.clipboard_content:
+                    c = self.clipboard_content[0]
+                    if c[0] == 'image':
+                        tags1 = c[1][2]
+                    else:
+                        tags1 = c[1][1]
+                for c in self.clipboard_content:
                     index = txt.index('insert')
                     if c[0] is 'image':
                         img, name, tags, latex = c[1]
@@ -434,19 +447,60 @@ class App(Tk):
                         txt.update_idletasks()
                     else:
                         char, tags = c[1]
-                        link = [t for t in tags if 'link#' in t]
-                        if link:
-                            tags = list(tags)
-                            tags.remove(link[0])
-                            tags.append(links[link[0]])
-                        txt.insert_undoable('insert', char)
+                        tags = list(tags)
+                        if char == '\n':
+                            if txt.mode == "list":
+                                txt.insert_undoable("insert", "\n")
+                                if 'list' not in tags1:
+                                    txt.insert_undoable("insert", "\t•\t")
+                            elif txt.mode == "todolist":
+                                txt.insert_undoable("insert", "\n")
+                                if 'todolist' not in tags1:
+                                    txt.checkbox_create_undoable("insert", ('!alternate',))
+                            elif txt.mode == "enum":
+                                txt.insert_undoable("insert", "\n")
+                                if 'enum' not in tags1:
+                                    txt.insert_undoable("insert", "\t0.\t")
+                            else:
+                                txt.insert_undoable("insert", "\n")
+                        else:
+                            link = [t for t in tags if 'link#' in t]
+                            if link:
+                                tags = list(tags)
+                                tags.remove(link[0])
+                                tags.append(links[link[0]])
+                            txt.insert_undoable('insert', char)
+                        for mode in ['list', 'todolist', 'enum']:
+                            if mode in tags:
+                                tags.remove(mode)
                     for tag in tags:
                         txt.tag_add_undoable(tag, index)
                 txt.tag_remove('sel', '1.0', 'end')
                 self.highlight_checkboxes(event)
             else:
                 self.clipboard = ""
-                txt.insert_undoable('insert', txt.clipboard_get())
+                text = txt.clipboard_get()
+                if txt.mode == 'list':
+                    text = text.replace('\n', "\n\t•\t")
+                    txt.insert_undoable('insert', text)
+                elif txt.mode == 'enum':
+                    text = text.replace('\n', "\n\t0.\t")
+                    txt.insert_undoable('insert', text)
+                elif txt.mode == 'todolist':
+                    lines = text.split('\n')
+                    if lines:
+                        txt.insert_undoable('insert', lines[0])
+                        for line in lines[1:]:
+                            txt.insert_undoable("insert", "\n")
+                            txt.checkbox_create_undoable("insert", ('!alternate',))
+                            txt.insert_undoable('insert', line)
+                else:
+                    txt.insert_undoable('insert', text)
+
+            if txt.mode != 'note':
+                txt.tag_add(txt.mode, '1.0', 'end')
+                if txt.mode == 'enum':
+                    txt.update_enum()
             txt.add_undo_sep()
         else:
             if txt.tag_ranges("sel"):

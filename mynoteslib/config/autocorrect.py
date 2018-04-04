@@ -57,7 +57,7 @@ class AutoCorrectConfig(Frame):
             self.by.trace_add('w', self._trace_by)
 
         b_frame = Frame(self)
-        self.b_add = Button(b_frame, text=_('Add'), command=self.add)
+        self.b_add = Button(b_frame, text=_('New'), command=self.add)
         self.b_rem = Button(b_frame, text=_('Delete'), command=self.remove)
         self.b_add.state(('disabled',))
         self.b_rem.state(('disabled',))
@@ -111,7 +111,7 @@ class AutoCorrectConfig(Frame):
                     self.b_add.state(('disabled',))
             else:
                 self.b_rem.state(('disabled',))
-                self.b_add.configure(text=_('Add'))
+                self.b_add.configure(text=_('New'))
                 if sel:
                     self.tree.selection_remove(*sel)
         if not val:
@@ -149,6 +149,3 @@ class AutoCorrectConfig(Frame):
         AUTOCORRECT.clear()
         for key in keys:
             AUTOCORRECT[key] = self.tree.set(key, 'by')
-
-
-
