@@ -24,7 +24,6 @@ Sticky note class
 
 from tkinter import Toplevel, StringVar, Menu, TclError
 from tkinter.ttk import  Style, Sizegrip, Entry, Label, Button, Frame
-from tkinter.font import Font
 from PIL.ImageTk import PhotoImage
 from PIL import Image
 import os
@@ -105,6 +104,10 @@ class Sticky(Toplevel):
         self.roll = Label(self.titlebar, image="img_roll", style=self.id + ".TLabel")
         self.close = Label(self.titlebar, image="img_close", style=self.id + ".TLabel")
         self.im_lock = PhotoImage(master=self, file=IM_LOCK)
+        im_unlock = Image.new('RGBA',
+                              (self.im_lock.width(), self.im_lock.height()),
+                              (0, 0, 0, 0))
+        self.im_unlock = PhotoImage(im_unlock, master=self)
         self.im_clip = PhotoImage(master=self, file=IM_CLIP)
         self.cadenas = Label(self.titlebar, style=self.id + ".TLabel")
 
@@ -397,6 +400,8 @@ class Sticky(Toplevel):
         if name is "color":
             self.style.configure(self.id + ".TSizegrip",
                                  background=self.color)
+            self.style.map(self.id + ".TSizegrip",
+                           background=[('disabled', self.color)])
             self.style.configure(self.id +  ".TLabel",
                                  background=self.color)
             self.style.configure(self.id +  ".TFrame",
@@ -433,31 +438,37 @@ class Sticky(Toplevel):
             self.destroy()
 
     def lock(self):
-        """Put note in read-only mode to avoid unwanted text insertion."""
+        """Put note in read-only mode to avoid unwanted text insertion and lock position."""
         if self.is_locked:
             selectbg = self.style.lookup('TEntry', 'selectbackground', ('focus',))
             self.txt.configure(state="normal",
                                selectforeground='white',
+                               cursor='xterm',
                                selectbackground=selectbg,
                                inactiveselectbackground=selectbg)
+            self.corner.state(('!disabled',))
+            self.corner.configure(cursor='bottom_right_corner')
             self.style.configure("sel.%s.TCheckbutton" % self.id, background=selectbg)
             self.style.map("sel.%s.TCheckbutton" % self.id, background=[("active", selectbg)])
             self.is_locked = False
             for checkbox in self.txt.window_names():
                 ch = self.txt.children[checkbox.split(".")[-1]]
                 ch.configure(state="normal")
-            self.cadenas.configure(image="")
+            self.cadenas.configure(image=self.im_unlock)
             self.menu.entryconfigure(3, label=_("Lock"))
             self.title_label.bind("<Double-Button-1>", self.edit_title)
             self.txt.bind('<Button-3>', self.show_menu_txt)
         else:
             self.txt.configure(state="disabled",
+                               cursor='arrow',
                                selectforeground='black',
                                inactiveselectbackground='#c3c3c3',
                                selectbackground='#c3c3c3')
             self.style.configure("sel.%s.TCheckbutton" % self.id, background='#c3c3c3')
             self.style.map("sel.%s.TCheckbutton" % self.id, background=[("active", '#c3c3c3')])
             self.cadenas.configure(image=self.im_lock)
+            self.corner.state(('disabled',))
+            self.corner.configure(cursor='arrow')
             for checkbox in self.txt.window_names():
                 ch = self.txt.children[checkbox.split(".")[-1]]
                 ch.configure(state="disabled")
@@ -770,9 +781,10 @@ class Sticky(Toplevel):
 
     def start_move(self, event):
         """Start moving the note."""
-        self.x = event.x
-        self.y = event.y
-        self.configure(cursor='fleur')
+        if not self.is_locked:
+            self.x = event.x
+            self.y = event.y
+            self.configure(cursor='fleur')
 
     def stop_move(self, event):
         """Stop moving the note."""
