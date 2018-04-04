@@ -990,7 +990,8 @@ class Sticky(Toplevel):
         """Edit link number link_nb."""
         # cancel link opening
         self.after_cancel(self.links_click_id[link_nb])
-        self.add_link(link_nb)
+        if not self.is_locked:
+            self.add_link(link_nb)
 
     # ---* --Add other objects
     def add_checkbox(self, event=None):
@@ -1008,6 +1009,8 @@ class Sticky(Toplevel):
 
     def add_latex(self, img_name=None):
         """Insert image generated from latex expression given in the entry."""
+        if self.is_locked:
+            return
 
         def ok(event):
             latex = r'%s' % text.get()
