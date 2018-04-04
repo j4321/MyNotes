@@ -5,14 +5,13 @@ from setuptools import setup
 
 import os
 images = [os.path.join("mynoteslib/images/", img) for img in os.listdir("mynoteslib/images/")]
+translations = [("/usr/share/locale/%s/LC_MESSAGES/" % lang, ["mynoteslib/locale/%s/LC_MESSAGES/MyNotes.mo" % lang])
+                for lang in os.listdir("mynoteslib/locale")]
 data_files = [("/usr/share/pixmaps", ["mynotes.svg"]),
               ("/usr/share/doc/mynotes", ["README.rst", "changelog"]),
               ("/usr/share/man/man1", ["mynotes.1.gz"]),
               ("/usr/share/mynotes/images", images),
-              ("/usr/share/locale/en_US/LC_MESSAGES/", ["mynoteslib/locale/en_US/LC_MESSAGES/MyNotes.mo"]),
-              ("/usr/share/locale/nl_NL/LC_MESSAGES/", ["mynoteslib/locale/nl_NL/LC_MESSAGES/MyNotes.mo"]),
-              ("/usr/share/locale/fr_FR/LC_MESSAGES/", ["mynoteslib/locale/fr_FR/LC_MESSAGES/MyNotes.mo"]),
-              ("/usr/share/applications", ["mynotes.desktop"])]
+              ("/usr/share/applications", ["mynotes.desktop"])] + translations
 
 with open("mynoteslib/version.py") as file:
     exec(file.read())
