@@ -24,9 +24,7 @@ Sticky note class
 
 from tkinter import Toplevel, StringVar, Menu, TclError
 from tkinter.ttk import  Style, Sizegrip, Entry, Label, Button, Frame
-from tkinter.font import Font
 from PIL.ImageTk import PhotoImage
-from PIL import Image
 import os
 import re
 from time import strftime
@@ -796,11 +794,16 @@ class Sticky(Toplevel):
         """Save note."""
         data = self.save_info()
         data["visible"] = True
-        data2 = {key:self.master.note_data[self.id][key] for key in data}
-        if data != data2:
+        if self.id in self.master.note_data:
+            data2 = {key:self.master.note_data[self.id][key] for key in data}
+            if data != data2:
+                data['mtime'] = int(time())  # last modification time in seconds since epoch
+                self.master.note_data[self.id] = data
+                self.master.save()
+        else:
             data['mtime'] = int(time())  # last modification time in seconds since epoch
-        self.master.note_data[self.id] = data
-        self.master.save()
+            self.master.note_data[self.id] = data
+            self.master.save()
 
     def mouse_roll(self, event):
         if event.num == 5 and not self.txt.winfo_ismapped():

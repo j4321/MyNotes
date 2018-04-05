@@ -45,9 +45,8 @@ from mynoteslib.sticky import Sticky
 from mynoteslib.about import About
 from mynoteslib.notemanager import Manager
 from mynoteslib.version_check import UpdateChecker
-from mynoteslib.messagebox import showerror, askokcancel, showinfo
+from mynoteslib.messagebox import showerror, askokcancel, showinfo, asksync
 from mynoteslib.mytext import MyText
-from mynoteslib.sync import check_login_info, warn_exist_remote
 if EASYWEBDAV:
     import easywebdav
 
@@ -216,33 +215,6 @@ class App(Tk):
         self.icon.menu.add_command(label=_('Quit'), command=self.quit)
         self.icon.loop(self)
 
-        # --- Sync
-        self.password = ""
-
-        if CONFIG.getboolean("Sync", "on"):
-            server_type = CONFIG.get("Sync", "server_type")
-            if (server_type == "WebDav" and EASYWEBDAV) or server_type == "FTP":
-                self.get_server_pwd()
-                if self.password:
-                    while (not check_login_info(self.password)) and self.password:
-                        self.get_server_login()
-                    if self.password:
-                        self.configure(cursor="watch")
-                        res = self.sync()
-                        if not res:
-                            showinfo(_("Information"),
-                                     _("There was an error during the synchronization so synchronization has been disabled."))
-                            CONFIG.set("Sync", "on", "False")
-                else:
-                    showinfo(_("Information"),
-                             _("No password has been given so synchronization has been disabled."))
-                    CONFIG.set("Sync", "on", "False")
-            else:
-                CONFIG.set("Sync", "on", "False")
-        if not CONFIG.getboolean("Sync", "on"):
-            self.icon.menu.disable_item(19)
-            self.icon.menu.disable_item(18)
-
         # --- Restore notes
         self.note_data = {}
         if os.path.exists(PATH_DATA):
@@ -278,14 +250,42 @@ class App(Tk):
             else:
                 backup()
 
-            for key, data in self.note_data.items():
-                cat = data["category"]
-                if not CONFIG.has_option("Categories", cat):
-                    CONFIG.set("Categories", cat, data["color"])
-                if data["visible"]:
-                    self.notes[key] = Sticky(self, key, **data)
+        # --- Sync
+        self.password = ""
+
+        if CONFIG.getboolean("Sync", "on"):
+            server_type = CONFIG.get("Sync", "server_type")
+            if (server_type == "WebDav" and EASYWEBDAV) or server_type == "FTP":
+                self.get_server_pwd()
+                if self.password:
+                    while (not self.check_login_info()) and self.password:
+                        self.get_server_login()
+                    if self.password:
+                        self.configure(cursor="watch")
+                        res = self.sync()
+                        if not res:
+                            showinfo(_("Information"),
+                                     _("There was an error during the synchronization so synchronization has been disabled."))
+                            CONFIG.set("Sync", "on", "False")
                 else:
-                    self.add_note_to_menu(key, data["title"], cat)
+                    showinfo(_("Information"),
+                             _("No password has been given so synchronization has been disabled."))
+                    CONFIG.set("Sync", "on", "False")
+            else:
+                CONFIG.set("Sync", "on", "False")
+        if not CONFIG.getboolean("Sync", "on"):
+            self.icon.menu.disable_item(19)
+            self.icon.menu.disable_item(18)
+
+        for key, data in self.note_data.items():
+            cat = data["category"]
+            if not CONFIG.has_option("Categories", cat):
+                CONFIG.set("Categories", cat, data["color"])
+            if data["visible"]:
+                self.notes[key] = Sticky(self, key, **data)
+            else:
+                self.add_note_to_menu(key, data["title"], cat)
+
         self.update_menu()
         self.update_notes()
         self.make_notes_sticky()
@@ -533,16 +533,6 @@ class App(Tk):
         self.highlight_checkboxes(event)
 
     # --- sync
-    def sync(self):
-        server_type = CONFIG.get("Sync", "server_type")
-        if server_type == "FTP":
-            return self._sync_ftp()
-        elif server_type == "WebDav":
-            return self._sync_webdav()
-        else:
-            raise ValueError("Wrong server type %s" % server_type)
-            return False
-
     def merge_note_data(self):
         """Merge note data."""
         try:
@@ -552,12 +542,12 @@ class App(Tk):
         except Exception as e:
             showerror(_('Error'), str(type(e)), traceback.format_exc())
         else:
-            for key in self.note_data:
-                if key in data_remote and data_remote.get('mtime', 0) > self.note_data.get('mtime', 0):
-                    self.note_data[key] = data_remote[key].copy()
-            for key in data_remote:
-                if key not in self.note_data:
-                    self.note_data[key] = data_remote[key].copy()
+            for note_id in self.note_data:
+                if note_id in data_remote and data_remote[note_id].get('mtime', 0) > self.note_data[note_id].get('mtime', 0):
+                    self.note_data[note_id] = data_remote[note_id].copy()
+            for note_id in data_remote:
+                if note_id not in self.note_data:
+                    self.note_data[note_id] = data_remote[note_id].copy()
             self.save()
 
     def _sync_ftp(self):
@@ -633,6 +623,160 @@ class App(Tk):
             showerror(_("Error"), str(type(e)), traceback.format_exc(), False)
             return False
 
+    def sync(self):
+        server_type = CONFIG.get("Sync", "server_type")
+        if server_type == "FTP":
+            return self._sync_ftp()
+        elif server_type == "WebDav":
+            return self._sync_webdav()
+        else:
+            raise ValueError("Wrong server type %s" % server_type)
+
+    def _new_sync_ftp(self):
+        """If a remote data file exists when sync is activated, ask the user what to do."""
+        remote_path = CONFIG.get("Sync", "file")
+
+        try:
+            if CONFIG.get("Sync", "protocol") == "FTP":
+                ftp = ftplib.FTP()
+                ftp.connect(CONFIG.get("Sync", "server"),
+                            CONFIG.getint("Sync", "port"))
+                ftp.login(user=CONFIG.get("Sync", "username"), passwd=self.password)
+            else:
+                ftp = ftplib.FTP_TLS()
+                ftp.connect(CONFIG.get("Sync", "server"),
+                            CONFIG.getint("Sync", "port"))
+                ftp.login(user=CONFIG.get("Sync", "username"), passwd=self.password)
+                ftp.prot_p()
+            if ftp.nlst(remote_path):
+                # it's a directory
+                CONFIG.set("Sync", "file", os.path.join(remote_path, "notes"))
+                directory, filename = remote_path, "notes"
+            else:
+                directory, filename = os.path.split(remote_path)
+            if directory:
+                ftp.cwd(directory)
+            if filename in ftp.nlst():
+                action = asksync(message=_("The file {filename} already exists on the server. What do you want to do?").format(filename=remote_path),
+                                 parent=self)
+                if action == "download":
+                    ftp.retrbinary('RETR ' + filename, open(PATH_DATA, 'wb').write)
+                elif action == "upload":
+                    ftp.storbinary("STOR " + filename, open(PATH_DATA, "rb"))
+                elif action == "sync":
+                    res = self._sync_ftp()
+                    if not res:
+                        return "error"
+                return action
+            else:
+                ftp.storbinary("STOR " + filename, open(PATH_DATA, "rb"))
+                return "upload"
+        except Exception as e:
+            showerror(_("Error"), str(type(e)), traceback.format_exc())
+            return "error"
+        finally:
+            ftp.quit()
+
+    def _new_sync_webdav(self):
+        """If a remote data file exists when sync is activated, ask the user what to do."""
+        remote_path = CONFIG.get("Sync", "file")
+        webdav = easywebdav.connect(CONFIG.get("Sync", "server"),
+                                    username=CONFIG.get("Sync", "username"),
+                                    password=self.password,
+                                    protocol=CONFIG.get("Sync", "protocol"),
+                                    port=CONFIG.get("Sync", "port"),
+                                    verify_ssl=True)
+        try:
+            if webdav.exists(remote_path):
+                ls = webdav.ls(remote_path)
+                if len(ls) > 1:
+                    # it's a folder
+                    remote_path = os.path.join(remote_path, 'notes')
+                    CONFIG.set("Sync", "file", remote_path)
+                    if not webdav.exists(remote_path):
+                        webdav.upload(PATH_DATA, remote_path)
+                        return "upload"
+
+                action = asksync(message=_("The file {filename} already exists on the server. What do you want to do?").format(filename=remote_path),
+                                 parent=self)
+                if action == "download":
+                    webdav.download(remote_path, PATH_DATA)
+                elif action == "upload":
+                    webdav.upload(PATH_DATA, remote_path)
+                elif action == "sync":
+                    res = self._sync_webdav()
+                    if not res:
+                        return "error"
+                return action
+            else:
+                webdav.upload(PATH_DATA, remote_path)
+                return "upload"
+        except Exception as e:
+            showerror(_("Error"), str(type(e)), traceback.format_exc())
+            return "error"
+
+    def new_sync(self):
+        """If a remote data file exists when sync is activated, ask the user what to do."""
+        server_type = CONFIG.get("Sync", "server_type")
+        if server_type == "FTP":
+            return self._new_sync_ftp()
+        elif server_type == "WebDav":
+            return self._new_sync_webdav()
+        else:
+            raise ValueError("Wrong server type %s" % server_type)
+
+    def _check_login_info_ftp(self):
+        try:
+            if CONFIG.get("Sync", "protocol") == "FTP":
+                ftp = ftplib.FTP()
+                ftp.connect(CONFIG.get("Sync", "server"),
+                            CONFIG.getint("Sync", "port"))
+                ftp.login(user=CONFIG.get("Sync", "username"), passwd=self.password)
+            else:
+                ftp = ftplib.FTP_TLS()
+                ftp.connect(CONFIG.get("Sync", "server"),
+                            CONFIG.getint("Sync", "port"))
+                ftp.login(user=CONFIG.get("Sync", "username"), passwd=self.spassword)
+            return True
+        except ftplib.error_perm as e:
+            showerror(_("Error"), _("Wrong login information."))
+            return False
+        except Exception as e:
+            showerror(_("Error"), str(type(e)), traceback.format_exc())
+            return False
+        finally:
+            ftp.quit()
+
+    def _check_login_info_webdav(self):
+        webdav = easywebdav.connect(CONFIG.get("Sync", "server"),
+                                    username=CONFIG.get("Sync", "username"),
+                                    password=self.password,
+                                    protocol=CONFIG.get("Sync", "protocol"),
+                                    port=CONFIG.get("Sync", "port"),
+                                    verify_ssl=True)
+        try:
+            webdav.exists(CONFIG.get("Sync", "file"))
+            return True
+        except easywebdav.OperationFailed as e:
+            if e.actual_code == 401:
+                showerror(_("Error"), _("Wrong login information."))
+                return False
+            else:
+                showerror(_("Error"), str(type(e)), traceback.format_exc())
+                return False
+        except Exception as e:
+            showerror(_("Error"), str(type(e)), traceback.format_exc())
+            return False
+
+    def check_login_info(self):
+        server_type = CONFIG.get("Sync", "server_type")
+        if server_type == "FTP":
+            return self._check_login_info_ftp()
+        elif server_type == "WebDav":
+            return self._check_login_info_webdav()
+        else:
+            raise ValueError("Wrong server type %s" % server_type)
+
     def get_server_pwd(self):
         def ok(event=None):
             self.password = pwd.get()
@@ -703,12 +847,21 @@ class App(Tk):
                 CONFIG.set("Sync", "on", "False")
                 showinfo(_("Information"),
                          _("No password has been given so synchronization has been disabled."))
-            while (not check_login_info(self.password)) and self.password:
-                self.get_server_login()
-            if self.password and sync_activated:
-                res = warn_exist_remote(self.password)
-                if res == "download":
-                    self.restore(PATH_DATA, False)
+            else:
+                while (not self.check_login_info()) and self.password:
+                    self.get_server_login()
+                if self.password and sync_activated:
+                    res = self.new_sync()
+                    if res in ["download", "sync"]:
+                        self.restore(PATH_DATA, False)
+                    elif res == "error":
+                        showinfo(_("Information"),
+                                 _("There was an error during the synchronization so synchronization has been disabled."))
+                        CONFIG.set("Sync", "on", "False")
+                    elif not res:
+                        CONFIG.set("Sync", "on", "False")
+                        showinfo(_("Information"),
+                                 _("No action has been chosen so synchronization has been disabled."))
 
     def get_password(self):
         return self.password
@@ -1096,4 +1249,3 @@ class App(Tk):
 
     def quit(self):
         self.destroy()
-

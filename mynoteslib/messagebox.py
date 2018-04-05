@@ -29,27 +29,30 @@ from mynoteslib.constants import ICONS, IM_WARNING_DATA
 
 
 class SyncConflict(Toplevel):
-    def __init__(self, master=None,
-                 text=_("There is a synchronization conflict. What do you want to do?")):
+    def __init__(self, master=None, title=_("Sync Conflict"), text=""):
         Toplevel.__init__(self, master, class_='MyNotes')
-        self.icon = PhotoImage(data=IM_WARNING_DATA)
-        self.title(_("Sync Conflict"))
-        self.grab_set()
+        self.icon = PhotoImage(data=IM_WARNING_DATA, master=self)
+        self.title(title)
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
+        self.columnconfigure(2, weight=1)
 
         self.action = ""
         frame = Frame(self)
-        frame.grid(row=0, columnspan=2, sticky="eswn")
+        frame.grid(row=0, columnspan=3, sticky="eswn")
         Label(frame, image=self.icon).pack(padx=4, pady=4, side="left")
-        Label(frame, text=text,
+        Label(frame, text=text, wraplength=400,
               font="TkDefaultFont 10 bold").pack(side="right", fill="x",
                                                  anchor="center", expand=True,
                                                  padx=4, pady=4)
-        Button(self, text=_("Download notes from server"),
+        Button(self, text=_("Download"),
                command=self.download).grid(row=1, column=0, padx=4, pady=4, sticky='ew')
-        Button(self, text=_("Upload local notes on server"),
+        Button(self, text=_("Upload"),
                command=self.upload).grid(row=1, column=1, padx=4, pady=4, sticky='ew')
+        Button(self, text=_("Sync"),
+               command=self.sync).grid(row=1, column=2, padx=4, pady=4, sticky='ew')
+        self.update_idletasks()
+        self.grab_set()
 
     def download(self):
         self.action = "download"
@@ -57,6 +60,10 @@ class SyncConflict(Toplevel):
 
     def upload(self):
         self.action = "upload"
+        self.destroy()
+
+    def sync(self):
+        self.action = "sync"
         self.destroy()
 
     def get_action(self):
@@ -448,3 +455,19 @@ def askyesnocancel(title="", message="", parent=None, icon=None):
     box = AskYesNoCancel(parent, title, message, image=icon)
     box.wait_window(box)
     return box.get_result()
+
+
+def asksync(title=_("Sync Conflict"), message="", parent=None):
+    """
+    Display a dialog to solve sync conflict.
+
+    Return the action chosen by the user: 'sync', 'upload' or 'download'.
+
+    Arguments:
+        title: dialog title
+        message: message displayed in the dialog
+        parent: parent window
+    """
+    box = SyncConflict(parent, title, message)
+    box.wait_window(box)
+    return box.get_action()
