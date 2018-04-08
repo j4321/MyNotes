@@ -532,7 +532,7 @@ msgstr "Farbe"
 
 #: mynoteslib/sticky.py:198 mynoteslib/sticky.py:450
 msgid "Lock"
-msgstr "Feststellen"
+msgstr "Schreibschutz ein"
 
 #: mynoteslib/sticky.py:199
 msgid "Position"
@@ -592,7 +592,7 @@ msgstr "Notiz löschen?"
 
 #: mynoteslib/sticky.py:465
 msgid "Unlock"
-msgstr "Entriegeln"
+msgstr "Schreibschutz aus"
 
 #: mynoteslib/sticky.py:949
 msgid "URL or file"
