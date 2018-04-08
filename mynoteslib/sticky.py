@@ -26,6 +26,7 @@ from tkinter import Text, Toplevel, StringVar, Menu, TclError
 from tkinter.ttk import  Style, Sizegrip, Entry, Checkbutton, Label, Button
 from tkinter.font import Font
 from PIL.ImageTk import PhotoImage
+from PIL import Image
 import os
 import re
 from time import strftime
@@ -52,6 +53,9 @@ class Sticky(Toplevel):
         """
         Toplevel.__init__(self, master, class_='MyNotes')
         self.withdraw()
+
+        self.x = None
+        self.y = None
 
         # --- window properties
         self.id = key
@@ -99,6 +103,10 @@ class Sticky(Toplevel):
         self.roll = Label(self, image="img_roll", style=self.id + ".TLabel")
         self.close = Label(self, image="img_close", style=self.id + ".TLabel")
         self.im_lock = PhotoImage(master=self, file=IM_LOCK)
+        im_unlock = Image.new('RGBA',
+                              (self.im_lock.width(), self.im_lock.height()),
+                              (0, 0, 0, 0))
+        self.im_unlock = PhotoImage(im_unlock, master=self)
         self.im_clip = PhotoImage(master=self, file=IM_CLIP)
         self.cadenas = Label(self, style=self.id + ".TLabel")
         # corner grip
@@ -462,6 +470,7 @@ class Sticky(Toplevel):
             selectbg = self.style.lookup('TEntry', 'selectbackground', ('focus',))
             self.txt.configure(state="normal",
                                selectforeground='white',
+                               cursor='xterm',
                                selectbackground=selectbg,
                                inactiveselectbackground=selectbg)
             self.style.configure("sel.%s.TCheckbutton" % self.id, background=selectbg)
@@ -470,12 +479,13 @@ class Sticky(Toplevel):
             for checkbox in self.txt.window_names():
                 ch = self.txt.children[checkbox.split(".")[-1]]
                 ch.configure(state="normal")
-            self.cadenas.configure(image="")
+            self.cadenas.configure(image=self.im_unlock)
             self.menu.entryconfigure(3, label=_("Lock"))
             self.title_label.bind("<Double-Button-1>", self.edit_title)
             self.txt.bind('<Button-3>', self.show_menu_txt)
         else:
             self.txt.configure(state="disabled",
+                               cursor='arrow',
                                selectforeground='black',
                                inactiveselectbackground='#c3c3c3',
                                selectbackground='#c3c3c3')

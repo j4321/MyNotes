@@ -432,8 +432,8 @@ msgid "Delete the note?"
 msgstr "Notiz löschen?"
 
 #: mynoteslib/sticky.py:489
-msgid "Schreibschutz aus"
-msgstr "Entriegeln"
+msgid "Unlock"
+msgstr "Schreibschutz aus"
 
 #: mynoteslib/sticky.py:868
 msgid "URL or file"
