@@ -3,7 +3,8 @@
 """
 My Notes - Sticky notes/post-it
 Copyright 2016-2017 Juliette Monsel <j_4321@protonmail.com>
-The tcl part of the code was take from http://wiki.tcl.tk/15780
+The tcl part of the code was taken from http://wiki.tcl.tk/15780 and
+written by Paweł Salawa.
 
 My Notes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
