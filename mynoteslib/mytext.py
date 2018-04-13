@@ -143,32 +143,34 @@ class MyText(Text):
         self.add_undo_sep()
 
     def undo(self, event=None):
-        try:
-            items = []
-            # skip empty sets
-            while not items:
-                items = self._undo_stack.pop()
-        except IndexError:
-            # empty stack
-            self._undo_stack.append([])
-        else:
-            self._redo_stack.append(items)
-            for item in reversed(items):
-                self._undo_single(item)
-            if not self._undo_stack:
+        if self.cget("state") != "disabled":
+            try:
+                items = []
+                # skip empty sets
+                while not items:
+                    items = self._undo_stack.pop()
+            except IndexError:
+                # empty stack
                 self._undo_stack.append([])
+            else:
+                self._redo_stack.append(items)
+                for item in reversed(items):
+                    self._undo_single(item)
+                if not self._undo_stack:
+                    self._undo_stack.append([])
         return "break"
 
     def redo(self, event=None):
-        try:
-            items = self._redo_stack.pop()
-        except IndexError:
-            # empty stack
-            pass
-        else:
-            self._undo_stack.append(items)
-            for item in items:
-                self._redo_single(item)
+        if self.cget("state") != "disabled":
+            try:
+                items = self._redo_stack.pop()
+            except IndexError:
+                # empty stack
+                pass
+            else:
+                self._undo_stack.append(items)
+                for item in items:
+                    self._redo_single(item)
         return "break"
 
     def add_undo_sep(self):
