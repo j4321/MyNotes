@@ -216,6 +216,8 @@ class MyText(Text):
             self.checkbox_create(item[1], item[2])
         elif item[0] == 'insert':
             self.insert(item[1], item[3], *item[4])
+            if self.mode != "note":
+                self.tag_add(self.mode, "1.0", "end")
         elif item[0] == 'link':
             self.links[item[1]] = item[3]
         elif item[0] == 'delete':
