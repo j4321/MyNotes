@@ -143,32 +143,34 @@ class MyText(Text):
         self.add_undo_sep()
 
     def undo(self, event=None):
-        try:
-            items = []
-            # skip empty sets
-            while not items:
-                items = self._undo_stack.pop()
-        except IndexError:
-            # empty stack
-            self._undo_stack.append([])
-        else:
-            self._redo_stack.append(items)
-            for item in reversed(items):
-                self._undo_single(item)
-            if not self._undo_stack:
+        if self.cget("state") != "disabled":
+            try:
+                items = []
+                # skip empty sets
+                while not items:
+                    items = self._undo_stack.pop()
+            except IndexError:
+                # empty stack
                 self._undo_stack.append([])
+            else:
+                self._redo_stack.append(items)
+                for item in reversed(items):
+                    self._undo_single(item)
+                if not self._undo_stack:
+                    self._undo_stack.append([])
         return "break"
 
     def redo(self, event=None):
-        try:
-            items = self._redo_stack.pop()
-        except IndexError:
-            # empty stack
-            pass
-        else:
-            self._undo_stack.append(items)
-            for item in items:
-                self._redo_single(item)
+        if self.cget("state") != "disabled":
+            try:
+                items = self._redo_stack.pop()
+            except IndexError:
+                # empty stack
+                pass
+            else:
+                self._undo_stack.append(items)
+                for item in items:
+                    self._redo_single(item)
         return "break"
 
     def add_undo_sep(self):
@@ -214,6 +216,8 @@ class MyText(Text):
             self.checkbox_create(item[1], item[2])
         elif item[0] == 'insert':
             self.insert(item[1], item[3], *item[4])
+            if self.mode != "note":
+                self.tag_add(self.mode, "1.0", "end")
         elif item[0] == 'link':
             self.links[item[1]] = item[3]
         elif item[0] == 'delete':
