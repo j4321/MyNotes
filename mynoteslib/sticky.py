@@ -29,9 +29,8 @@ from PIL import Image
 import os
 import re
 from time import strftime
-from mynoteslib.constants import TEXT_COLORS, askopenfilename,\
-    PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK, IM_CLIP, sorting,\
-    math_to_image, EWMH, INV_COLORS
+from mynoteslib.constants import TEXT_COLORS, COLORS, askopenfilename, EWMH,\
+    PATH_LATEX, LATEX, CONFIG, IM_LOCK, IM_CLIP, sorting, math_to_image
 from mynoteslib.autoscrollbar import AutoScrollbar
 from mynoteslib.symbols import pick_symbol
 from mynoteslib.mytext import MyText
@@ -60,6 +59,7 @@ class Sticky(Toplevel):
 
         # --- window properties
         self.id = key
+        self._date = kwargs.get('date', '??')
         self.is_locked = not (kwargs.get("locked", False))
         self.images = []
         self.links_click_id = {}  # delay click effect to avoid triggering <1> with <Double-1>
@@ -94,9 +94,14 @@ class Sticky(Toplevel):
                                    value=kwargs.get("title", _("Title")))
         self.title_label = Label(self.titlebar,
                                  textvariable=self.title_var,
-                                 anchor="center",
+                                 anchor="e",
                                  style=self.id + ".TLabel",
                                  font=font_title)
+        self.date_label = Label(self.titlebar,
+                                text="",
+                                anchor="w",
+                                style=self.id + ".TLabel",
+                                font=font_title)
         self.title_entry = Entry(self.titlebar, textvariable=self.title_var,
                                  exportselection=False,
                                  justify="center", font=font_title)
@@ -114,17 +119,24 @@ class Sticky(Toplevel):
         if CONFIG.get("General", "buttons_position") == "right":
             # right = lock icon - title - roll - close
             self.titlebar.columnconfigure(1, weight=1)
-            self.roll.grid(row=0, column=2, sticky="e")
-            self.close.grid(row=0, column=3, sticky="e", padx=(0,2))
+            self.titlebar.columnconfigure(2, weight=1)
+            self.roll.grid(row=0, column=3, sticky="e")
+            self.close.grid(row=0, column=4, sticky="e", padx=(0,2))
             self.cadenas.grid(row=0, column=0, sticky="w")
             self.title_label.grid(row=0, column=1, sticky="ew", pady=(1,0))
+            self.date_label.grid(row=0, column=2, sticky="ew", pady=(1,0))
         else:
             # left = close - roll - title - lock icon
             self.titlebar.columnconfigure(2, weight=1)
+            self.titlebar.columnconfigure(3, weight=1)
             self.roll.grid(row=0, column=1, sticky="w")
             self.close.grid(row=0, column=0, sticky="w", padx=(2,0))
-            self.cadenas.grid(row=0,column=3, sticky="e")
+            self.cadenas.grid(row=0, column=4, sticky="e")
             self.title_label.grid(row=0, column=2, sticky="ew", pady=(1,0))
+            self.date_label.grid(row=0, column=3, sticky="ew", pady=(1,0))
+
+        if CONFIG.getboolean('General', 'date_in_title', fallback=True):
+            self.date_label.configure(text='- ' + self._date)
 
         # -------- body
         # corner grip
@@ -355,6 +367,13 @@ class Sticky(Toplevel):
         self.title_label.bind('<Button-3>', self.show_menu)
         self.title_label.bind('<Button-4>', self.mouse_roll)
         self.title_label.bind('<Button-5>', self.mouse_roll)
+        self.date_label.bind("<Double-Button-1>", self.edit_title)
+        self.date_label.bind("<ButtonPress-1>", self.start_move)
+        self.date_label.bind("<ButtonRelease-1>", self.stop_move)
+        self.date_label.bind("<B1-Motion>", self.move)
+        self.date_label.bind('<Button-3>', self.show_menu)
+        self.date_label.bind('<Button-4>', self.mouse_roll)
+        self.date_label.bind('<Button-5>', self.mouse_roll)
 
         self.title_entry.bind("<Return>", lambda e: self.title_entry.place_forget())
         self.title_entry.bind("<FocusOut>", lambda e: self.title_entry.place_forget())
@@ -421,7 +440,7 @@ class Sticky(Toplevel):
                            background=[("active", self.color)])
             self.style.map("roll" + self.id +  ".TLabel",
                            background=[("active", self.color)])
-            self.scroll.configure(style='%s.Vertical.TScrollbar' % INV_COLORS[value])
+            self.scroll.configure(style='%s.Vertical.TScrollbar' % value)
             self.configure(bg=self.color)
             self.txt.configure(bg=self.color)
 
@@ -487,6 +506,7 @@ class Sticky(Toplevel):
             if tag not in ["sel", "todolist", "list", "enum"]:
                 data["tags"][tag] = [index.string for index in self.txt.tag_ranges(tag)]
         data["title"] = self.title_var.get()
+        data["date"] = self._date
         data["geometry"] = self.save_geometry
         data["category"] = self.category.get()
         data["color"] = self.color
@@ -777,7 +797,9 @@ class Sticky(Toplevel):
         self.title_entry.place(x=self.title_label.winfo_x() + 5,
                                y=self.title_label.winfo_y(),
                                anchor="nw",
-                               width=self.title_label.winfo_width()-10)
+                               width=self.title_label.winfo_width() + self.date_label.winfo_width() -10)
+        self.title_entry.selection_range(0, 'end')
+        self.title_entry.focus_set()
 
     def start_move(self, event):
         """Start moving the note."""
@@ -873,19 +895,26 @@ class Sticky(Toplevel):
         if CONFIG.get("General", "buttons_position") == "right":
             # right = lock icon - title - roll - close
             self.titlebar.columnconfigure(1, weight=1)
-            self.titlebar.columnconfigure(2, weight=0)
-            self.roll.grid(row=0, column=2, sticky="e")
-            self.close.grid(row=0, column=3, sticky="e", padx=(0,2))
+            self.titlebar.columnconfigure(2, weight=1)
+            self.roll.grid(row=0, column=3, sticky="e")
+            self.close.grid(row=0, column=4, sticky="e", padx=(0,2))
             self.cadenas.grid(row=0, column=0, sticky="w")
             self.title_label.grid(row=0, column=1, sticky="ew", pady=(1,0))
+            self.date_label.grid(row=0, column=2, sticky="ew", pady=(1,0))
         else:
             # left = close - roll - title - lock icon
-            self.titlebar.columnconfigure(1, weight=0)
             self.titlebar.columnconfigure(2, weight=1)
+            self.titlebar.columnconfigure(3, weight=1)
             self.roll.grid(row=0, column=1, sticky="w")
             self.close.grid(row=0, column=0, sticky="w", padx=(2,0))
-            self.cadenas.grid(row=0,column=3, sticky="e")
+            self.cadenas.grid(row=0, column=4, sticky="e")
             self.title_label.grid(row=0, column=2, sticky="ew", pady=(1,0))
+            self.date_label.grid(row=0, column=3, sticky="ew", pady=(1,0))
+
+        if CONFIG.getboolean('General', 'date_in_title', fallback=True):
+            self.date_label.configure(text='- ' + self._date)
+        else:
+            self.date_label.configure(text='')
 
     # --- Text edition
     # ---* --Link

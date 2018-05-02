@@ -177,6 +177,15 @@ class Config(Toplevel):
               font=font_title).pack(side="right", fill="x", expand=True)
         for ch in left.children.values():
             ch.bind("<Button-1>", select_left)
+
+        self.date_in_title = Checkbutton(frame_titlebar,
+                                         text=_('Display creation date in title'))
+        self.date_in_title.grid(row=2, columnspan=4, sticky='w', pady=4)
+        if CONFIG.getboolean('General', 'date_in_title', fallback=True):
+            self.date_in_title.state(('!alternate', 'selected'))
+        else:
+            self.date_in_title.state(('!alternate', '!selected'))
+
         # --- * ---- placement
         lang_frame.grid(sticky="w")
         Separator(general_settings,
@@ -191,6 +200,8 @@ class Config(Toplevel):
         Separator(general_settings,
                   orient="horizontal").grid(sticky="ew", pady=10)
         frame_titlebar.grid(sticky="ew", pady=4)
+
+        # --- * ---- clean latex
         if LATEX:
             Separator(general_settings,
                       orient="horizontal").grid(sticky="ew", pady=10)
@@ -452,6 +463,7 @@ class Config(Toplevel):
         CONFIG.set("General", "opacity", opacity)
         CONFIG.set("General", "position", self.position.get())
         CONFIG.set("General", "buttons_position", self.titlebar_disposition.get())
+        CONFIG.set("General", "date_in_title", str('selected' in self.date_in_title.state()))
         CONFIG.set("General", "symbols", "".join(symbols))
         CONFIG.set("General", "trayicon", self.gui.get().lower())
         CONFIG.set("General", "autocorrect", autocorrect)

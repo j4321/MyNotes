@@ -29,32 +29,41 @@ from mynoteslib.constants import CONFIG, IM_DELETE, IM_CHANGE, IM_SELECT_ALL, \
 from mynoteslib.autoscrollbar import AutoScrollbar as Scrollbar
 from mynoteslib.messagebox import askokcancel
 
+# TODO: use a treeview instead of reinventing the wheel -> see FeedAgregator manager
+
 
 class ManagerItem(Frame):
     def __init__(self, master, note_data, toggle_visibility_cmd):
         Frame.__init__(self, master, class_='ManagerItem', style='manager.TFrame')
-        self.columnconfigure(0, weight=0, minsize=10)
-        self.columnconfigure(1, weight=1, minsize=175)
-        self.columnconfigure(2, weight=1, minsize=175)
+        self.columnconfigure(0, weight=0, minsize=16)
+        self.columnconfigure(1, weight=1, minsize=198)
+        self.columnconfigure(2, weight=1, minsize=198)
+        self.columnconfigure(3, weight=0, minsize=84)
+        self.columnconfigure(4, weight=0, minsize=20)
         self.toggle_visibility_cmd = toggle_visibility_cmd
-        title = note_data['title'][:20]
-        title = title.replace('\t', ' ') + ' ' * (20 - len(title))
+        title = note_data['title']
+        if title:
+            title = title[:17] + (len(title) > 17) * '...'
+        title = title.replace('\t', ' ')
+        date = note_data.get('date', '??')
         txt = note_data['txt'].splitlines()
         if txt:
             txt = txt[0][:17] + (len(txt[0]) > 17 or len(txt) > 1) * '...'
         else:
             txt = ''
-        txt = txt.replace('\t', ' ') + ' ' * (20 - len(txt))
-        self.title = Label(self, text=title, font='TkDefaultFont 9 bold', style='manager.TLabel')
-        self.text = Label(self, text=txt, style='manager.TLabel')
+        txt = txt.replace('\t', ' ')
+        self.title = Label(self, text=title, anchor='w', style='manager.TLabel')
+        self.text = Label(self, text=txt, anchor='w', style='manager.TLabel')
+        self.date = Label(self, text=date, anchor='center', style='manager.TLabel')
         self.checkbutton = Checkbutton(self, style='manager.TCheckbutton')
         self.visibility = BooleanVar(self, note_data['visible'])
-        self.toggle_visibility = Checkbutton(self, style='Toggle', variable=self.visibility,
+        self.toggle_visibility = Checkbutton(self, style='manager.Toggle', variable=self.visibility,
                                              command=self.toggle_visibility)
-        self.checkbutton.grid(row=0, column=0, padx=(2, 0), pady=4, sticky='ns')
-        self.title.grid(row=0, column=1, padx=4, pady=4, sticky='w')
-        self.text.grid(row=0, column=2, padx=4, pady=4, sticky='w')
-        self.toggle_visibility.grid(row=0, column=3, padx=(0, 2), pady=4, sticky='ens')
+        self.checkbutton.grid(row=0, column=0, padx=(2, 0), pady=4, sticky='nsew')
+        self.title.grid(row=0, column=1, padx=4, pady=4, sticky='ew')
+        self.text.grid(row=0, column=2, padx=4, pady=4, sticky='ew')
+        self.date.grid(row=0, column=3, padx=4, pady=4, sticky='ew')
+        self.toggle_visibility.grid(row=0, column=4, padx=(0, 2), pady=4, sticky='wens')
         self.bind('<Enter>', self._on_enter)
         self.bind('<Leave>', self._on_leave)
         self.checkbutton.bind('<Enter>', self._on_enter)  # override class binding
@@ -75,6 +84,7 @@ class ManagerItem(Frame):
     def _on_enter(self, event):
         self.title.state(('active',))
         self.text.state(('active',))
+        self.date.state(('active',))
         self.checkbutton.state(('active',))
         self.toggle_visibility.state(('active',))
         Frame.state(self, ('active',))
@@ -83,6 +93,7 @@ class ManagerItem(Frame):
     def _on_leave(self, event):
         self.title.state(('!active',))
         self.text.state(('!active',))
+        self.date.state(('!active',))
         self.checkbutton.state(('!active',))
         self.toggle_visibility.state(('!active',))
         Frame.state(self, ('!active',))
@@ -99,6 +110,7 @@ class Manager(Toplevel):
         """Create note manager to easily delete multiple notes."""
         Toplevel.__init__(self, master, class_='MyNotes')
         self.title(_("Note Manager"))
+        self.minsize(width=544, height=200)
         self.grab_set()
         categories = CONFIG.options("Categories")
         categories.sort()
@@ -127,14 +139,14 @@ class Manager(Toplevel):
                                      variable=self.category,
                                      command=self.change_cat_selection)
             self.notes[cat] = {}
-            frame = Frame(self.notebook)
+            frame = Frame(self.notebook, padding=2)
             self.texts[cat] = Text(frame, width=1, height=1, bg=self.cget('bg'),
                                    relief='flat', highlightthickness=0,
-                                   padx=2, pady=2, cursor='arrow')
+                                   padx=0, pady=0, cursor='arrow')
             frame.columnconfigure(0, weight=1)
             frame.rowconfigure(0, weight=1)
 
-            self.texts[cat].grid(row=0, column=0, sticky='ewsn', padx=(0, 2))
+            self.texts[cat].grid(row=0, column=0, sticky='ewsn')
             scrolly = Scrollbar(frame, orient='vertical',
                                 command=self.texts[cat].yview)
             scrolly.grid(row=0, column=1, sticky='ns')
@@ -143,8 +155,30 @@ class Manager(Toplevel):
             scrollx.grid(row=1, column=0, sticky='ew')
             self.texts[cat].configure(xscrollcommand=scrollx.set,
                                       yscrollcommand=scrolly.set)
-            self.frames[cat] = Frame(self.texts[cat])
+            self.frames[cat] = Frame(self.texts[cat], style='bg.TFrame',
+                                     padding=(1, 0, 1, 1))
             self.frames[cat].columnconfigure(0, weight=1, minsize=170)
+            headings = Frame(self.frames[cat])
+            headings.columnconfigure(0, weight=0, minsize=18)
+            headings.columnconfigure(1, weight=1, minsize=202)
+            headings.columnconfigure(2, weight=1, minsize=202)
+            headings.columnconfigure(3, weight=0, minsize=88)
+            headings.columnconfigure(4, weight=0, minsize=22)
+            Label(headings, text=_('Title'), anchor='center',
+                  style='heading.TLabel').grid(row=0, column=1, sticky='ew')
+            Label(headings, text=_('Text'), anchor='center',
+                  style='heading.TLabel').grid(row=0, column=2, sticky='ew')
+            Label(headings, text=_('Date'), anchor='center',
+                  style='heading.TLabel').grid(row=0, column=3, sticky='ew')
+            Label(headings,
+                  style='heading.TLabel').place(x=-1, y=0, anchor='nw',
+                                                bordermode='outside',
+                                                relheight=1, width=19)
+            Label(headings,
+                  style='heading.TLabel').place(x=510, y=0, anchor='nw',
+                                                bordermode='outside',
+                                                width=23, relheight=1)
+            headings.grid(row=0, sticky='w')
             self.texts[cat].window_create('1.0', window=self.frames[cat])
             b_frame = Frame(frame)
             b_frame.grid(row=2, columnspan=2)
@@ -208,6 +242,7 @@ class Manager(Toplevel):
         else:
             if key in self.master.notes:
                 self.master.notes[key].hide()
+        self.after(2, self.focus_set)
         self.after(4, self.grab_set)
 
     def display_note(self, key, note_data):

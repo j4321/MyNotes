@@ -293,6 +293,7 @@ else:
     CONFIG.set("General", "opacity", "82")
     CONFIG.set("General", "position", "normal")
     CONFIG.set("General", "buttons_position", "right")
+    CONFIG.set("General", "date_in_title", "True")
     CONFIG.set("General", "check_update", "True")
     CONFIG.set("General", "symbols", SYMBOLS)
     CONFIG.set("General", "trayicon", "")
