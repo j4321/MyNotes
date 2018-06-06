@@ -509,6 +509,8 @@ class MyText(Text):
                     self.tag_add_undoable("bold-italic", d, f)
                     self.tag_remove_undoable("italic", d, f)
                     self.tag_remove_undoable("bold", d, f)
+            else:
+                self.tag_add_undoable(style, "sel.first", "sel.last")
             self.add_undo_sep()
 
     def toggle_underline(self):
