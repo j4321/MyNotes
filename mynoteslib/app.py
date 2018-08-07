@@ -32,6 +32,7 @@ import re
 import traceback
 from shutil import copy
 import pickle
+import signal
 from mynoteslib.trayicon import TrayIcon, SubMenu
 from mynoteslib.constants import CONFIG, PATH_DATA, PATH_DATA_BACKUP,\
     LOCAL_PATH, backup, asksaveasfilename, askopenfilename, COLORS, \
@@ -53,7 +54,7 @@ class App(Tk):
 
     Put an icon in the system tray with a right click menu to create notes.
     """
-    def __init__(self):
+    def __init__(self, *args):
         Tk.__init__(self, className='MyNotes')
         self.withdraw()
         self.notes = {}
@@ -292,6 +293,15 @@ class App(Tk):
                '<<SelectPrevLine>>', '<<SelectPrevPara>>', '<<SelectPrevWord>>']
         for ev in evs:
             self.bind_class("Text", ev, self.highlight_checkboxes, True)
+
+        if '--show-all' in args:
+            self.show_all()
+        elif '--hide-all' in args:
+            self.hide_all()
+
+        # react to mynotes --show-all in command line
+        signal.signal(signal.SIGUSR1, lambda *args: self.show_all())
+        signal.signal(signal.SIGUSR2, lambda *args: self.hide_all())
 
         # check for updates
         if CONFIG.getboolean("General", "check_update"):

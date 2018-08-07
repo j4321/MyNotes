@@ -1,18 +1,20 @@
 My Notes - Sticky notes/post-it
 ===============================
-Copyright 2016 Juliette Monsel <j_4321@protonmail.com>
+Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
 
 Changelog
 ---------
 
 - Version 2.4.0
     * Add scrollbars to notes
-    * Improved undo (Ctrl+Z)/redo (Ctrl+Y): works with text, image, links,
+    * Improve undo (Ctrl+Z)/redo (Ctrl+Y): works with text, image, links,
       checkboxes, latex and formatting
     * Refocus on note after LaTeX/link/image insertion
     * Improve note manager: group deletion, change category, visibility
     * Add AutoCorrect feature: automatic replacement of text (e.g. -> becomes →)
     * Re-create missing LaTeX formulas
+    * Add possibility to show/hide all notes from command line with the
+      --show-all/--hide-all options
 
 - Version 2.3.3
     * Fix German translation
