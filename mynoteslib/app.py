@@ -100,6 +100,7 @@ class App(Tk):
         style.configure('Vertical.TScrollbar', background=bg)
         style.configure('Horizontal.TScrollbar', background=bg)
         style.configure('TCheckbutton', background=bg)
+        style.map('TCheckbutton', indicatorbackground=[])
         style.layout('manager.TCheckbutton', [('Checkbutton.indicator', {'side': 'left', 'sticky': ''})])
         style.configure('manager.TCheckbutton', background='white')
         active_bg = style.lookup('TCheckbutton', 'background', ('active',))

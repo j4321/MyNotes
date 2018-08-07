@@ -144,25 +144,25 @@ class Manager(Toplevel):
                                    relief='flat', highlightthickness=0,
                                    padx=0, pady=0, cursor='arrow')
             frame.columnconfigure(0, weight=1)
-            frame.rowconfigure(0, weight=1)
+            frame.rowconfigure(1, weight=1)
 
-            self.texts[cat].grid(row=0, column=0, sticky='ewsn')
+            self.texts[cat].grid(row=1, column=0, sticky='ewsn')
             scrolly = Scrollbar(frame, orient='vertical',
                                 command=self.texts[cat].yview)
-            scrolly.grid(row=0, column=1, sticky='ns')
+            scrolly.grid(row=1, column=1, sticky='ns', pady=(2, 0))
             scrollx = Scrollbar(frame, orient='horizontal',
                                 command=self.texts[cat].xview)
-            scrollx.grid(row=1, column=0, sticky='ew')
+            scrollx.grid(row=2, column=0, sticky='ew')
             self.texts[cat].configure(xscrollcommand=scrollx.set,
                                       yscrollcommand=scrolly.set)
             self.frames[cat] = Frame(self.texts[cat], style='bg.TFrame',
-                                     padding=(1, 0, 1, 1))
+                                     padding=1, height=29, width=521)
             self.frames[cat].columnconfigure(0, weight=1, minsize=170)
-            headings = Frame(self.frames[cat])
+            headings = Frame(frame, padding=(1, 0, 1, 0))
             headings.columnconfigure(0, weight=0, minsize=18)
-            headings.columnconfigure(1, weight=1, minsize=202)
-            headings.columnconfigure(2, weight=1, minsize=202)
-            headings.columnconfigure(3, weight=0, minsize=88)
+            headings.columnconfigure(1, weight=1, minsize=198)
+            headings.columnconfigure(2, weight=1, minsize=198)
+            headings.columnconfigure(3, weight=0, minsize=84)
             headings.columnconfigure(4, weight=0, minsize=22)
             Label(headings, text=_('Title'), anchor='center',
                   style='heading.TLabel').grid(row=0, column=1, sticky='ew')
@@ -171,17 +171,18 @@ class Manager(Toplevel):
             Label(headings, text=_('Date'), anchor='center',
                   style='heading.TLabel').grid(row=0, column=3, sticky='ew')
             Label(headings,
-                  style='heading.TLabel').place(x=-1, y=0, anchor='nw',
-                                                bordermode='outside',
-                                                relheight=1, width=19)
+                  style='heading.TLabel').place(x=0, y=0, anchor='nw',
+                                                relheight=1, width=18)
             Label(headings,
-                  style='heading.TLabel').place(x=510, y=0, anchor='nw',
+                  style='heading.TLabel').place(relx=1, y=0, anchor='ne',
                                                 bordermode='outside',
                                                 width=23, relheight=1)
-            headings.grid(row=0, sticky='w')
+            headings.place(x=0, y=2, anchor='nw')
+            self.update_idletasks()
+            frame.rowconfigure(0, minsize=headings.winfo_reqheight())
             self.texts[cat].window_create('1.0', window=self.frames[cat])
             b_frame = Frame(frame)
-            b_frame.grid(row=2, columnspan=2)
+            b_frame.grid(row=3, columnspan=2)
             Button(b_frame, image=self.im_sel, padding=1,
                    command=self.select_all).pack(side='left', padx=4, pady=4)
             Button(b_frame, image=self.im_desel, padding=1,
@@ -253,6 +254,7 @@ class Manager(Toplevel):
                                            lambda vis: self.toggle_visibility(key, vis))
         self.notes[cat][key].grid(row=r, sticky='ew')
 
+
     def on_change_tab(self, event):
         self.category.set(self.notebook.tab("current", "text").lower())
 
@@ -267,6 +269,7 @@ class Manager(Toplevel):
                     self.master.delete_note(key)
                     self.notes[cat][key].destroy()
                     del self.notes[cat][key]
+                    self.update_idletasks()
 
     def change_cat_selection(self):
         """Change selected notes category."""
@@ -281,8 +284,8 @@ class Manager(Toplevel):
                     self.notes[cat][key].destroy()
                     del self.notes[cat][key]
                     self.display_note(key, self.master.note_data[key])
-
-            self.category.set(cat)
+                    self.update_idletasks()
+        self.category.set(cat)
         self.grab_set()
 
     def get_selection(self, cat):
