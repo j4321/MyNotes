@@ -1,15 +1,15 @@
 #! /usr/bin/python3
 # -*- coding:Utf-8 -*-
 """
-CheckMails - System tray unread mail checker
-Copyright 2016 Juliette Monsel <j_4321@protonmail.com>
+MyNotes - System tray unread mail checker
+Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
 
-CheckMails is free software: you can redistribute it and/or modify
+MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-CheckMails is distributed in the hope that it will be useful,
+MyNotes is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.

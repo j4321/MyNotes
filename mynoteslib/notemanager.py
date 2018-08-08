@@ -1,15 +1,15 @@
 #! /usr/bin/python3
 # -*- coding:Utf-8 -*-
 """
-My Notes - Sticky notes/post-it
+MyNotes - Sticky notes/post-it
 Copyright 2016-2017 Juliette Monsel <j_4321@protonmail.com>
 
-My Notes is free software: you can redistribute it and/or modify
+MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-My Notes is distributed in the hope that it will be useful,
+MyNotes is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -28,8 +28,7 @@ from mynoteslib.constants import CONFIG, IM_DELETE, IM_CHANGE, IM_SELECT_ALL, \
     IM_DESELECT_ALL, IM_VISIBLE_24, IM_HIDDEN_24
 from mynoteslib.autoscrollbar import AutoScrollbar as Scrollbar
 from mynoteslib.messagebox import askokcancel
-
-# TODO: use a treeview instead of reinventing the wheel -> see FeedAgregator manager
+from mynoteslib.tooltip import TooltipWrapper
 
 
 class ManagerItem(Frame):
@@ -122,6 +121,8 @@ class Manager(Toplevel):
         self.im_visible = PhotoImage(file=IM_VISIBLE_24, master=self)
         self.im_hidden = PhotoImage(file=IM_HIDDEN_24, master=self)
 
+        tooltipwrapper = TooltipWrapper(self)
+
         self.notebook = Notebook(self)
         self.notebook.pack(fill='both', expand=True)
 
@@ -183,19 +184,31 @@ class Manager(Toplevel):
             self.texts[cat].window_create('1.0', window=self.frames[cat])
             b_frame = Frame(frame)
             b_frame.grid(row=3, columnspan=2)
-            Button(b_frame, image=self.im_sel, padding=1,
-                   command=self.select_all).pack(side='left', padx=4, pady=4)
-            Button(b_frame, image=self.im_desel, padding=1,
-                   command=self.deselect_all).pack(side='left', padx=4, pady=4)
-            Menubutton(b_frame, image=self.im_change, text=_('Change category'),
-                       compound='right', menu=menu_cat,
-                       padding=1).pack(side='left', padx=4, pady=4, fill='y')
-            Button(b_frame, image=self.im_visible, padding=1,
-                   command=self.show_selection).pack(side='left', padx=4, pady=4)
-            Button(b_frame, image=self.im_hidden, padding=1,
-                   command=self.hide_selection).pack(side='left', padx=4, pady=4)
-            Button(b_frame, image=self.im_del, command=self.del_selection,
-                   padding=1).pack(side='left', padx=4, pady=4, fill='y')
+            b_sel = Button(b_frame, image=self.im_sel, padding=1,
+                           command=self.select_all)
+            b_sel.pack(side='left', padx=4, pady=4)
+            tooltipwrapper.add_tooltip(b_sel, _('Select all'))
+            b_desel = Button(b_frame, image=self.im_desel, padding=1,
+                             command=self.deselect_all)
+            tooltipwrapper.add_tooltip(b_desel, _('Deselect all'))
+            b_desel.pack(side='left', padx=4, pady=4)
+            m = Menubutton(b_frame, image=self.im_change, text=_('Change category'),
+                           compound='right', menu=menu_cat,
+                           padding=1)
+            m.pack(side='left', padx=4, pady=4, fill='y')
+            tooltipwrapper.add_tooltip(m, _('Change category of selected notes'))
+            b_show = Button(b_frame, image=self.im_visible, padding=1,
+                            command=self.show_selection)
+            b_show.pack(side='left', padx=4, pady=4)
+            tooltipwrapper.add_tooltip(b_show, _('Show selected notes'))
+            b_hide = Button(b_frame, image=self.im_hidden, padding=1,
+                            command=self.hide_selection)
+            b_hide.pack(side='left', padx=4, pady=4)
+            tooltipwrapper.add_tooltip(b_hide, _('Hide selected notes'))
+            b_del = Button(b_frame, image=self.im_del, command=self.del_selection,
+                           padding=1)
+            b_del.pack(side='left', padx=4, pady=4, fill='y')
+            tooltipwrapper.add_tooltip(b_del, _('Delete selected notes'))
 
             self.notebook.add(frame, text=cat.capitalize(), sticky="ewsn",
                               padding=0)

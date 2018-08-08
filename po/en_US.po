@@ -1,4 +1,4 @@
-# My Notes - Sticky notes/post-it
+# MyNotes- Sticky notes/post-it
 # Copyright (C) 2016-2018 Juliette Monsel
 # This file is distributed under the same license as the MyNotes package.
 # Juliette Monsel <j_4321@protonmail.com>, 2018.
