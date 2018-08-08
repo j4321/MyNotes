@@ -1,15 +1,15 @@
 #! /usr/bin/python3
 # -*- coding:Utf-8 -*-
 """
-My Notes - Sticky notes/post-it
+MyNotes - Sticky notes/post-it
 Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
 
-My Notes is free software: you can redistribute it and/or modify
+MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-My Notes is distributed in the hope that it will be useful,
+MyNotes is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -32,11 +32,13 @@ import re
 import traceback
 from shutil import copy
 import pickle
+from time import strftime
 import signal
 from mynoteslib.trayicon import TrayIcon, SubMenu
 from mynoteslib.constants import CONFIG, PATH_DATA, PATH_DATA_BACKUP,\
     LOCAL_PATH, backup, asksaveasfilename, askopenfilename, COLORS, \
-    IM_SCROLL_ALPHA, IM_VISIBLE, IM_HIDDEN, TEXT_COLORS, color_box
+    IM_SCROLL_ALPHA, IM_VISIBLE, IM_HIDDEN, IM_SELECT, IM_SORT_REV, IM_ROLL, \
+    TEXT_COLORS, color_box
 import mynoteslib.constants as cst
 from mynoteslib.config import Config
 from mynoteslib.export import Export
@@ -62,6 +64,9 @@ class App(Tk):
         self.iconphoto(True, self.im_icon)
         self.im_visible = PhotoImage(file=IM_VISIBLE, master=self)
         self.im_hidden = PhotoImage(file=IM_HIDDEN, master=self)
+        self.im_select = PhotoImage(file=IM_SELECT, master=self)
+        self.im_sort_rev = PhotoImage(file=IM_SORT_REV, master=self)
+        self.im_sort = PhotoImage(file=IM_ROLL, master=self)
 
         # color boxes for menus
         self.im_text_color = {}
@@ -71,6 +76,7 @@ class App(Tk):
         for name, value in COLORS.items():
             self.im_color[name] = PhotoImage(color_box(value), master=self)
 
+        # --- style
         style = Style(self)
         style.theme_use("clam")
         style.map('TEntry', selectbackground=[('!focus', '#c3c3c3')])
@@ -83,7 +89,15 @@ class App(Tk):
                                                      {'sticky': 'nswe'})],
                                        'sticky': 'nswe'})],
                         'sticky': 'nswe'})])
-
+        style.layout('heading.TLabel',
+                     [('Label.border',
+                       {'sticky': 'nswe',
+                        'border': '1',
+                        'children': [('Label.padding',
+                                      {'sticky': 'nswe',
+                                       'border': '1',
+                                       'children': [('Label.text', {'sticky': 'nswe'}),
+                                                    ('Label.image', {'sticky': 'e'})]})]})])
         style.map('TCheckbutton',
                   indicatorbackground=[('pressed', '#dcdad5'),
                                        ('!disabled', 'alternate', '#ffffff'),
@@ -99,10 +113,22 @@ class App(Tk):
         style.configure('Vertical.TScrollbar', background=bg)
         style.configure('Horizontal.TScrollbar', background=bg)
         style.configure('TCheckbutton', background=bg)
+        style.map('TCheckbutton', indicatorbackground=[])
         style.layout('manager.TCheckbutton', [('Checkbutton.indicator', {'side': 'left', 'sticky': ''})])
+        style.configure('manager.TCheckbutton', background='white')
         active_bg = style.lookup('TCheckbutton', 'background', ('active',))
         style.map('manager.TLabel', background=[('active', active_bg)])
         style.map('manager.TFrame', background=[('active', active_bg)])
+        style.configure('heading.TLabel', relief='raised', borderwidth=1)
+        style.map('heading.TLabel', **style.map('TButton'))
+        style.map('heading.TLabel', bordercolor=[])
+        style.map('select.heading.TLabel', image=[('active', self.im_select)])
+        style.map('heading.TLabel', image=[('active', 'alternate', self.im_sort_rev),
+                                           ('active', '!alternate', self.im_sort)])
+        style.configure('manager.TFrame', background='white')
+        style.configure('bg.TFrame', background='white', relief='sunken', borderwidth=1)
+        style.configure('manager.TLabel', background='white')
+        style.configure('manager.Toggle', background='white')
         style.map('Toggle', background=[('active', active_bg), ('hover', active_bg)])
         style.configure('TSeparator', background=bg)
 
@@ -111,7 +137,7 @@ class App(Tk):
         self._im_slider = {}
         self._im_slider_prelight = {}
         self._im_slider_active = {}
-        for name, html in COLORS.items():
+        for html in COLORS.values():
             color = tuple(int(val / vmax * 255) for val in self.winfo_rgb(html))
             active_bg = cst.active_color(color)
             active_bg2 = cst.active_color(cst.active_color(color, 'RGB'))
@@ -123,27 +149,27 @@ class App(Tk):
             slider_vert_active.putalpha(slider_alpha)
             slider_vert_prelight = Image.new('RGBA', (13, 28), active_bg2)
             slider_vert_prelight.putalpha(slider_alpha)
-            self._im_trough[name] = tkPhotoImage(width=15, height=15,
+            self._im_trough[html] = tkPhotoImage(width=15, height=15,
                                                  master=self)
-            self._im_trough[name].put(" ".join(["{" + " ".join([html] * 15) + "}"] * 15))
-            self._im_slider_active[name] = PhotoImage(slider_vert_active,
+            self._im_trough[html].put(" ".join(["{" + " ".join([html] * 15) + "}"] * 15))
+            self._im_slider_active[html] = PhotoImage(slider_vert_active,
                                                       master=self)
-            self._im_slider[name] = PhotoImage(slider_vert,
+            self._im_slider[html] = PhotoImage(slider_vert,
                                                master=self)
-            self._im_slider_prelight[name] = PhotoImage(slider_vert_prelight,
+            self._im_slider_prelight[html] = PhotoImage(slider_vert_prelight,
                                                         master=self)
-            self._im_slider_active[name] = PhotoImage(slider_vert_active,
+            self._im_slider_active[html] = PhotoImage(slider_vert_active,
                                                       master=self)
-            style.element_create('%s.Vertical.Scrollbar.trough' % name, 'image',
-                                 self._im_trough[name])
-            style.element_create('%s.Vertical.Scrollbar.thumb' % name, 'image',
-                                 self._im_slider[name],
-                                 ('pressed', '!disabled', self._im_slider_active[name]),
-                                 ('active', '!disabled', self._im_slider_prelight[name]),
+            style.element_create('%s.Vertical.Scrollbar.trough' % html, 'image',
+                                 self._im_trough[html])
+            style.element_create('%s.Vertical.Scrollbar.thumb' % html, 'image',
+                                 self._im_slider[html],
+                                 ('pressed', '!disabled', self._im_slider_active[html]),
+                                 ('active', '!disabled', self._im_slider_prelight[html]),
                                  border=6, sticky='ns')
-            style.layout('%s.Vertical.TScrollbar' % name,
-                         [('%s.Vertical.Scrollbar.trough' % name,
-                           {'children': [('%s.Vertical.Scrollbar.thumb' % name,
+            style.layout('%s.Vertical.TScrollbar' % html,
+                         [('%s.Vertical.Scrollbar.trough' % html,
+                           {'children': [('%s.Vertical.Scrollbar.thumb' % html,
                                           {'expand': '1'})],
                             'sticky': 'ns'})])
 
@@ -764,7 +790,7 @@ class App(Tk):
     def new(self):
         """Create a new note."""
         key = "%i" % self.nb
-        self.notes[key] = Sticky(self, key)
+        self.notes[key] = Sticky(self, key, date=strftime("%x"))
         data = self.notes[key].save_info()
         data["visible"] = True
         self.note_data[key] = data
@@ -778,8 +804,9 @@ class App(Tk):
         categories_to_export, only_visible = export.get_export()
         if categories_to_export:
             initialdir, initialfile = os.path.split(PATH_DATA_BACKUP % 0)
-            fichier = asksaveasfilename(defaultextension=".html",
-                                        filetypes=[(_("HTML file (.html)"), "*.html"),
+            fichier = asksaveasfilename(defaultextension=".notes",
+                                        filetypes=[(_("Notes (.notes)"), "*.notes"),
+                                                   (_("HTML file (.html)"), "*.html"),
                                                    (_("Text file (.txt)"), "*.txt"),
                                                    (_("All files"), "*")],
                                         initialdir=initialdir,
@@ -812,8 +839,7 @@ class App(Tk):
                             fich.write('<body style="max-width:30em">\n')
                             fich.write(text.encode('ascii', 'xmlcharrefreplace').decode("utf-8"))
                             fich.write("\n</body>")
-#                if os.path.splitext(fichier)[-1] == ".txt":
-                    else:
+                    elif os.path.splitext(fichier)[-1] == ".txt":
         # --- txt export
                         # export notes to .txt: all formatting is lost
                         cats = {cat: [] for cat in categories_to_export}
@@ -841,6 +867,17 @@ class App(Tk):
                             text += "\n\n"
                         with open(fichier, "w") as fich:
                             fich.write(text)
+                    else:
+        # --- pickle export (same format as backups)
+                        note_data = {}
+                        for key in self.note_data:
+                            if self.note_data[key]["category"] in categories_to_export:
+                                if (not only_visible) or self.note_data[key]["visible"]:
+                                    note_data[key] = self.note_data[key]
+
+                        with open(fichier, "wb") as fich:
+                            dp = pickle.Pickler(fich)
+                            dp.dump(note_data)
 
                 except Exception as e:
                     report_msg = e.strerror != 'Permission denied'
@@ -849,7 +886,7 @@ class App(Tk):
 
     def import_notes(self):
         """Import notes."""
-        fichier = askopenfilename(defaultextension=".backup",
+        fichier = askopenfilename(defaultextension=".notes",
                                   filetypes=[(_("Notes (.notes)"), "*.notes"),
                                              (_("All files"), "*")],
                                   initialdir=LOCAL_PATH,

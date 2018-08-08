@@ -1,15 +1,15 @@
 #! /usr/bin/python3
 # -*- coding:Utf-8 -*-
 """
-My Notes - Sticky notes/post-it
+MyNotes - Sticky notes/post-it
 Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
 
-My Notes is free software: you can redistribute it and/or modify
+MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-My Notes is distributed in the hope that it will be useful,
+MyNotes is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -22,7 +22,7 @@ Configuration Window
 """
 
 
-from tkinter import Toplevel, StringVar, Menu, Text
+from tkinter import Toplevel, StringVar, Menu, Text, BooleanVar
 from mynoteslib.messagebox import showinfo
 from mynoteslib.autocomplete import AutoCompleteCombobox
 from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator
@@ -33,6 +33,7 @@ from mynoteslib.config.categories import CategoryManager
 from mynoteslib.config.autocorrect import AutoCorrectConfig
 from mynoteslib.autoscrollbar import AutoScrollbar
 from tkinter import font
+from time import strftime
 
 
 class Config(Toplevel):
@@ -136,6 +137,7 @@ class Config(Toplevel):
         # --- * ---- titlebar
         self.titlebar_disposition = StringVar(self, CONFIG.get("General",
                                                                "buttons_position"))
+        self.title_var = StringVar(self)  # to add date if date_in_title is true
         font_title = "%s %s" % (CONFIG.get("Font", "title_family").replace(" ", "\ "),
                                 CONFIG.get("Font", "title_size"))
         style = CONFIG.get("Font", "title_style").split(",")
@@ -157,8 +159,8 @@ class Config(Toplevel):
         def select_right(event):
             self.titlebar_disposition.set("right")
 
-        Label(right, text=_("Title"), style="titlebar.TLabel", anchor="center",
-              font=font_title).pack(side="left", fill="x", expand=True)
+        Label(right, textvariable=self.title_var, style="titlebar.TLabel",
+              anchor="center", font=font_title).pack(side="left", fill="x", expand=True)
         Label(right, image="img_close", style="titlebar.TLabel").pack(side="right")
         Label(right, image="img_roll", style="titlebar.TLabel").pack(side="right")
         for ch in right.children.values():
@@ -173,10 +175,17 @@ class Config(Toplevel):
 
         Label(left, image="img_close", style="titlebar.TLabel").pack(side="left")
         Label(left, image="img_roll", style="titlebar.TLabel").pack(side="left")
-        Label(left, text=_("Title"), style="titlebar.TLabel", anchor="center",
-              font=font_title).pack(side="right", fill="x", expand=True)
+        Label(left, textvariable=self.title_var, style="titlebar.TLabel",
+              anchor="center", font=font_title).pack(side="right", fill="x", expand=True)
         for ch in left.children.values():
             ch.bind("<Button-1>", select_left)
+
+        self.date_in_title = BooleanVar(self, CONFIG.getboolean('General', 'date_in_title', fallback=True))
+        date_in_title = Checkbutton(frame_titlebar, variable=self.date_in_title,
+                                    text=_('Display creation date in title'),
+                                    command=self.toggle_date)
+        date_in_title.grid(row=2, columnspan=4, sticky='w', pady=4)
+        self.toggle_date()
         # --- * ---- placement
         lang_frame.grid(sticky="w")
         Separator(general_settings,
@@ -191,6 +200,8 @@ class Config(Toplevel):
         Separator(general_settings,
                   orient="horizontal").grid(sticky="ew", pady=10)
         frame_titlebar.grid(sticky="ew", pady=4)
+
+        # --- * ---- clean latex
         if LATEX:
             Separator(general_settings,
                       orient="horizontal").grid(sticky="ew", pady=10)
@@ -364,6 +375,12 @@ class Config(Toplevel):
         self.symbols.delete('1.0', 'end')
         self.symbols.insert('1.0', SYMBOLS)
 
+    def toggle_date(self):
+        if self.date_in_title.get():
+            self.title_var.set('{} - {}'.format(_('Title'), strftime('%x')))
+        else:
+            self.title_var.set(_('Title'))
+
     def cleanup(self):
         """Remove unused latex images."""
         self.master.cleanup()
@@ -452,6 +469,7 @@ class Config(Toplevel):
         CONFIG.set("General", "opacity", opacity)
         CONFIG.set("General", "position", self.position.get())
         CONFIG.set("General", "buttons_position", self.titlebar_disposition.get())
+        CONFIG.set("General", "date_in_title", str(self.date_in_title.get()))
         CONFIG.set("General", "symbols", "".join(symbols))
         CONFIG.set("General", "trayicon", self.gui.get().lower())
         CONFIG.set("General", "autocorrect", autocorrect)

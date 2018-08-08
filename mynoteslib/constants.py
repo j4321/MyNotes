@@ -1,15 +1,15 @@
 #! /usr/bin/python3
 # -*- coding:Utf-8 -*-
 """
-My Notes - Sticky notes/post-it
+MyNotes - Sticky notes/post-it
 Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
 
-My Notes is free software: you can redistribute it and/or modify
+MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-My Notes is distributed in the hope that it will be useful,
+MyNotes is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -103,9 +103,9 @@ IM_PLUS = os.path.join(PATH_IMAGES, "plus.png")
 IM_MOINS = os.path.join(PATH_IMAGES, "moins.png")
 IM_DELETE_16 = os.path.join(PATH_IMAGES, "delete_16.png")
 IM_DELETE = os.path.join(PATH_IMAGES, "delete.png")
-IM_SELECT_ALL = os.path.join(PATH_IMAGES, "select_all.png")
-IM_DESELECT_ALL = os.path.join(PATH_IMAGES, "deselect_all.png")
 IM_CHANGE = os.path.join(PATH_IMAGES, "change.png")
+IM_SELECT = os.path.join(PATH_IMAGES, "select.png")
+IM_SORT_REV = os.path.join(PATH_IMAGES, "sort_rev.png")
 IM_VISIBLE = os.path.join(PATH_IMAGES, "visible.png")
 IM_HIDDEN = os.path.join(PATH_IMAGES, "hidden.png")
 IM_VISIBLE_24 = os.path.join(PATH_IMAGES, "visible_24.png")
@@ -293,6 +293,7 @@ else:
     CONFIG.set("General", "opacity", "82")
     CONFIG.set("General", "position", "normal")
     CONFIG.set("General", "buttons_position", "right")
+    CONFIG.set("General", "date_in_title", "True")
     CONFIG.set("General", "check_update", "True")
     CONFIG.set("General", "symbols", SYMBOLS)
     CONFIG.set("General", "trayicon", "")
