@@ -24,21 +24,43 @@ Dialog to delete notes
 
 from tkinter import Toplevel, PhotoImage, Text, Menu, StringVar, BooleanVar
 from tkinter.ttk import Label, Frame, Button, Notebook, Checkbutton, Menubutton
-from mynoteslib.constants import CONFIG, IM_DELETE, IM_CHANGE, IM_SELECT_ALL, \
-    IM_DESELECT_ALL, IM_VISIBLE_24, IM_HIDDEN_24
+from mynoteslib.constants import CONFIG, IM_DELETE, IM_CHANGE, IM_VISIBLE_24, \
+    IM_HIDDEN_24, IM_SELECT
 from mynoteslib.autoscrollbar import AutoScrollbar as Scrollbar
 from mynoteslib.messagebox import askokcancel
 from mynoteslib.tooltip import TooltipWrapper
 
 
+class Heading(Label):
+
+    _initialized = False
+
+    def __init__(self, master, category, column, anchor='center', command=None,
+                 style='heading.TLabel', compound='right', **kwargs):
+        Label.__init__(self, master, class_='ManagerHeading', style=style,
+                       anchor=anchor, compound=compound, **kwargs)
+        self.category = category
+        self.column = column
+        self.reverse = False
+        self.state(['alternate'])
+
+        if command is not None:
+            self.bind('<Button-1>', command)
+
+        if not Heading._initialized:
+            for seq in self.bind_class('TButton'):
+                self.bind_class('ManagerHeading', seq, self.bind_class('TButton', seq))
+            Heading._initialized = True
+
+
 class ManagerItem(Frame):
     def __init__(self, master, note_data, toggle_visibility_cmd):
         Frame.__init__(self, master, class_='ManagerItem', style='manager.TFrame')
-        self.columnconfigure(0, weight=0, minsize=16)
+        self.columnconfigure(0, weight=0, minsize=18)
         self.columnconfigure(1, weight=1, minsize=198)
         self.columnconfigure(2, weight=1, minsize=198)
-        self.columnconfigure(3, weight=0, minsize=84)
-        self.columnconfigure(4, weight=0, minsize=20)
+        self.columnconfigure(3, weight=0, minsize=85)
+        self.columnconfigure(4, weight=0, minsize=22)
         self.toggle_visibility_cmd = toggle_visibility_cmd
         title = note_data['title']
         if title:
@@ -51,6 +73,7 @@ class ManagerItem(Frame):
         else:
             txt = ''
         txt = txt.replace('\t', ' ')
+        self._data = {'title': title, 'text': txt, 'date': date}
         self.title = Label(self, text=title, anchor='w', style='manager.TLabel')
         self.text = Label(self, text=txt, anchor='w', style='manager.TLabel')
         self.date = Label(self, text=date, anchor='center', style='manager.TLabel')
@@ -79,6 +102,15 @@ class ManagerItem(Frame):
 
     def toggle_visibility(self):
         self.toggle_visibility_cmd(self.visibility.get())
+
+    def get(self, key):
+        if key is 'visibility':
+            return self.visibility.get()
+        else:
+            return self._data[key]
+
+    def get_values(self):
+        return (self._data['title'], self._data['text'], self._data['date'], self.visibility.get())
 
     def _on_enter(self, event):
         self.title.state(('active',))
@@ -109,15 +141,13 @@ class Manager(Toplevel):
         """Create note manager to easily delete multiple notes."""
         Toplevel.__init__(self, master, class_='MyNotes')
         self.title(_("Note Manager"))
-        self.minsize(width=544, height=200)
+        self.minsize(width=546, height=200)
         self.grab_set()
         categories = CONFIG.options("Categories")
         categories.sort()
 
         self.im_del = PhotoImage(file=IM_DELETE, master=self)
         self.im_change = PhotoImage(file=IM_CHANGE, master=self)
-        self.im_sel = PhotoImage(file=IM_SELECT_ALL, master=self)
-        self.im_desel = PhotoImage(file=IM_DESELECT_ALL, master=self)
         self.im_visible = PhotoImage(file=IM_VISIBLE_24, master=self)
         self.im_hidden = PhotoImage(file=IM_HIDDEN_24, master=self)
 
@@ -157,41 +187,33 @@ class Manager(Toplevel):
             self.texts[cat].configure(xscrollcommand=scrollx.set,
                                       yscrollcommand=scrolly.set)
             self.frames[cat] = Frame(self.texts[cat], style='bg.TFrame',
-                                     padding=1, height=29, width=521)
+                                     padding=1, height=29, width=523)
             self.frames[cat].columnconfigure(0, weight=1, minsize=170)
             headings = Frame(frame, padding=(1, 0, 1, 0))
-            headings.columnconfigure(0, weight=0, minsize=18)
+            headings.columnconfigure(0, weight=0, minsize=20)
             headings.columnconfigure(1, weight=1, minsize=198)
             headings.columnconfigure(2, weight=1, minsize=198)
             headings.columnconfigure(3, weight=0, minsize=84)
             headings.columnconfigure(4, weight=0, minsize=22)
-            Label(headings, text=_('Title'), anchor='center',
-                  style='heading.TLabel').grid(row=0, column=1, sticky='ew')
-            Label(headings, text=_('Text'), anchor='center',
-                  style='heading.TLabel').grid(row=0, column=2, sticky='ew')
-            Label(headings, text=_('Date'), anchor='center',
-                  style='heading.TLabel').grid(row=0, column=3, sticky='ew')
-            Label(headings,
-                  style='heading.TLabel').place(x=0, y=0, anchor='nw',
-                                                relheight=1, width=18)
-            Label(headings,
-                  style='heading.TLabel').place(relx=1, y=0, anchor='ne',
-                                                bordermode='outside',
-                                                width=23, relheight=1)
+            Heading(headings, cat, 'title', command=self.sort_column,
+                    text=_('Title')).grid(row=0, column=1, sticky='ew')
+            Heading(headings, cat, 'text', command=self.sort_column,
+                    text=_('Text')).grid(row=0, column=2, sticky='ew')
+            Heading(headings, cat, 'date', command=self.sort_column,
+                    text=_('Date')).grid(row=0, column=3, sticky='ew')
+            Heading(headings, cat, 'select_all', style='select.heading.TLabel', padding=0,
+                    command=self.toggle_selectall).place(x=0, y=0, anchor='nw',
+                                                         relheight=1, width=20)
+            Heading(headings, cat, 'visibility',
+                    command=self.sort_column).place(relx=1, y=0, anchor='ne',
+                                                    bordermode='outside',
+                                                    width=23, relheight=1)
             headings.place(x=0, y=2, anchor='nw')
             self.update_idletasks()
             frame.rowconfigure(0, minsize=headings.winfo_reqheight())
             self.texts[cat].window_create('1.0', window=self.frames[cat])
             b_frame = Frame(frame)
             b_frame.grid(row=3, columnspan=2)
-            b_sel = Button(b_frame, image=self.im_sel, padding=1,
-                           command=self.select_all)
-            b_sel.pack(side='left', padx=4, pady=4)
-            tooltipwrapper.add_tooltip(b_sel, _('Select all'))
-            b_desel = Button(b_frame, image=self.im_desel, padding=1,
-                             command=self.deselect_all)
-            tooltipwrapper.add_tooltip(b_desel, _('Deselect all'))
-            b_desel.pack(side='left', padx=4, pady=4)
             m = Menubutton(b_frame, image=self.im_change, text=_('Change category'),
                            compound='right', menu=menu_cat,
                            padding=1)
@@ -223,6 +245,17 @@ class Manager(Toplevel):
         self.bind("<Button-5>", lambda e: self.scroll(1))
         self.notebook.bind('<<NotebookTabChanged>>', self.on_change_tab)
 
+    def toggle_selectall(self, event):
+        heading = event.widget
+        cat = heading.category
+        sel = self.get_selection(cat)
+        if len(sel) == len(self.notes[cat]):
+            for widget in self.notes[cat].values():
+                widget.state(('!selected',))
+        else:
+            for widget in self.notes[cat].values():
+                widget.state(('selected',))
+
     def show_selection(self):
         cat = self.notebook.tab('current', 'text').lower()
         sel = self.get_selection(cat)
@@ -248,6 +281,16 @@ class Manager(Toplevel):
         cat = self.notebook.tab('current', 'text').lower()
         for widget in self.notes[cat].values():
             widget.state(('!selected',))
+
+    def sort_column(self, event):
+        """Sort column."""
+        heading = event.widget
+        notes = [(item.get(heading.column), item.get_values(), item) for item in self.notes[heading.category].values()]
+        notes.sort(reverse=heading.reverse, key=lambda x: x[:-1])
+        for i, (val, values, item) in enumerate(notes):
+            item.grid_configure(row=i)
+        heading.reverse = not heading.reverse
+        heading.state(['!' * heading.reverse + 'alternate'])
 
     def toggle_visibility(self, key, visible):
         if visible:

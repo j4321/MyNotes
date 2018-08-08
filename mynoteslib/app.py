@@ -37,7 +37,8 @@ import signal
 from mynoteslib.trayicon import TrayIcon, SubMenu
 from mynoteslib.constants import CONFIG, PATH_DATA, PATH_DATA_BACKUP,\
     LOCAL_PATH, backup, asksaveasfilename, askopenfilename, COLORS, \
-    IM_SCROLL_ALPHA, IM_VISIBLE, IM_HIDDEN, TEXT_COLORS, color_box
+    IM_SCROLL_ALPHA, IM_VISIBLE, IM_HIDDEN, IM_SELECT, IM_SORT_REV, IM_ROLL, \
+    TEXT_COLORS, color_box
 import mynoteslib.constants as cst
 from mynoteslib.config import Config
 from mynoteslib.export import Export
@@ -63,6 +64,9 @@ class App(Tk):
         self.iconphoto(True, self.im_icon)
         self.im_visible = PhotoImage(file=IM_VISIBLE, master=self)
         self.im_hidden = PhotoImage(file=IM_HIDDEN, master=self)
+        self.im_select = PhotoImage(file=IM_SELECT, master=self)
+        self.im_sort_rev = PhotoImage(file=IM_SORT_REV, master=self)
+        self.im_sort = PhotoImage(file=IM_ROLL, master=self)
 
         # color boxes for menus
         self.im_text_color = {}
@@ -85,7 +89,15 @@ class App(Tk):
                                                      {'sticky': 'nswe'})],
                                        'sticky': 'nswe'})],
                         'sticky': 'nswe'})])
-
+        style.layout('heading.TLabel',
+                     [('Label.border',
+                       {'sticky': 'nswe',
+                        'border': '1',
+                        'children': [('Label.padding',
+                                      {'sticky': 'nswe',
+                                       'border': '1',
+                                       'children': [('Label.text', {'sticky': 'nswe'}),
+                                                    ('Label.image', {'sticky': 'e'})]})]})])
         style.map('TCheckbutton',
                   indicatorbackground=[('pressed', '#dcdad5'),
                                        ('!disabled', 'alternate', '#ffffff'),
@@ -108,6 +120,11 @@ class App(Tk):
         style.map('manager.TLabel', background=[('active', active_bg)])
         style.map('manager.TFrame', background=[('active', active_bg)])
         style.configure('heading.TLabel', relief='raised', borderwidth=1)
+        style.map('heading.TLabel', **style.map('TButton'))
+        style.map('heading.TLabel', bordercolor=[])
+        style.map('select.heading.TLabel', image=[('active', self.im_select)])
+        style.map('heading.TLabel', image=[('active', 'alternate', self.im_sort_rev),
+                                           ('active', '!alternate', self.im_sort)])
         style.configure('manager.TFrame', background='white')
         style.configure('bg.TFrame', background='white', relief='sunken', borderwidth=1)
         style.configure('manager.TLabel', background='white')
