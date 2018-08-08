@@ -804,8 +804,9 @@ class App(Tk):
         categories_to_export, only_visible = export.get_export()
         if categories_to_export:
             initialdir, initialfile = os.path.split(PATH_DATA_BACKUP % 0)
-            fichier = asksaveasfilename(defaultextension=".html",
-                                        filetypes=[(_("HTML file (.html)"), "*.html"),
+            fichier = asksaveasfilename(defaultextension=".notes",
+                                        filetypes=[(_("Notes (.notes)"), "*.notes"),
+                                                   (_("HTML file (.html)"), "*.html"),
                                                    (_("Text file (.txt)"), "*.txt"),
                                                    (_("All files"), "*")],
                                         initialdir=initialdir,
@@ -838,8 +839,7 @@ class App(Tk):
                             fich.write('<body style="max-width:30em">\n')
                             fich.write(text.encode('ascii', 'xmlcharrefreplace').decode("utf-8"))
                             fich.write("\n</body>")
-#                if os.path.splitext(fichier)[-1] == ".txt":
-                    else:
+                    elif os.path.splitext(fichier)[-1] == ".txt":
         # --- txt export
                         # export notes to .txt: all formatting is lost
                         cats = {cat: [] for cat in categories_to_export}
@@ -867,6 +867,17 @@ class App(Tk):
                             text += "\n\n"
                         with open(fichier, "w") as fich:
                             fich.write(text)
+                    else:
+        # --- pickle export (same format as backups)
+                        note_data = {}
+                        for key in self.note_data:
+                            if self.note_data[key]["category"] in categories_to_export:
+                                if (not only_visible) or self.note_data[key]["visible"]:
+                                    note_data[key] = self.note_data[key]
+
+                        with open(fichier, "wb") as fich:
+                            dp = pickle.Pickler(fich)
+                            dp.dump(note_data)
 
                 except Exception as e:
                     report_msg = e.strerror != 'Permission denied'
@@ -875,7 +886,7 @@ class App(Tk):
 
     def import_notes(self):
         """Import notes."""
-        fichier = askopenfilename(defaultextension=".backup",
+        fichier = askopenfilename(defaultextension=".notes",
                                   filetypes=[(_("Notes (.notes)"), "*.notes"),
                                              (_("All files"), "*")],
                                   initialdir=LOCAL_PATH,

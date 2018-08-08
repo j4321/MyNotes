@@ -24,8 +24,7 @@ Dialog to delete notes
 
 from tkinter import Toplevel, PhotoImage, Text, Menu, StringVar, BooleanVar
 from tkinter.ttk import Label, Frame, Button, Notebook, Checkbutton, Menubutton
-from mynoteslib.constants import CONFIG, IM_DELETE, IM_CHANGE, IM_VISIBLE_24, \
-    IM_HIDDEN_24, IM_SELECT
+from mynoteslib.constants import CONFIG, IM_DELETE, IM_CHANGE, IM_VISIBLE_24, IM_HIDDEN_24
 from mynoteslib.autoscrollbar import AutoScrollbar as Scrollbar
 from mynoteslib.messagebox import askokcancel
 from mynoteslib.tooltip import TooltipWrapper
@@ -309,7 +308,6 @@ class Manager(Toplevel):
         self.notes[cat][key] = ManagerItem(self.frames[cat], note_data,
                                            lambda vis: self.toggle_visibility(key, vis))
         self.notes[cat][key].grid(row=r, sticky='ew')
-
 
     def on_change_tab(self, event):
         self.category.set(self.notebook.tab("current", "text").lower())
