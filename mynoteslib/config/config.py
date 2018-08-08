@@ -22,7 +22,7 @@ Configuration Window
 """
 
 
-from tkinter import Toplevel, StringVar, Menu, Text
+from tkinter import Toplevel, StringVar, Menu, Text, BooleanVar
 from mynoteslib.messagebox import showinfo
 from mynoteslib.autocomplete import AutoCompleteCombobox
 from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator
@@ -33,6 +33,7 @@ from mynoteslib.config.categories import CategoryManager
 from mynoteslib.config.autocorrect import AutoCorrectConfig
 from mynoteslib.autoscrollbar import AutoScrollbar
 from tkinter import font
+from time import strftime
 
 
 class Config(Toplevel):
@@ -136,6 +137,7 @@ class Config(Toplevel):
         # --- * ---- titlebar
         self.titlebar_disposition = StringVar(self, CONFIG.get("General",
                                                                "buttons_position"))
+        self.title_var = StringVar(self)  # to add date if date_in_title is true
         font_title = "%s %s" % (CONFIG.get("Font", "title_family").replace(" ", "\ "),
                                 CONFIG.get("Font", "title_size"))
         style = CONFIG.get("Font", "title_style").split(",")
@@ -157,8 +159,8 @@ class Config(Toplevel):
         def select_right(event):
             self.titlebar_disposition.set("right")
 
-        Label(right, text=_("Title"), style="titlebar.TLabel", anchor="center",
-              font=font_title).pack(side="left", fill="x", expand=True)
+        Label(right, textvariable=self.title_var, style="titlebar.TLabel",
+              anchor="center", font=font_title).pack(side="left", fill="x", expand=True)
         Label(right, image="img_close", style="titlebar.TLabel").pack(side="right")
         Label(right, image="img_roll", style="titlebar.TLabel").pack(side="right")
         for ch in right.children.values():
@@ -173,19 +175,17 @@ class Config(Toplevel):
 
         Label(left, image="img_close", style="titlebar.TLabel").pack(side="left")
         Label(left, image="img_roll", style="titlebar.TLabel").pack(side="left")
-        Label(left, text=_("Title"), style="titlebar.TLabel", anchor="center",
-              font=font_title).pack(side="right", fill="x", expand=True)
+        Label(left, textvariable=self.title_var, style="titlebar.TLabel",
+              anchor="center", font=font_title).pack(side="right", fill="x", expand=True)
         for ch in left.children.values():
             ch.bind("<Button-1>", select_left)
 
-        self.date_in_title = Checkbutton(frame_titlebar,
-                                         text=_('Display creation date in title'))
-        self.date_in_title.grid(row=2, columnspan=4, sticky='w', pady=4)
-        if CONFIG.getboolean('General', 'date_in_title', fallback=True):
-            self.date_in_title.state(('!alternate', 'selected'))
-        else:
-            self.date_in_title.state(('!alternate', '!selected'))
-
+        self.date_in_title = BooleanVar(self, CONFIG.getboolean('General', 'date_in_title', fallback=True))
+        date_in_title = Checkbutton(frame_titlebar, variable=self.date_in_title,
+                                    text=_('Display creation date in title'),
+                                    command=self.toggle_date)
+        date_in_title.grid(row=2, columnspan=4, sticky='w', pady=4)
+        self.toggle_date()
         # --- * ---- placement
         lang_frame.grid(sticky="w")
         Separator(general_settings,
@@ -375,6 +375,13 @@ class Config(Toplevel):
         self.symbols.delete('1.0', 'end')
         self.symbols.insert('1.0', SYMBOLS)
 
+    def toggle_date(self):
+        if self.date_in_title.get():
+            self.title_var.set('{} - {}'.format(_('Title'), strftime('%x')))
+        else:
+            self.title_var.set(_('Title'))
+
+
     def cleanup(self):
         """Remove unused latex images."""
         self.master.cleanup()
@@ -463,7 +470,7 @@ class Config(Toplevel):
         CONFIG.set("General", "opacity", opacity)
         CONFIG.set("General", "position", self.position.get())
         CONFIG.set("General", "buttons_position", self.titlebar_disposition.get())
-        CONFIG.set("General", "date_in_title", str('selected' in self.date_in_title.state()))
+        CONFIG.set("General", "date_in_title", str(self.date_in_title.get()))
         CONFIG.set("General", "symbols", "".join(symbols))
         CONFIG.set("General", "trayicon", self.gui.get().lower())
         CONFIG.set("General", "autocorrect", autocorrect)
