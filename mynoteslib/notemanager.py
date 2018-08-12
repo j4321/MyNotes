@@ -94,7 +94,7 @@ class ManagerItem(Frame):
         self.bind('<ButtonRelease-1>', self._on_click)
         self.text.bind('<ButtonRelease-1>', self._on_click)
         self.title.bind('<ButtonRelease-1>', self._on_click)
-        self.checkbutton.bind('<ButtonRelease-1>', self._on_click)
+        self.date.bind('<ButtonRelease-1>', self._on_click)
 
     def state(self, statespec=None):
         return self.checkbutton.state(statespec)
