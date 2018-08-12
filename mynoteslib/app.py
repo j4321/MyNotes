@@ -48,6 +48,7 @@ from mynoteslib.notemanager import Manager
 from mynoteslib.version_check import UpdateChecker
 from mynoteslib.messagebox import showerror, askokcancel
 from mynoteslib.mytext import MyText
+# TODO: md/rst links
 
 
 class App(Tk):
@@ -807,7 +808,8 @@ class App(Tk):
             fichier = asksaveasfilename(defaultextension=".notes",
                                         filetypes=[(_("Notes (.notes)"), "*.notes"),
                                                    (_("HTML file (.html)"), "*.html"),
-                                                   (_("Text file (.txt)"), "*.txt"),
+                                                   (_("Markdown file (.md)"), "*.md"),
+                                                   (_("reStructuredText file (.rst)"), "*.rst"),
                                                    (_("All files"), "*")],
                                         initialdir=initialdir,
                                         initialfile="",
@@ -824,47 +826,85 @@ class App(Tk):
                                                   cst.note_to_html(self.note_data[key], self)))
                         text = ""
                         for cat in cats:
-                            cat_txt = "<h1 style='text-align:center'>" + _("Category: {category}").format(category=cat) + "<h1/>\n"
-                            text += cat_txt
-                            text += "<br>"
-                            for title, txt in cats[cat]:
-                                text += "<h2 style='text-align:center'>%s</h2>\n" % title
-                                text += txt
+                            if cats[cat]:
+                                # skip empty categories
+                                cat_txt = "<h1 style='text-align:center'>" + _("Category: {category}").format(category=cat) + "<h1/>\n"
+                                text += cat_txt
+                                text += "<br>"
+                                for title, txt in cats[cat]:
+                                    text += "<h2 style='text-align:center'>%s</h2>\n" % title
+                                    text += txt
+                                    text += "<br>\n"
+                                    text += "<hr />"
+                                    text += "<br>\n"
+                                text += '<hr style="height: 8px;background-color:grey" />'
                                 text += "<br>\n"
-                                text += "<hr />"
-                                text += "<br>\n"
-                            text += '<hr style="height: 8px;background-color:grey" />'
-                            text += "<br>\n"
                         with open(fichier, "w") as fich:
                             fich.write('<body style="max-width:30em">\n')
                             fich.write(text.encode('ascii', 'xmlcharrefreplace').decode("utf-8"))
                             fich.write("\n</body>")
-                    elif os.path.splitext(fichier)[-1] == ".txt":
-        # --- txt export
-                        # export notes to .txt: all formatting is lost
+                    elif os.path.splitext(fichier)[-1] == ".md":
+        # --- md export
                         cats = {cat: [] for cat in categories_to_export}
                         for key in self.note_data:
                             cat = self.note_data[key]["category"]
                             if cat in cats and ((not only_visible) or self.note_data[key]["visible"]):
                                 cats[cat].append((self.note_data[key]["title"],
-                                                  cst.note_to_txt(self.note_data[key])))
+                                                  cst.note_to_md(self.note_data[key])))
                         text = ""
                         for cat in cats:
-                            cat_txt = _("Category: {category}").format(category=cat) + "\n"
-                            text += cat_txt
-                            text += "=" * len(cat_txt)
-                            text += "\n\n"
-                            for title, txt in cats[cat]:
-                                text += title
-                                text += "\n"
-                                text += "-" * len(title)
+                            if cats[cat]:
+                                # skip empty categories
+                                cat_txt = _("Category: {category}").format(category=cat) + "\n"
+                                text += cat_txt
+                                text += "=" * len(cat_txt)
                                 text += "\n\n"
-                                text += txt
+                                for title, txt in cats[cat]:
+                                    text += title
+                                    text += "\n"
+                                    text += "-" * len(title)
+                                    text += "\n\n"
+                                    text += txt
+                                    text += "\n\n"
+                                    text += "-" * 30
+                                    text += "\n\n"
+                                text += "-" * 30
                                 text += "\n\n"
                                 text += "-" * 30
                                 text += "\n\n"
-                            text += "#" * 30
-                            text += "\n\n"
+                        with open(fichier, "w") as fich:
+                            fich.write(text)
+                    elif os.path.splitext(fichier)[-1] == ".rst":
+        # --- rst export
+                        cats = {cat: [] for cat in categories_to_export}
+                        for key in self.note_data:
+                            cat = self.note_data[key]["category"]
+                            if cat in cats and ((not only_visible) or self.note_data[key]["visible"]):
+                                cats[cat].append((self.note_data[key]["title"],
+                                                  cst.note_to_rst(self.note_data[key])))
+                        text = ""
+                        for cat in cats:
+                            if cats[cat]:
+                                # skip empty categories
+                                cat_txt = _("Category: {category}").format(category=cat) + "\n"
+                                text += cat_txt
+                                text += "=" * len(cat_txt)
+                                text += "\n\n"
+                                for title, txt in cats[cat]:
+                                    text += title
+                                    text += "\n"
+                                    text += "-" * len(title)
+                                    text += "\n\n"
+                                    text += txt if txt else '...'
+                                    text += "\n\n"
+                                    text += "-" * 30
+                                    text += "\n\n"
+                                text += "#" * 30
+                                text += "\n\n"
+                        if text:
+                            text = text[:-34]
+                            if text[-30:] == "-" * 30:
+                                text = text[:-30]
                         with open(fichier, "w") as fich:
                             fich.write(text)
                     else:

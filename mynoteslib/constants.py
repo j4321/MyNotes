@@ -45,6 +45,7 @@ Constants and functions
 
 
 import os
+import re
 import gettext
 from configparser import ConfigParser
 from locale import getdefaultlocale, setlocale, LC_ALL
@@ -799,13 +800,20 @@ def note_to_html(data, master):
                 t[i] = line.replace("\t•\t", "<li>") + "</li>"
         t = "<br>\n".join(t)
         t = "<ul>%s</ul>" % t
+    elif data["mode"] == "enum":
+        for i, line in enumerate(t):
+            res = re.match('^\t[0-9]+\.\t', line)
+            if res:
+                t[i] = line.replace(res.group(), "<li>") + "</li>"
+        t = "\n".join(t)
+        t = "<ol>\n%s</ol>" % t
     else:
         t = "<br>\n".join(t)
     return t
 
 
-def note_to_txt(data):
-    """Convert note content to .txt"""
+def note_to_md(data):
+    """Convert note content to .md"""
     t = data["txt"].splitlines()
     obj = data["inserted_objects"]
     indexes = list(obj.keys())
@@ -826,4 +834,53 @@ def note_to_txt(data):
         elif tp == "image":
             l.insert(col, "![%s](%s)" % (os.path.split(val)[-1], val))
         t[line] = "".join(l)
-    return "\n".join(t)
+    if data["mode"] == "list":
+        for i, line in enumerate(t):
+            if "\t•\t" in line:
+                t[i] = line.replace("\t•\t", "* ")
+    elif data["mode"] == "enum":
+        for i, line in enumerate(t):
+            res = re.match('^\t[0-9]+\.\t', line)
+            if res:
+                t[i] = line.replace(res.group(), "%s. " % re.search("[0-9]+", res.group()).group())
+    return "<br>\n".join(t)
+
+
+def note_to_rst(data):
+    """Convert note content to .rst"""
+    t = data["txt"].splitlines()
+    obj = data["inserted_objects"]
+    indexes = list(obj.keys())
+    indexes.sort(reverse=True, key=sorting)
+    images = []
+    for i in indexes:
+        tp, val = obj[i]
+        line, col = i.split(".")
+        line = int(line) - 1
+        while line >= len(t):
+            t.append("")
+        col = int(col)
+        l = list(t[line])
+        if tp == "checkbox":
+            if val:
+                l.insert(col, "☒ ")
+            else:
+                l.insert(col, "☐ ")
+        elif tp == "image":
+            name = os.path.split(val)[-1]
+            l.insert(col, "|%s|" % name)
+            images.append(".. |%s| image:: %s" % (name, val))
+        t[line] = "".join(l)
+    t.extend(images)
+    if data["mode"] == "list":
+        for i, line in enumerate(t):
+            if "\t•\t" in line:
+                t[i] = line.replace("\t•\t", "* ")
+    elif data["mode"] == "enum":
+        for i, line in enumerate(t):
+            res = re.match('^\t[0-9]+\.\t', line)
+            if res:
+                t[i] = line.replace(res.group(), "%s. " % re.search("[0-9]+", res.group()).group())
+    return "\n\n".join(t)
+
+
