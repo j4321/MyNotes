@@ -94,19 +94,27 @@ def apply_formatting(balises, text_lines, obj_indexes):
         if index in obj_indexes:
             del(l[col])
         l.insert(col, "".join(balises[index]))
-        text_lines[line] = "".join(l).strip()
+        text_lines[line] = "".join(l)
 
 
 def md_rst_list_enum_format(mode, text_lines):
     if mode == "list":
         for i, line in enumerate(text_lines):
             if "\t•\t" in line:
-                text_lines[i] = line.replace("\t•\t", "* ")
+                text_lines[i] = line.replace("\t•\t", "* ").strip()
+            else:
+                text_lines[i] = line.strip()
     elif mode == "enum":
         for i, line in enumerate(text_lines):
             res = re.match('^\t[0-9]+\.\t', line)
             if res:
-                text_lines[i] = line.replace(res.group(), "%s. " % re.search("[0-9]+", res.group()).group())
+                text_lines[i] = line.replace(res.group(),
+                                             "%s. " % re.search("[0-9]+",
+                                                                res.group()).group()).strip()
+            else:
+                text_lines[i] = line.strip()
+    else:
+        text_lines = [line.strip() for line in text_lines]
 
 
 def note_to_html(data, master):
