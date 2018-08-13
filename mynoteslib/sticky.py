@@ -30,12 +30,11 @@ import os
 import re
 from time import strftime
 from mynoteslib.constants import TEXT_COLORS, COLORS, askopenfilename, EWMH,\
-    PATH_LATEX, LATEX, CONFIG, IM_LOCK, IM_CLIP, sorting, math_to_image
+    PATH_LATEX, LATEX, CONFIG, IM_LOCK, IM_CLIP, sorting, math_to_image, open_url
 from mynoteslib.autoscrollbar import AutoScrollbar
 from mynoteslib.symbols import pick_symbol
 from mynoteslib.mytext import MyText
 from mynoteslib.messagebox import showerror, askokcancel
-from webbrowser import open as open_url
 
 
 class Sticky(Toplevel):
@@ -313,18 +312,22 @@ class Sticky(Toplevel):
             if indices:
                 self.txt.tag_add(tag, *indices)
 
-        for link in kwargs.get("links", {}).values():
-            self.nb_links += 1
-            self.txt.links[self.nb_links] = link
-            self.links_click_id[self.nb_links] = ""
-            lid = "link#%i" % self.nb_links
+        # restore links
+        links = kwargs.get("links", {})
+        for link_nb, link in links.items():
+            self.txt.links[link_nb] = link
+            self.links_click_id[link_nb] = ""
+            lid = "link#%i" % link_nb
             self.txt.tag_bind(lid,
                               "<Button-1>",
-                              lambda e, lnb=self.nb_links: self.open_link(lnb))
+                              lambda e, lnb=link_nb: self.open_link(lnb))
             self.txt.tag_bind(lid,
                               "<Double-Button-1>",
-                              lambda e, lnb=self.nb_links: self.edit_link(lnb))
+                              lambda e, lnb=link_nb: self.edit_link(lnb))
+        if links:
+            self.nb_links = max(links)
 
+        # restore latex
         for img, latex in latex_data.items():
             self.txt.latex[img] = latex
             if LATEX:
