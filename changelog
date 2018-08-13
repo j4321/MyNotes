@@ -18,6 +18,7 @@ Changelog
     * Improve note manager: group deletion, change category, visibility
     * Improve note locking: no editing at all, locked position
     * Re-create missing LaTeX formulas
+    * Remove unused categories after backup restoration
     * Fix link restoration
 
 - Version 2.3.3
