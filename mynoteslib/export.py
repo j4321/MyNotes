@@ -223,14 +223,24 @@ def note_to_html(data, master):
     if data["mode"] == "list":
         for i, line in enumerate(t):
             if "\t•\t" in line:
-                t[i] = ('<li>' + line.replace("\t•\t", "") + "</li>").replace('</p></li>', '</li></p>')
+                line = ('<li>' + line.replace("\t•\t", "") + "</li>").replace('</p></li>', '</li></p>')
+                res = re.match(r'<li>\n<p(.)*>\n', line)
+                if res:
+                    ch = res.group()
+                    line = line.replace(ch, ch[4:] + '<li>')
+                t[i] = line
         t = "<br>\n".join(t)
         t = "<ul>\n%s\n</ul>" % t
     elif data["mode"] == "enum":
         for i, line in enumerate(t):
             res = re.search('\t[0-9]+\.\t', line)
             if res:
-                t[i] = ("<li>" + line.replace(res.group(), "") + "</li>").replace('</p></li>', '</li></p>')
+                line = ("<li>" + line.replace(res.group(), "") + "</li>").replace('</p></li>', '</li></p>')
+                res = re.match(r'<li>\n<p(.)*>\n', line)
+                if res:
+                    ch = res.group()
+                    line = line.replace(ch, ch[4:] + '<li>')
+                t[i] = line
         t = "\n".join(t)
         t = "<ol>\n%s\n</ol>" % t
     else:
