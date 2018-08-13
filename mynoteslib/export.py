@@ -62,23 +62,93 @@ TAG_OPEN_MD = {'bold': ' **',
                'italic': ' *',
                'bold-italic': ' **_',
                "link": "",
+               'code': "    ",
+               'code_start': "\n\n    ",
                'mono': ' ``'}
 
 TAG_CLOSE_MD = {'bold': '** ',
                 'italic': '* ',
                 'bold-italic': '_** ',
                 "link": "",
+                "code_end": "\n",
                 'mono': '`` '}
 
 TAG_OPEN_RST = {'bold': ' **',
                 'italic': ' *',
                 "link": "",
+                'code_start': "\n\n::\n\n    ",
+                'code': "    ",
                 'mono': ' ``'}
 
 TAG_CLOSE_RST = {'bold': '** ',
                  'italic': '* ',
                  "link": "",
+                 "code_end": "\n",
                  'mono': '`` '}
+
+
+def md_rst_generate_formatting_dict(txt, b_open, b_close):
+
+    def add_to_formatting(deb, fin, tag):
+        if deb not in formatting:
+            formatting[deb] = []
+        if fin not in formatting:
+            formatting[fin] = []
+        try:
+            formatting[deb].append(b_open[tag])
+            formatting[fin].insert(0, b_close[tag])
+        except KeyError:
+            # error due to notes created before links restoration was fixed
+            pass
+
+    def add_to_formatting_single(index, b, tag):
+        if index not in formatting:
+            formatting[index] = []
+        formatting[index].append(b[tag])
+
+    formatting = {}
+    tags = [tag for tag in txt.tag_names() if tag != 'mono']
+    for tag in tags:
+        tr = [str(i) for i in txt.tag_ranges(tag)]
+        for i, (deb, fin) in enumerate(zip(tr[::2], tr[1::2])):
+            deb_line = sorting(deb)[0]
+            fin_line, fin_col = sorting(fin)
+            while fin_col == 0:
+                fin = str(txt.index("%s-1c" % fin))
+                fin_line, fin_col = sorting(fin)
+            if deb_line < fin_line:
+                ind = str(txt.index('%i.end' % deb_line))
+                if ind != deb:
+                    add_to_formatting(deb, ind, tag)
+                for line in range(deb_line + 1, fin_line):
+                    ind1 = '%i.0' % line
+                    ind2 = str(txt.index('%i.end' % line))
+                    if ind1 != ind2:
+                        add_to_formatting(ind1, ind2, tag)
+                ind = '%i.0' % fin_line
+                if ind != fin:
+                    add_to_formatting(ind, fin, tag)
+            elif deb_line == fin_line:
+                add_to_formatting(deb, fin, tag)
+    # mono
+    tr = [str(i) for i in txt.tag_ranges('mono')]
+    for i, (deb, fin) in enumerate(zip(tr[::2], tr[1::2])):
+        deb_line = sorting(deb)[0]
+        fin_line, fin_col = sorting(fin)
+        while fin_col == 0:
+            fin = str(txt.index("%s-1c" % fin))
+            fin_line, fin_col = sorting(fin)
+        if deb_line < fin_line:
+            add_to_formatting_single(deb, b_open, 'code_start')
+            for line in range(deb_line + 1, fin_line):
+                ind = '%i.0' % line
+                add_to_formatting_single(ind, b_open, 'code')
+            ind = '%i.0' % fin_line
+            add_to_formatting_single(ind, b_open, 'code')
+            add_to_formatting_single(fin, b_close, 'code_end')
+        elif deb_line == fin_line:
+            add_to_formatting(deb, fin, 'mono')
+    return formatting
 
 
 def apply_formatting(balises, text_lines, obj_indexes):
@@ -97,24 +167,45 @@ def apply_formatting(balises, text_lines, obj_indexes):
         text_lines[line] = "".join(l)
 
 
+def md_rst_line_cleanup(line):
+    """Strip line and remove space just after/before bold or italic start/end"""
+    l = line
+    with open('/tmp/text', 'a') as f:
+        f.write('\nnewline')
+        if l[:2] == ' *' or l[:3] == ' ``':
+            l = l[1:]
+        for res in re.finditer(r'\*[^\*]+\*', l):
+            ch = res.group()
+            if not re.match(r'^\*[ ]+\*$', ch):
+                l = l.replace(ch, '*%s*' % ch[1:-1].strip(' '))
+        for res in re.finditer(r'``(.)+``', l):
+            ch = res.group()
+            f.write(str(res) + '\n')
+        for res in re.finditer(r'``[^``]+``', l):
+            ch = res.group()
+            l = l.replace(ch, '``%s``' % ch[2:-2].strip(' '))
+            f.write(str(res) + ' %r ' % ch + ' %r\n' % ch[2:-2].strip(' '))
+        f.write(line + '\n\n')
+    return l
+
+
 def md_rst_list_enum_format(mode, text_lines):
     if mode == "list":
         for i, line in enumerate(text_lines):
             if "\t•\t" in line:
-                text_lines[i] = line.replace("\t•\t", "* ").strip()
-            else:
-                text_lines[i] = line.strip()
+                line = line.replace("\t•\t", "* ")
+            text_lines[i] = md_rst_line_cleanup(line)
     elif mode == "enum":
         for i, line in enumerate(text_lines):
             res = re.match('^\t[0-9]+\.\t', line)
             if res:
-                text_lines[i] = line.replace(res.group(),
-                                             "%s. " % re.search("[0-9]+",
-                                                                res.group()).group()).strip()
-            else:
-                text_lines[i] = line.strip()
+                line = line.replace(res.group(),
+                                    "%s. " % re.search("[0-9]+",
+                                                       res.group()).group())
+            text_lines[i] = md_rst_line_cleanup(line)
     else:
-        text_lines = [line.strip() for line in text_lines]
+        for i, line in enumerate(text_lines):
+            text_lines[i] = md_rst_line_cleanup(line)
 
 
 def note_to_html(data, master):
@@ -162,7 +253,10 @@ def note_to_html(data, master):
                         tags.add(t2)
                     else:
                         tags.add(tag)
+                elif align is None:
+                    align = tag
                 else:
+                    txt.tag_remove(align, index)
                     align = tag
             tags = list(tags)
             tags.sort()
@@ -220,6 +314,9 @@ def note_to_html(data, master):
             apply_formatting(balises, t, indexes)
     txt.destroy()
 
+    while '' in t:
+        t.remove('')
+
     if data["mode"] == "list":
         for i, line in enumerate(t):
             if "\t•\t" in line:
@@ -245,6 +342,7 @@ def note_to_html(data, master):
         t = "<ol>\n%s\n</ol>" % t
     else:
         t = "<br>\n".join(t)
+        t = t.replace('</p>\n<br>', '</p>\n')
     return t
 
 
@@ -286,22 +384,7 @@ def note_to_md(data, master):
                     if 'link#' not in tag:
                         txt.tag_remove(tag, index)
 
-    formatting = {}
-    for tag in txt.tag_names():
-        tr = txt.tag_ranges(tag)
-        for deb, fin in zip(tr[::2], tr[1::2]):
-            deb = str(deb)
-            fin = str(fin)
-            if deb not in formatting:
-                formatting[deb] = []
-            if fin not in formatting:
-                formatting[fin] = []
-            try:
-                formatting[deb].append(b_open[tag])
-                formatting[fin].insert(0, b_close[tag])
-            except KeyError:
-                # error due to notes created before links restoration was fixed
-                pass
+    formatting = md_rst_generate_formatting_dict(txt, b_open, b_close)
 
     for i in indexes:
         tp, val = obj[i]
@@ -321,7 +404,7 @@ def note_to_md(data, master):
     apply_formatting(formatting, t, indexes)
     md_rst_list_enum_format(data['mode'], t)
 
-    return "<br>\n".join(t)
+    return "\n\n".join(t)
 
 
 def note_to_rst(data, master):
@@ -366,34 +449,7 @@ def note_to_rst(data, master):
                     txt.tag_remove(tag, index)
                 txt.tag_add('bold', index)
 
-    formatting = {}
-    for tag in txt.tag_names():
-        tr = [str(i) for i in txt.tag_ranges(tag)]
-        for i, (deb, fin) in enumerate(zip(tr[::2], tr[1::2])):
-            deb_line = sorting(deb)[0]
-            fin_line = sorting(fin)[0]
-            if deb_line < fin_line:
-                ind = 2 * i + 1
-                tr.insert(ind, '%i.0' % fin_line)
-                for line in range(fin_line - 1, deb_line, -1):
-                    tr.insert(ind, str(txt.index('%i.end' % line)))
-                    tr.insert(ind, '%i.0' % line)
-                tr.insert(ind, str(txt.index('%i.end' % deb_line)))
-                for i in reversed(range(len(tr) // 2)):
-                    if tr[2 * i] == tr[2 * i + 1]:
-                        del tr[2 * i + 1]
-                        del tr[2 * i]
-        for deb, fin in zip(tr[::2], tr[1::2]):
-            if deb not in formatting:
-                formatting[deb] = []
-            if fin not in formatting:
-                formatting[fin] = []
-            try:
-                formatting[deb].append(b_open[tag])
-                formatting[fin].insert(0, b_close[tag])
-            except KeyError:
-                # error due to notes created before links restoration was fixed
-                pass
+    formatting = md_rst_generate_formatting_dict(txt, b_open, b_close)
 
     images = []
     for i in indexes:
