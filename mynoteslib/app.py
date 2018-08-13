@@ -41,14 +41,13 @@ from mynoteslib.constants import CONFIG, PATH_DATA, PATH_DATA_BACKUP,\
     TEXT_COLORS, color_box
 import mynoteslib.constants as cst
 from mynoteslib.config import Config
-from mynoteslib.export import Export
+from mynoteslib.export import Export, note_to_html, note_to_md, note_to_rst
 from mynoteslib.sticky import Sticky
 from mynoteslib.about import About
 from mynoteslib.notemanager import Manager
 from mynoteslib.version_check import UpdateChecker
 from mynoteslib.messagebox import showerror, askokcancel
 from mynoteslib.mytext import MyText
-# TODO: md/rst links
 
 
 class App(Tk):
@@ -823,22 +822,18 @@ class App(Tk):
                             cat = self.note_data[key]["category"]
                             if cat in cats and ((not only_visible) or self.note_data[key]["visible"]):
                                 cats[cat].append((self.note_data[key]["title"],
-                                                  cst.note_to_html(self.note_data[key], self)))
+                                                  note_to_html(self.note_data[key], self)))
                         text = ""
                         for cat in cats:
                             if cats[cat]:
                                 # skip empty categories
-                                cat_txt = "<h1 style='text-align:center'>" + _("Category: {category}").format(category=cat) + "<h1/>\n"
+                                cat_txt = "<h1 style='text-align:center'>" + _("Category: {category}").format(category=cat) + "<h1/>\n\n"
                                 text += cat_txt
-                                text += "<br>"
                                 for title, txt in cats[cat]:
-                                    text += "<h2 style='text-align:center'>%s</h2>\n" % title
+                                    text += "<h2 style='text-align:center'>%s</h2>\n\n" % title
                                     text += txt
-                                    text += "<br>\n"
-                                    text += "<hr />"
-                                    text += "<br>\n"
-                                text += '<hr style="height: 8px;background-color:grey" />'
-                                text += "<br>\n"
+                                    text += "\n<br>\n<hr /><br>\n\n"
+                                text += '<hr style="height: 8px;background-color:grey" /><br>\n'
                         with open(fichier, "w") as fich:
                             fich.write('<body style="max-width:30em">\n')
                             fich.write(text.encode('ascii', 'xmlcharrefreplace').decode("utf-8"))
@@ -850,28 +845,20 @@ class App(Tk):
                             cat = self.note_data[key]["category"]
                             if cat in cats and ((not only_visible) or self.note_data[key]["visible"]):
                                 cats[cat].append((self.note_data[key]["title"],
-                                                  cst.note_to_md(self.note_data[key])))
+                                                  note_to_md(self.note_data[key], self)))
                         text = ""
                         for cat in cats:
-                            if cats[cat]:
-                                # skip empty categories
+                            if cats[cat]:  # skip empty categories
                                 cat_txt = _("Category: {category}").format(category=cat) + "\n"
                                 text += cat_txt
                                 text += "=" * len(cat_txt)
                                 text += "\n\n"
                                 for title, txt in cats[cat]:
                                     text += title
-                                    text += "\n"
-                                    text += "-" * len(title)
-                                    text += "\n\n"
+                                    text += "\n" + "-" * len(title) + "\n\n"
                                     text += txt
-                                    text += "\n\n"
-                                    text += "-" * 30
-                                    text += "\n\n"
-                                text += "-" * 30
-                                text += "\n\n"
-                                text += "-" * 30
-                                text += "\n\n"
+                                    text += "\n\n" + "-" * 30 + "\n\n"
+                                text += "-" * 30 + "\n\n"
                         with open(fichier, "w") as fich:
                             fich.write(text)
                     elif os.path.splitext(fichier)[-1] == ".rst":
@@ -881,24 +868,21 @@ class App(Tk):
                             cat = self.note_data[key]["category"]
                             if cat in cats and ((not only_visible) or self.note_data[key]["visible"]):
                                 cats[cat].append((self.note_data[key]["title"],
-                                                  cst.note_to_rst(self.note_data[key])))
+                                                  note_to_rst(self.note_data[key], self)))
                         text = ""
                         for cat in cats:
-                            if cats[cat]:
-                                # skip empty categories
+                            if cats[cat]:   # skip empty categories
                                 cat_txt = _("Category: {category}").format(category=cat) + "\n"
                                 text += cat_txt
                                 text += "=" * len(cat_txt)
                                 text += "\n\n"
                                 for title, txt in cats[cat]:
                                     text += title
-                                    text += "\n"
-                                    text += "-" * len(title)
+                                    text += "\n" + "-" * len(title) + "\n\n"
                                     text += "\n\n"
                                     text += txt if txt else '...'
-                                    text += "\n\n"
-                                    text += "-" * 30
-                                    text += "\n\n"
+                                    text += "\n\n" + "-" * 30 + "\n\n"
+                                text = text[:-32]
                                 text += "#" * 30
                                 text += "\n\n"
                         if text:
@@ -920,7 +904,10 @@ class App(Tk):
                             dp.dump(note_data)
 
                 except Exception as e:
-                    report_msg = e.strerror != 'Permission denied'
+                    try:
+                        report_msg = e.strerror != 'Permission denied'
+                    except AttributeError:
+                        report_msg = True
                     showerror(_("Error"), str(e), traceback.format_exc(),
                               report_msg)
 

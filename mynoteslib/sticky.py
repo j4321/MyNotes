@@ -30,12 +30,11 @@ import os
 import re
 from time import strftime
 from mynoteslib.constants import TEXT_COLORS, COLORS, askopenfilename, EWMH,\
-    PATH_LATEX, LATEX, CONFIG, IM_LOCK, IM_CLIP, sorting, math_to_image
+    PATH_LATEX, LATEX, CONFIG, IM_LOCK, IM_CLIP, sorting, math_to_image, open_url
 from mynoteslib.autoscrollbar import AutoScrollbar
 from mynoteslib.symbols import pick_symbol
 from mynoteslib.mytext import MyText
 from mynoteslib.messagebox import showerror, askokcancel
-from webbrowser import open as open_url
 
 
 class Sticky(Toplevel):
