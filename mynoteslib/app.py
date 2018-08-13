@@ -618,16 +618,21 @@ class App(Tk):
                     with open(PATH_DATA, "rb") as myfich:
                         dp = pickle.Unpickler(myfich)
                         note_data = dp.load()
+                    categories = set()
                     for i, key in enumerate(note_data):
                         data = note_data[key]
                         note_id = "%i" % i
                         self.note_data[note_id] = data
                         cat = data["category"]
+                        categories.add(cat)
                         if not CONFIG.has_option("Categories", cat):
                             CONFIG.set("Categories", cat, data["color"])
                         if data["visible"]:
                             self.notes[note_id] = Sticky(self, note_id, **data)
                     self.nb = len(self.note_data)
+                    for cat in CONFIG.options("Categories"):
+                        if cat not in categories:
+                            CONFIG.remove_option("Categories", cat)
                     self.update_menu()
                     self.update_notes()
                 except FileNotFoundError:

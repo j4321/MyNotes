@@ -384,8 +384,15 @@ def note_to_rst(data, master):
                 formatting[deb] = []
             if fin not in formatting:
                 formatting[fin] = []
-            formatting[deb].append(b_open[tag])
-            formatting[fin].insert(0, b_close[tag])
+            try:
+                formatting[deb].append(b_open[tag])
+                formatting[fin].insert(0, b_close[tag])
+            except KeyError:
+                # error due to notes created before links restoration was fixed
+                print(data['links'])
+                print(tag, data['tags'][tag])
+#                pass
+
 
     images = []
     for i in indexes:
