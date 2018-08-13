@@ -324,7 +324,8 @@ class Sticky(Toplevel):
             self.txt.tag_bind(lid,
                               "<Double-Button-1>",
                               lambda e, lnb=link_nb: self.edit_link(lnb))
-        self.nb_links = max(links)
+        if links:
+            self.nb_links = max(links)
 
         # restore latex
         for img, latex in latex_data.items():
