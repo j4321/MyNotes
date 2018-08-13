@@ -472,7 +472,7 @@ def note_to_rst(data, master):
     apply_formatting(formatting, t, indexes)
     md_rst_list_enum_format(data['mode'], t)
     t.extend(images)
-    return "\n\n".join(t)
+    return "\n\n".join(t).replace('\\', '\\\\')  # escape backslashes
 
 
 class Export(Toplevel):
