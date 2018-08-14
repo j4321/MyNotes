@@ -862,9 +862,9 @@ class App(Tk):
         export = Export(self)
         self.wait_window(export)
         export_type, categories_to_export, only_visible, export_data = export.get_export()
-        extension = EXT_DICT[export_type]
         if not categories_to_export:
             return
+        extension = EXT_DICT[export_type]
 
         initialdir, initialfile = os.path.split(PATH_DATA_BACKUP % 0)
         if export_data:
