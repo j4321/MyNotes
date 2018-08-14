@@ -13,6 +13,7 @@ Changelog
     * Improve undo (Ctrl+Z)/redo (Ctrl+Y): works with text, image, links,
       checkboxes, latex and formatting
     * Improve note export:
+        + Improve export dialog
         + Improve HTML export
         + Replace .txt export option by .rst and .md export options
         + Export as archive containing data (images and local files linked to notes)
