@@ -3,6 +3,8 @@ build/
 __pycache__
 dist/
 backup/
+data/
+*.notes
 latex/
 *.backup*
 *.ini

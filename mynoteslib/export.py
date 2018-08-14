@@ -23,10 +23,20 @@ Export dialog
 
 
 import re
-from os.path import split, exists
-from tkinter import Toplevel, Text
-from tkinter.ttk import Checkbutton, Frame, Button, Separator
+from os.path import split, exists, join, splitext
+from os import mkdir
+from tempfile import TemporaryDirectory
+import tarfile
+from shutil import copyfile
+from tkinter import Toplevel, Text, StringVar, Menu
+from tkinter.ttk import Checkbutton, Frame, Button, Separator, Menubutton, Label
 from mynoteslib.constants import CONFIG, TEXT_COLORS, sorting, text_ranges
+from pickle import Pickler
+
+EXT_DICT = {_("Notes (.notes)"): '.notes',
+            _("HTML file (.html)"): '.html',
+            _("Markdown file (.md)"): '.md',
+            _("reStructuredText file (.rst)"): '.rst'}
 
 TAG_OPEN_HTML = {"bold": "<b>",
                  "italic": "<i>",
@@ -85,6 +95,47 @@ TAG_CLOSE_RST = {'bold': '** ',
                  "link": "",
                  "code_end": "\n",
                  'mono': '`` '}
+
+
+def make_archive(archive, data, extension, text, latex={}, pickle=False):
+    """
+    archive: archive path
+    data: {name: path}
+    extension: extension for the notes
+    text: exported notes
+    """
+
+    with TemporaryDirectory() as tmpdir:
+        # create archive root directory
+        local_dir_name, ext = splitext(split(archive)[1])
+        while ext:
+            local_dir_name, ext = splitext(local_dir_name)
+        local_dir = join(tmpdir, local_dir_name)
+        mkdir(local_dir)
+        # create data directory
+        data_dir = join(local_dir, 'data')
+        mkdir(data_dir)
+        if latex:
+            latex_dir = join(local_dir, 'latex')
+            mkdir(latex_dir)
+        # create note file
+        filename = splitext(local_dir_name)[0] + extension
+        tmpfile = join(local_dir, filename)
+        if pickle:
+            with open(tmpfile, "wb") as fich:
+                dp = Pickler(fich)
+                dp.dump(text)
+        else:
+            with open(tmpfile, 'w') as f:
+                f.write(text)
+        with tarfile.open(name=archive, mode='w') as tar:
+            tar.add(tmpfile, arcname=join(local_dir_name, filename))
+            for name, path in data.items():
+                copyfile(path, join(data_dir, name))
+                tar.add(join(data_dir, name), arcname=join(local_dir_name, 'data', name))
+            for name, path in latex.items():
+                copyfile(path, join(data_dir, name))
+                tar.add(join(data_dir, name), arcname=join(local_dir_name, 'latex', name))
 
 
 def md_rst_generate_formatting_dict(txt, b_open, b_close):
@@ -208,7 +259,21 @@ def md_rst_list_enum_format(mode, text_lines):
             text_lines[i] = md_rst_line_cleanup(line)
 
 
-def note_to_html(data, master):
+def export_filename(filepath, datafiles, local_dir='data'):
+    """For rst, md and html"""
+    path, name = split(filepath)
+    name, ext = splitext(name)
+    if name in datafiles:
+        name = name + '-%i'
+        i = 1
+        while name % i + ext in datafiles:
+            i += 1
+        name = name % i
+    datafiles[name + ext] = filepath
+    return join(local_dir, name + ext)  # new path
+
+
+def note_to_html(data, master, export_data, datafiles):
     """Convert note content to html."""
     txt = Text(master)
     tags = data["tags"]
@@ -218,10 +283,12 @@ def note_to_html(data, master):
 
     b_open = TAG_OPEN_HTML.copy()
     b_close = TAG_CLOSE_HTML.copy()
-
     for key, link in data["links"].items():
-        if not exists(link) and not re.match(r'http(s)?://', link):
-            link = 'http://' + link
+        if not exists(link):
+            if not re.match(r'http(s)?://', link):
+                link = 'http://' + link
+        elif export_data:
+            link = export_filename(link, datafiles)
         b_open["link#%i" % key] = '<a href="%s" target="_blank">' % link
         b_close["link#%i" % key] = "</a>"
 
@@ -310,6 +377,8 @@ def note_to_html(data, master):
                         else:
                             balises[i].append('<input type="checkbox" />')
                     elif tp == "image":
+                        if export_data and exists(val):
+                            val = export_filename(val, datafiles)
                         balises[i].append('<img src="%s" style="vertical-align:middle" alt="%s" />' % (val, split(val)[-1]))
             apply_formatting(balises, t, indexes)
     txt.destroy()
@@ -346,7 +415,7 @@ def note_to_html(data, master):
     return t
 
 
-def note_to_md(data, master):
+def note_to_md(data, master, export_data, datafiles):
     """Convert note content to .md"""
     txt = Text(master)
     obj = data["inserted_objects"]
@@ -358,6 +427,8 @@ def note_to_md(data, master):
     b_close = TAG_CLOSE_MD.copy()
     for key, link in data["links"].items():
         b_open["link#%i" % key] = '['
+        if export_data and exists(link):
+            link = export_filename(link, datafiles)
         b_close["link#%i" % key] = "](%s)" % link
 
     txt.insert('1.0', data["txt"])
@@ -396,6 +467,8 @@ def note_to_md(data, master):
             else:
                 formatting[i].append("☐ ")
         elif tp == "image":
+            if export_data and exists(val, datafiles):
+                val = export_filename(val)
             formatting[i].append("![%s](%s)" % (split(val)[-1], val))
 
     t = txt.get("1.0", "end").splitlines()
@@ -407,7 +480,7 @@ def note_to_md(data, master):
     return "\n\n".join(t)
 
 
-def note_to_rst(data, master):
+def note_to_rst(data, master, export_data, datafiles):
     """Convert note content to .rst"""
     txt = Text(master)
     obj = data["inserted_objects"]
@@ -419,6 +492,8 @@ def note_to_rst(data, master):
     b_close = TAG_CLOSE_RST.copy()
     for key, link in data["links"].items():
         b_open["link#%i" % key] = '`'
+        if export_data and exists(link):
+            link = export_filename(link, datafiles)
         b_close["link#%i" % key] = " <%s>`__" % link.replace(' ', '\ ')
 
     txt.insert('1.0', data["txt"])
@@ -462,6 +537,8 @@ def note_to_rst(data, master):
             else:
                 formatting[i].append("☐ ")
         elif tp == "image":
+            if export_data and exists(val):
+                val = export_filename(val, datafiles)
             name = split(val)[-1]
             formatting[i].append("|%s|" % name)
             images.append(".. |%s| image:: %s" % (name, val))
@@ -473,6 +550,70 @@ def note_to_rst(data, master):
     md_rst_list_enum_format(data['mode'], t)
     t.extend(images)
     return "\n\n".join(t).replace('\\', '\\\\')  # escape backslashes
+
+
+EXPORT_FCT = {'.rst': note_to_rst, '.md': note_to_md, '.html': note_to_html}
+
+
+def merge_notes_html(cats):
+    text = ""
+    for cat in cats:
+        if cats[cat]:
+            # skip empty categories
+            cat_txt = "<h1 style='text-align:center'>" + _("Category: {category}").format(category=cat) + "<h1/>\n\n"
+            text += cat_txt
+            for title, txt in cats[cat]:
+                text += "<h2 style='text-align:center'>%s</h2>\n\n" % title
+                text += txt
+                text += "\n<br>\n<hr /><br>\n\n"
+            text += '<hr style="height: 8px;background-color:grey" /><br>\n'
+    text = text.encode('ascii', 'xmlcharrefreplace').decode("utf-8")
+    text = '<body style="max-width:30em">\n%s\n</body>' % text
+    return text
+
+
+def merge_notes_md(cats):
+    text = ""
+    for cat in cats:
+        if cats[cat]:  # skip empty categories
+            cat_txt = _("Category: {category}").format(category=cat) + "\n"
+            text += cat_txt
+            text += "=" * len(cat_txt)
+            text += "\n\n"
+            for title, txt in cats[cat]:
+                text += title
+                text += "\n" + "-" * len(title) + "\n\n"
+                text += txt
+                text += "\n\n" + "-" * 30 + "\n\n"
+            text += "-" * 30 + "\n\n"
+    return text
+
+
+def merge_notes_rst(cats):
+    text = ""
+    for cat in cats:
+        if cats[cat]:   # skip empty categories
+            cat_txt = _("Category: {category}").format(category=cat) + "\n"
+            text += cat_txt
+            text += "=" * len(cat_txt)
+            text += "\n\n"
+            for title, txt in cats[cat]:
+                text += title
+                text += "\n" + "-" * len(title) + "\n\n"
+                text += "\n\n"
+                text += txt if txt else '...'
+                text += "\n\n" + "-" * 30 + "\n\n"
+            text = text[:-32]
+            text += "#" * 30
+            text += "\n\n"
+    if text:
+        text = text[:-34]
+        if text[-30:] == "-" * 30:
+            text = text[:-30]
+    return text
+
+
+MERGE_FCT = {'.rst': merge_notes_rst, '.md': merge_notes_md, '.html': merge_notes_html}
 
 
 class Export(Toplevel):
@@ -487,6 +628,20 @@ class Export(Toplevel):
         self.categories.sort()
         self.categories_to_export = []
         self.only_visible = False
+        self.export_type = None
+        self.export_data = False
+
+        # export type
+        self.type = StringVar(self, _("Notes (.notes)"))
+
+        type_frame = Frame(self)
+        menu_type = Menu(self, tearoff=False)
+        for etype in EXT_DICT:
+            menu_type.add_radiobutton(label=etype, value=etype, variable=self.type)
+        mb = Menubutton(type_frame, menu=menu_type, textvariable=self.type, width=max([int(len(key) * 0.8) for key in EXT_DICT]))
+        Label(type_frame, text=_('Export as')).pack(side='left', padx=4)
+        mb.pack(side='left', padx=4)
+        type_frame.grid(sticky='w', pady=4)
 
         # select all checkbutton
         self.ch_all = Checkbutton(self, text=_("Select all"),
@@ -502,6 +657,9 @@ class Export(Toplevel):
             self.checkbuttons.append(Checkbutton(self, text=cat.capitalize(),
                                                  command=self.toggle_select_all))
             self.checkbuttons[-1].grid(sticky="w", padx=4, pady=4)
+        Separator(self).grid(sticky="ew", padx=4, pady=4)
+        self.ch_export_data = Checkbutton(self, text=_('Export data (pictures and local files)'))
+        self.ch_export_data.grid(sticky="w", padx=4, pady=4)
 
         frame = Frame(self)
         frame.grid()
@@ -519,6 +677,8 @@ class Export(Toplevel):
             if "selected" in ch.state():
                 self.categories_to_export.append(cat)
         self.only_visible = "selected" in self.ch_only_visible.state()
+        self.export_type = self.type.get()
+        self.export_data = "selected" in self.ch_export_data.state()
         self.destroy()
 
     def select_all(self):
@@ -542,4 +702,5 @@ class Export(Toplevel):
             self.ch_all.state(("!selected",))
 
     def get_export(self):
-        return self.categories_to_export, self.only_visible
+        return self.export_type, self.categories_to_export, self.only_visible, self.export_data
+
