@@ -201,13 +201,12 @@ class Config(Toplevel):
                   orient="horizontal").grid(sticky="ew", pady=10)
         frame_titlebar.grid(sticky="ew", pady=4)
 
-        # --- * ---- clean latex
-        if LATEX:
-            Separator(general_settings,
-                      orient="horizontal").grid(sticky="ew", pady=10)
-            Button(general_settings,
-                   text=_('Delete unused LaTex data'),
-                   command=self.cleanup).grid(padx=4, pady=4, sticky='w')
+        # --- * ---- clean local data
+        Separator(general_settings,
+                  orient="horizontal").grid(sticky="ew", pady=10)
+        Button(general_settings,
+               text=_('Delete unused local data'),
+               command=self.cleanup).grid(padx=4, pady=4, sticky='w')
 
         # --- * Font settings
         font_settings = Frame(self.notebook, padding=4)
