@@ -30,18 +30,21 @@ from PIL.ImageTk import PhotoImage
 import os
 import re
 import traceback
-from shutil import copy
+from shutil import copy, copyfile
 import pickle
+import tarfile
+from tempfile import TemporaryDirectory
 from time import strftime
 import signal
 from mynoteslib.trayicon import TrayIcon, SubMenu
 from mynoteslib.constants import CONFIG, PATH_DATA, PATH_DATA_BACKUP,\
     LOCAL_PATH, backup, asksaveasfilename, askopenfilename, COLORS, \
     IM_SCROLL_ALPHA, IM_VISIBLE, IM_HIDDEN, IM_SELECT, IM_SORT_REV, IM_ROLL, \
-    TEXT_COLORS, color_box
+    TEXT_COLORS, color_box, PATH_LATEX, PATH_LOCAL_DATA
 import mynoteslib.constants as cst
 from mynoteslib.config import Config
-from mynoteslib.export import Export, note_to_html, note_to_md, note_to_rst
+from mynoteslib.export import Export, EXT_DICT, MERGE_FCT, EXPORT_FCT, \
+    make_archive, export_filename
 from mynoteslib.sticky import Sticky
 from mynoteslib.about import About
 from mynoteslib.notemanager import Manager
@@ -287,10 +290,6 @@ class App(Tk):
         self.make_notes_sticky()
 
         # --- class bindings
-#        # newline depending on mode
-#        self.bind_class("Text", "<Return>", self.insert_newline)
-#        # char deletion taking into account list type
-#        self.bind_class("Text", "<BackSpace>", self.delete_char)
         # change Ctrl+A to select all instead of go to the beginning of the line
         self.bind_class('Text', '<Control-a>', self.select_all_text)
         self.bind_class('TEntry', '<Control-a>', self.select_all_entry)
@@ -542,7 +541,8 @@ class App(Tk):
         self.highlight_checkboxes(event)
 
     # --- Other methods
-    def make_notes_sticky(self):
+    @staticmethod
+    def make_notes_sticky():
         for w in cst.EWMH.getClientList():
             try:
                 if re.match(r'mynotes[0-9]+', w.get_wm_name()):
@@ -577,19 +577,29 @@ class App(Tk):
 
     def backup(self):
         """Create a backup at the location indicated by user."""
-        initialdir, initialfile = os.path.split(PATH_DATA_BACKUP % 0)
-        fichier = asksaveasfilename(defaultextension=".backup",
-                                    filetypes=[],
+        initialdir = os.path.dirname(PATH_DATA_BACKUP)
+        fichier = asksaveasfilename(defaultextension=".notes",
+                                    filetypes=[(_("Notes (.notes)"), '*.notes'),
+                                               (_("Notes with data (.tar.*)"), "*.tar.*"),
+                                               (_("All files"), "*")],
                                     initialdir=initialdir,
-                                    initialfile="notes.backup0",
+                                    initialfile="backup.notes",
                                     title=_('Backup Notes'))
         if fichier:
+            name, ext = os.path.splitext(fichier)
+            exts = []
+            while ext:
+                exts.append(ext)
+                name, ext = os.path.splitext(name)
+            export_data = '.tar' in exts
             try:
-                with open(fichier, "wb") as fich:
-                    dp = pickle.Pickler(fich)
-                    dp.dump(self.note_data)
+                self._export_pickle(fichier, '.notes',
+                                    CONFIG.options('Categories'), False, export_data)
             except Exception as e:
-                report_msg = e.strerror != 'Permission denied'
+                try:
+                    report_msg = e.strerror != 'Permission denied'
+                except AttributeError:
+                    report_msg = True
                 showerror(_("Error"), _("Backup failed."),
                           traceback.format_exc(), report_msg)
 
@@ -604,41 +614,41 @@ class App(Tk):
         if rep:
             if fichier is None:
                 fichier = askopenfilename(defaultextension=".backup",
-                                          filetypes=[],
-                                          initialdir=LOCAL_PATH,
+                                          filetypes=[(_('Backup'), 'notes.backup*'),
+                                                     (_("Notes (.notes)"), '*.notes'),
+                                                     (_("Notes with data (.tar.*)"), "*.tar.*"),
+                                                     (_("All files"), "*")],
+                                          initialdir=os.path.dirname(PATH_DATA_BACKUP),
                                           initialfile="",
                                           title=_('Restore Backup'))
-            if fichier:
+            if not fichier:
+                return
+            try:
+                with open(fichier, "rb") as myfich:
+                    dp = pickle.Unpickler(myfich)
+                    note_data = dp.load()
+                keys = list(self.note_data.keys())
+                self.hide_all()
+                self._load_notes(note_data)
+                if not os.path.samefile(fichier, PATH_DATA):
+                    copy(fichier, PATH_DATA)
+                for key in keys:
+                    self.delete_note(key)
+            except pickle.UnpicklingError:
                 try:
                     keys = list(self.note_data.keys())
+                    self.hide_all()
+                    self._load_notes_with_data(fichier, cleanup_cat=True)
                     for key in keys:
                         self.delete_note(key)
-                    if not os.path.samefile(fichier, PATH_DATA):
-                        copy(fichier, PATH_DATA)
-                    with open(PATH_DATA, "rb") as myfich:
-                        dp = pickle.Unpickler(myfich)
-                        note_data = dp.load()
-                    categories = set()
-                    for i, key in enumerate(note_data):
-                        data = note_data[key]
-                        note_id = "%i" % i
-                        self.note_data[note_id] = data
-                        cat = data["category"]
-                        categories.add(cat)
-                        if not CONFIG.has_option("Categories", cat):
-                            CONFIG.set("Categories", cat, data["color"])
-                        if data["visible"]:
-                            self.notes[note_id] = Sticky(self, note_id, **data)
-                    self.nb = len(self.note_data)
-                    for cat in CONFIG.options("Categories"):
-                        if cat not in categories:
-                            CONFIG.remove_option("Categories", cat)
-                    self.update_menu()
-                    self.update_notes()
-                except FileNotFoundError:
-                    showerror(_("Error"), _("The file {filename} does not exists.").format(filename=fichier))
-                except Exception as e:
-                    showerror(_("Error"), str(e), traceback.format_exc(), True)
+                except Exception:
+                    message = _("The file {file} is not a valid note archive.").format(file=fichier)
+                    showerror(_("Error"), message, traceback.format_exc())
+            except FileNotFoundError:
+                showerror(_("Error"), _("The file {filename} does not exists.").format(filename=fichier))
+            except Exception:
+                message = _("The file {file} is not a valid .notes file.").format(file=fichier)
+                showerror(_("Error"), message, traceback.format_exc())
 
     def show_all(self):
         """Show all notes."""
@@ -802,159 +812,243 @@ class App(Tk):
         self.nb += 1
         self.make_notes_sticky()
 
+    def _generate(self, filename, extension, categories_to_export, only_visible, export_data):
+        datafiles = {}
+        cats = {cat: [] for cat in categories_to_export}
+        for key in self.note_data:
+            cat = self.note_data[key]["category"]
+            if cat in cats and ((not only_visible) or self.note_data[key]["visible"]):
+                cats[cat].append((self.note_data[key]["title"],
+                                  EXPORT_FCT[extension](self.note_data[key], self, export_data, datafiles)))
+        text = MERGE_FCT[extension](cats)
+        if export_data:
+            make_archive(filename, datafiles, extension, text)
+        else:
+            with open(filename, 'w') as file:
+                file.write(text)
+
+    def _export_pickle(self, filename, extension, categories_to_export, only_visible, export_data):
+        """pickle export (same format as backups)"""
+        note_data = {}
+        datafiles = {}
+        latexfiles = {}
+        for key in self.note_data:
+            if self.note_data[key]["category"] in categories_to_export:
+                if (not only_visible) or self.note_data[key]["visible"]:
+                    note_data[key] = self.note_data[key].copy()
+                    if export_data:
+                        note_data[key]["inserted_objects"] = self.note_data[key]["inserted_objects"].copy()
+                        note_data[key]["links"] = self.note_data[key]["links"].copy()
+                        for link_id, link in tuple(note_data[key]["links"].items()):
+                            if os.path.exists(link):
+                                link = export_filename(link, datafiles)
+                                note_data[key]["links"][link_id] = link
+                        for ind, (obj_type, val) in tuple(note_data[key]["inserted_objects"].items()):
+                            if obj_type == 'image':
+                                if os.path.split(val)[0] == PATH_LATEX:
+                                    val = export_filename(val, latexfiles, 'latex')
+                                else:
+                                    val = export_filename(val, datafiles)
+                                note_data[key]["inserted_objects"][ind] = (obj_type, val)
+        if export_data:
+            make_archive(filename, datafiles, extension, note_data, latexfiles, pickle=True)
+        else:
+            with open(filename, "wb") as fich:
+                dp = pickle.Pickler(fich)
+                dp.dump(note_data)
+
     def export_notes(self):
         """Note export."""
         export = Export(self)
         self.wait_window(export)
-        categories_to_export, only_visible = export.get_export()
-        if categories_to_export:
-            initialdir, initialfile = os.path.split(PATH_DATA_BACKUP % 0)
-            fichier = asksaveasfilename(defaultextension=".notes",
-                                        filetypes=[(_("Notes (.notes)"), "*.notes"),
-                                                   (_("HTML file (.html)"), "*.html"),
-                                                   (_("Markdown file (.md)"), "*.md"),
-                                                   (_("reStructuredText file (.rst)"), "*.rst"),
+        export_type, categories_to_export, only_visible, export_data = export.get_export()
+        extension = EXT_DICT[export_type]
+        if not categories_to_export:
+            return
+
+        initialdir, initialfile = os.path.split(PATH_DATA_BACKUP % 0)
+        if export_data:
+            fichier = asksaveasfilename(defaultextension='.tar.gz',
+                                        filetypes=[(_('tar.gzip archive (.tar.gz)'), '*.tar.gz'),
+                                                   (_('tar.bzip2 archive (.tar.bz2)'), '*.tar.bz2'),
+                                                   (_('tar.xz archive (.tar.xz)'), '*.tar.xz'),
                                                    (_("All files"), "*")],
                                         initialdir=initialdir,
                                         initialfile="",
                                         title=_('Export Notes As'))
-            if fichier:
-                try:
-                    if os.path.splitext(fichier)[-1] == ".html":
-        # --- html export
-                        cats = {cat: [] for cat in categories_to_export}
-                        for key in self.note_data:
-                            cat = self.note_data[key]["category"]
-                            if cat in cats and ((not only_visible) or self.note_data[key]["visible"]):
-                                cats[cat].append((self.note_data[key]["title"],
-                                                  note_to_html(self.note_data[key], self)))
-                        text = ""
-                        for cat in cats:
-                            if cats[cat]:
-                                # skip empty categories
-                                cat_txt = "<h1 style='text-align:center'>" + _("Category: {category}").format(category=cat) + "<h1/>\n\n"
-                                text += cat_txt
-                                for title, txt in cats[cat]:
-                                    text += "<h2 style='text-align:center'>%s</h2>\n\n" % title
-                                    text += txt
-                                    text += "\n<br>\n<hr /><br>\n\n"
-                                text += '<hr style="height: 8px;background-color:grey" /><br>\n'
-                        with open(fichier, "w") as fich:
-                            fich.write('<body style="max-width:30em">\n')
-                            fich.write(text.encode('ascii', 'xmlcharrefreplace').decode("utf-8"))
-                            fich.write("\n</body>")
-                    elif os.path.splitext(fichier)[-1] == ".md":
-        # --- md export
-                        cats = {cat: [] for cat in categories_to_export}
-                        for key in self.note_data:
-                            cat = self.note_data[key]["category"]
-                            if cat in cats and ((not only_visible) or self.note_data[key]["visible"]):
-                                cats[cat].append((self.note_data[key]["title"],
-                                                  note_to_md(self.note_data[key], self)))
-                        text = ""
-                        for cat in cats:
-                            if cats[cat]:  # skip empty categories
-                                cat_txt = _("Category: {category}").format(category=cat) + "\n"
-                                text += cat_txt
-                                text += "=" * len(cat_txt)
-                                text += "\n\n"
-                                for title, txt in cats[cat]:
-                                    text += title
-                                    text += "\n" + "-" * len(title) + "\n\n"
-                                    text += txt
-                                    text += "\n\n" + "-" * 30 + "\n\n"
-                                text += "-" * 30 + "\n\n"
-                        with open(fichier, "w") as fich:
-                            fich.write(text)
-                    elif os.path.splitext(fichier)[-1] == ".rst":
-        # --- rst export
-                        cats = {cat: [] for cat in categories_to_export}
-                        for key in self.note_data:
-                            cat = self.note_data[key]["category"]
-                            if cat in cats and ((not only_visible) or self.note_data[key]["visible"]):
-                                cats[cat].append((self.note_data[key]["title"],
-                                                  note_to_rst(self.note_data[key], self)))
-                        text = ""
-                        for cat in cats:
-                            if cats[cat]:   # skip empty categories
-                                cat_txt = _("Category: {category}").format(category=cat) + "\n"
-                                text += cat_txt
-                                text += "=" * len(cat_txt)
-                                text += "\n\n"
-                                for title, txt in cats[cat]:
-                                    text += title
-                                    text += "\n" + "-" * len(title) + "\n\n"
-                                    text += "\n\n"
-                                    text += txt if txt else '...'
-                                    text += "\n\n" + "-" * 30 + "\n\n"
-                                text = text[:-32]
-                                text += "#" * 30
-                                text += "\n\n"
-                        if text:
-                            text = text[:-34]
-                            if text[-30:] == "-" * 30:
-                                text = text[:-30]
-                        with open(fichier, "w") as fich:
-                            fich.write(text)
-                    else:
-        # --- pickle export (same format as backups)
-                        note_data = {}
-                        for key in self.note_data:
-                            if self.note_data[key]["category"] in categories_to_export:
-                                if (not only_visible) or self.note_data[key]["visible"]:
-                                    note_data[key] = self.note_data[key]
+        else:
+            fichier = asksaveasfilename(defaultextension=extension,
+                                        filetypes=[(export_type, '*' + extension),
+                                                   (_("All files"), "*")],
+                                        initialdir=initialdir,
+                                        initialfile="",
+                                        title=_('Export Notes As'))
+        if not fichier:
+            return
+        try:
+            if extension in EXPORT_FCT:
+                self._generate(fichier, extension, categories_to_export, only_visible, export_data)
+            else:
+                self._export_pickle(fichier, extension, categories_to_export, only_visible, export_data)
 
-                        with open(fichier, "wb") as fich:
-                            dp = pickle.Pickler(fich)
-                            dp.dump(note_data)
+        except Exception as e:
+            try:
+                report_msg = e.strerror != 'Permission denied'
+            except AttributeError:
+                report_msg = True
+            showerror(_("Error"), str(e), traceback.format_exc(),
+                      report_msg)
 
-                except Exception as e:
-                    try:
-                        report_msg = e.strerror != 'Permission denied'
-                    except AttributeError:
-                        report_msg = True
-                    showerror(_("Error"), str(e), traceback.format_exc(),
-                              report_msg)
+    def _cleanup_cat(self, cats):
+        """Remove categories not in cats"""
+        for cat in CONFIG.options("Categories"):
+            if cat not in cats:
+                CONFIG.remove_option("Categories", cat)
+        default = CONFIG.get("General", "default_category")
+        if not CONFIG.has_option("Categories", default):
+            CONFIG.set("General", "default_category", CONFIG.options("Categories")[0])
+            cst.save_config()
+
+    def _load_notes(self, note_data, cleanup_cat=False):
+        """Load notes from note_data."""
+        categories = set()
+        for i, key in enumerate(note_data):
+            data = note_data[key]
+            note_id = "%i" % (i + self.nb)
+            self.note_data[note_id] = data
+            cat = data["category"]
+            categories.add(cat)
+            if not CONFIG.has_option("Categories", cat):
+                CONFIG.set("Categories", cat, data["color"])
+            if data["visible"]:
+                self.notes[note_id] = Sticky(self, note_id, **data)
+        self.nb = int(max(self.note_data.keys(), key=lambda x: int(x))) + 1
+        if cleanup_cat:
+            # remove categories with no notes (for restore)
+            self._cleanup_cat(self, categories)
+        self.update_menu()
+        self.update_notes()
+
+    def _load_notes_with_data(self, filename, cleanup_cat=False):
+        """Load notes and data from archive."""
+
+        def get_name(path, local_files, latex=False):
+            name, ext = os.path.splitext(os.path.split(path)[1])
+            if name + ext in local_files:
+                if latex:
+                    name = '%i'
+                else:
+                    name = name + '-%i'
+                i = 0
+                while name % i + ext in local_files:
+                    i += 1
+                name = name % i
+            return name + ext
+
+        with TemporaryDirectory() as tmpdir:
+            # extract archive
+            with tarfile.open(filename, 'r') as tar:
+                tar.extractall(tmpdir)
+            # get path of main folder
+            tmppath = os.path.join(tmpdir, os.listdir(tmpdir)[0])
+            # load note data
+            tmpfile = os.path.join(tmppath, [f for f in os.listdir(tmppath) if '.notes' in f][0])
+            with open(tmpfile, "rb") as fich:
+                dp = pickle.Unpickler(fich)
+                note_data = dp.load()
+            # get local data to avoid replacements
+            local_latexfiles = os.listdir(PATH_LATEX)
+            if not os.path.exists(PATH_LOCAL_DATA):
+                os.mkdir(PATH_LOCAL_DATA)
+            local_datafiles = os.listdir(PATH_LOCAL_DATA)
+            # create notes
+            categories = set()
+            for i, key in enumerate(note_data):
+                data = note_data[key]
+                note_id = "%i" % (i + self.nb)
+                self.note_data[note_id] = data
+                cat = data["category"]
+                categories.add(cat)
+                if not CONFIG.has_option("Categories", cat):
+                    CONFIG.set("Categories", cat, data["color"])
+                # copy link data if it is a local file
+                for link_id, link in tuple(data["links"].items()):
+                    if os.path.exists(os.path.join(tmppath, link)):
+                        new_link = os.path.join(PATH_LOCAL_DATA, get_name(link, local_datafiles))
+                        copyfile(os.path.join(tmppath, link), new_link)
+                        self.note_data[note_id]["links"][link_id] = new_link
+                # copy images
+                for ind, (obj_type, val) in tuple(data["inserted_objects"].items()):
+                    if obj_type == 'image':
+                        path, name = os.path.split(val)
+                        if path == 'latex':
+                            new_val = os.path.join(PATH_LATEX, get_name(val, local_latexfiles, True))
+                            latex_val = self.note_data[note_id]['latex'][os.path.split(val)[1]]
+                            del self.note_data[note_id]['latex'][os.path.split(val)[1]]
+                            self.note_data[note_id]['latex'][os.path.split(new_val)[1]] = latex_val
+                        else:
+                            new_val = os.path.join(PATH_LOCAL_DATA, get_name(val, local_datafiles))
+                            copyfile(os.path.join(tmppath, val), new_val)
+                        self.note_data[note_id]["inserted_objects"][ind] = (obj_type, new_val)
+
+                if data["visible"]:
+                    self.notes[note_id] = Sticky(self, note_id, **self.note_data[note_id])
+
+        self.nb = int(max(self.note_data.keys(), key=lambda x: int(x))) + 1
+        if cleanup_cat:
+            # remove categories with no notes (for restore)
+            self._cleanup_cat(categories)
+        self.update_menu()
+        self.update_notes()
 
     def import_notes(self):
         """Import notes."""
+
         fichier = askopenfilename(defaultextension=".notes",
                                   filetypes=[(_("Notes (.notes)"), "*.notes"),
+                                             (_("Notes with data (.tar.*)"), "*.tar.*"),
                                              (_("All files"), "*")],
                                   initialdir=LOCAL_PATH,
                                   initialfile="",
                                   title=_('Import'))
-        if fichier:
+        if not fichier:
+            return
+        try:
+            with open(fichier, "rb") as fich:
+                dp = pickle.Unpickler(fich)
+                note_data = dp.load()
+            self._load_notes(note_data)
+        except pickle.UnpicklingError:
             try:
-                with open(fichier, "rb") as fich:
-                    dp = pickle.Unpickler(fich)
-                    note_data = dp.load()
-                for i, key in enumerate(note_data):
-                    data = note_data[key]
-                    note_id = "%i" % (i + self.nb)
-                    self.note_data[note_id] = data
-                    cat = data["category"]
-                    if not CONFIG.has_option("Categories", cat):
-                        CONFIG.set("Categories", cat, data["color"])
-                        self.hidden_notes[cat] = {}
-                    if data["visible"]:
-                        self.notes[note_id] = Sticky(self, note_id, **data)
-                self.nb = int(max(self.note_data.keys(), key=lambda x: int(x))) + 1
-                self.update_menu()
-                self.update_notes()
+                self._load_notes_with_data(fichier)
             except Exception:
-                message = _("The file {file} is not a valid .notes file.").format(file=fichier)
+                message = _("The file {file} is not a valid note archive.").format(file=fichier)
                 showerror(_("Error"), message, traceback.format_exc())
 
+        except Exception:
+            message = _("The file {file} is not a valid .notes file.").format(file=fichier)
+            showerror(_("Error"), message, traceback.format_exc())
+
     def cleanup(self):
-        """Remove unused latex images."""
-        img_stored = os.listdir(cst.PATH_LATEX)
-        img_used = []
+        """Remove unused local data."""
+        if cst.LATEX:
+            latex_stored = os.listdir(PATH_LATEX)
+        else:
+            latex_stored = []
+        latex_used = []
+        data_stored = os.listdir(PATH_LOCAL_DATA)
+        data_used = []
         for data in self.note_data.values():
-            img_used.extend(list(data.get("latex", {}).keys()))
-        for img in img_stored:
-            if img not in img_used:
-                os.remove(os.path.join(cst.PATH_LATEX, img))
+            latex_used.extend(list(data.get("latex", {}).keys()))
+            img = [os.path.split(val[1]) for val in data.get("inserted_objects", {}).values()
+                   if val[0] == 'image']
+            data_used.extend([im for path, im in img if path == PATH_LOCAL_DATA])
+        for img in latex_stored:
+            if img not in latex_used:
+                os.remove(os.path.join(PATH_LATEX, img))
+        for img in data_stored:
+            if img not in data_used:
+                os.remove(os.path.join(PATH_LOCAL_DATA, img))
 
     def quit(self):
         self.destroy()

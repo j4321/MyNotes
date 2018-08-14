@@ -84,6 +84,7 @@ else:
 
 PATH_CONFIG = os.path.join(LOCAL_PATH, "mynotes.ini")
 PATH_LATEX = os.path.join(LOCAL_PATH, "latex")
+PATH_LOCAL_DATA = os.path.join(LOCAL_PATH, "data")
 PIDFILE = os.path.join(LOCAL_PATH, "mynotes.pid")
 
 if not os.path.exists(PATH_LATEX):
