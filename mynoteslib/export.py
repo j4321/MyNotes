@@ -639,7 +639,7 @@ class Export(Toplevel):
         for etype in EXT_DICT:
             menu_type.add_radiobutton(label=etype, value=etype, variable=self.type)
         mb = Menubutton(type_frame, menu=menu_type, textvariable=self.type, width=max([int(len(key) * 0.8) for key in EXT_DICT]))
-        Label(type_frame, text=_('Export as')).pack(side='left', padx=4)
+        Label(type_frame, text=_('Export to')).pack(side='left', padx=4)
         mb.pack(side='left', padx=4)
         type_frame.grid(sticky='w', pady=4)
 
@@ -658,7 +658,7 @@ class Export(Toplevel):
                                                  command=self.toggle_select_all))
             self.checkbuttons[-1].grid(sticky="w", padx=4, pady=4)
         Separator(self).grid(sticky="ew", padx=4, pady=4)
-        self.ch_export_data = Checkbutton(self, text=_('Export data (pictures and local files)'))
+        self.ch_export_data = Checkbutton(self, text=_('Export data (pictures and linked files)'))
         self.ch_export_data.grid(sticky="w", padx=4, pady=4)
 
         frame = Frame(self)
