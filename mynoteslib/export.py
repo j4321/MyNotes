@@ -626,6 +626,7 @@ class Export(Toplevel):
         """Create export dialog."""
         Toplevel.__init__(self, master, class_='MyNotes')
         self.title(_("Export"))
+        self.minsize(350, 250)
         self.grab_set()
         self.columnconfigure(0, weight=1)
         self.rowconfigure(3, weight=1)
@@ -667,7 +668,8 @@ class Export(Toplevel):
         for cat in self.categories:
             self.tree.insert('root', 'end', cat, text=cat.capitalize())
         for key, data in self.note_data.items():
-            self.tree.insert(data['category'], 'end', key, text=data['title'],
+            self.tree.insert(data['category'], 'end', key,
+                             text='{} - {}'.format(data['title'], data.get('date', '??')),
                              tags=['visible'] if data['visible'] else [])
         for cat in self.categories:
             if not self.tree.get_children(cat):
@@ -688,6 +690,7 @@ class Export(Toplevel):
                command=self.destroy).grid(row=0, column=1, sticky="e", padx=4, pady=4)
         self.tree.check_item('root')
         self.tree.expand_all()
+        self.toggle_select_visible()
 
     def ok(self):
         """Validate choice."""
@@ -705,7 +708,7 @@ class Export(Toplevel):
                 else:
                     self.tree.uncheck_item(item)
 
-    def toggle_select_visible(self, event):
+    def toggle_select_visible(self, event=None):
         """Change select all checkbutton state when another checkbutton is clicked."""
         checked = list(self.tree.get_checked())
         checked.sort()
