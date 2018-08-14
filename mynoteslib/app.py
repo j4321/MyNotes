@@ -884,7 +884,6 @@ class App(Tk):
                                         title=_('Export Notes As'))
         if not fichier:
             return
-        print(fichier, export_type, notes_to_export, export_data)
         try:
             if extension in EXPORT_FCT:
                 self._generate(fichier, extension, notes_to_export, export_data)
@@ -943,6 +942,7 @@ class App(Tk):
                 while name % i + ext in local_files:
                     i += 1
                 name = name % i
+            local_files.append(name + ext)
             return name + ext
 
         with TemporaryDirectory() as tmpdir:
@@ -961,6 +961,7 @@ class App(Tk):
             if not os.path.exists(PATH_LOCAL_DATA):
                 os.mkdir(PATH_LOCAL_DATA)
             local_datafiles = os.listdir(PATH_LOCAL_DATA)
+            copied_tmp_datafiles = {}
             # create notes
             categories = set()
             for i, key in enumerate(note_data):
@@ -973,9 +974,14 @@ class App(Tk):
                     CONFIG.set("Categories", cat, data["color"])
                 # copy link data if it is a local file
                 for link_id, link in tuple(data["links"].items()):
-                    if os.path.exists(os.path.join(tmppath, link)):
-                        new_link = os.path.join(PATH_LOCAL_DATA, get_name(link, local_datafiles))
-                        copyfile(os.path.join(tmppath, link), new_link)
+                    link_path = os.path.join(tmppath, link)
+                    if os.path.exists(link_path):
+                        if link in copied_tmp_datafiles:
+                            new_link = copied_tmp_datafiles[link]
+                        else:
+                            new_link = os.path.join(PATH_LOCAL_DATA, get_name(link, local_datafiles))
+                            copied_tmp_datafiles[link] = new_link
+                            copyfile(link_path, new_link)
                         self.note_data[note_id]["links"][link_id] = new_link
                 # copy images
                 for ind, (obj_type, val) in tuple(data["inserted_objects"].items()):
@@ -985,10 +991,15 @@ class App(Tk):
                             new_val = os.path.join(PATH_LATEX, get_name(val, local_latexfiles, True))
                             latex_val = self.note_data[note_id]['latex'][os.path.split(val)[1]]
                             del self.note_data[note_id]['latex'][os.path.split(val)[1]]
+                            del self.note_data[note_id]['tags'][os.path.split(val)[1]]
                             self.note_data[note_id]['latex'][os.path.split(new_val)[1]] = latex_val
                         else:
-                            new_val = os.path.join(PATH_LOCAL_DATA, get_name(val, local_datafiles))
-                            copyfile(os.path.join(tmppath, val), new_val)
+                            if val in copied_tmp_datafiles:
+                                new_val = copied_tmp_datafiles[val]
+                            else:
+                                new_val = os.path.join(PATH_LOCAL_DATA, get_name(val, local_datafiles))
+                                copied_tmp_datafiles[val] = new_val
+                                copyfile(os.path.join(tmppath, val), new_val)
                         self.note_data[note_id]["inserted_objects"][ind] = (obj_type, new_val)
 
                 if data["visible"]:
@@ -1043,6 +1054,8 @@ class App(Tk):
             img = [os.path.split(val[1]) for val in data.get("inserted_objects", {}).values()
                    if val[0] == 'image']
             data_used.extend([im for path, im in img if path == PATH_LOCAL_DATA])
+            links = [os.path.split(link) for link in data.get('links', {}).values()]
+            data_used.extend([file for path, file in links if path == PATH_LOCAL_DATA])
         for img in latex_stored:
             if img not in latex_used:
                 os.remove(os.path.join(PATH_LATEX, img))
