@@ -21,7 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Category Manager
 """
 
-from tkinter import StringVar, PhotoImage, Toplevel, Text
+from tkinter import StringVar, Toplevel, Text
+from PIL.ImageTk import PhotoImage
 from mynoteslib.constants import CONFIG, COLORS, INV_COLORS, IM_PLUS, IM_DELETE
 from mynoteslib.constants import save_config, optionmenu_patch
 from tkinter.ttk import Label, Button, OptionMenu, Style, Entry, Frame

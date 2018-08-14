@@ -21,7 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 About dialog
 """
 from webbrowser import open as webOpen
-from tkinter import Text, Toplevel, PhotoImage
+from tkinter import Text, Toplevel
+from PIL.ImageTk import PhotoImage
 from tkinter.ttk import Button, Label, Style
 from mynoteslib.constants import IM_ICON_48
 from mynoteslib.version import __version__

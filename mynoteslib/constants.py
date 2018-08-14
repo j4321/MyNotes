@@ -113,6 +113,9 @@ IM_VISIBLE_24 = os.path.join(PATH_IMAGES, "visible_24.png")
 IM_HIDDEN_24 = os.path.join(PATH_IMAGES, "hidden_24.png")
 IM_CLIP = os.path.join(PATH_IMAGES, "clip.png")
 IM_SCROLL_ALPHA = os.path.join(PATH_IMAGES, "scroll.png")
+IM_CHECKED = os.path.join(PATH_IMAGES, "checked.png")
+IM_UNCHECKED = os.path.join(PATH_IMAGES, "unchecked.png")
+IM_TRISTATE = os.path.join(PATH_IMAGES, "tristate.png")
 
 # --- images data
 IM_ERROR_DATA = """

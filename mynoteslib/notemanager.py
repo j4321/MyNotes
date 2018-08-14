@@ -22,7 +22,8 @@ Dialog to delete notes
 """
 
 
-from tkinter import Toplevel, PhotoImage, Text, Menu, StringVar, BooleanVar
+from PIL.ImageTk import PhotoImage
+from tkinter import Toplevel, Text, Menu, StringVar, BooleanVar
 from tkinter.ttk import Label, Frame, Button, Notebook, Checkbutton, Menubutton
 from mynoteslib.constants import CONFIG, IM_DELETE, IM_CHANGE, IM_VISIBLE_24, IM_HIDDEN_24
 from mynoteslib.autoscrollbar import AutoScrollbar as Scrollbar
