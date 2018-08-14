@@ -628,6 +628,7 @@ class App(Tk):
                     dp = pickle.Unpickler(myfich)
                     note_data = dp.load()
                 keys = list(self.note_data.keys())
+                visible_notes = list(self.notes.keys())
                 self.hide_all()
                 self._load_notes(note_data)
                 if not os.path.samefile(fichier, PATH_DATA):
@@ -637,16 +638,21 @@ class App(Tk):
             except pickle.UnpicklingError:
                 try:
                     keys = list(self.note_data.keys())
+                    visible_notes = list(self.notes.keys())
                     self.hide_all()
                     self._load_notes_with_data(fichier, cleanup_cat=True)
                     for key in keys:
                         self.delete_note(key)
                 except Exception:
+                    for key in visible_notes:
+                        self.show_note(key)
                     message = _("The file {file} is not a valid note archive.").format(file=fichier)
                     showerror(_("Error"), message, traceback.format_exc())
             except FileNotFoundError:
                 showerror(_("Error"), _("The file {filename} does not exists.").format(filename=fichier))
             except Exception:
+                for key in visible_notes:
+                    self.show_note(key)
                 message = _("The file {file} is not a valid .notes file.").format(file=fichier)
                 showerror(_("Error"), message, traceback.format_exc())
 
