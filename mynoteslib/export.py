@@ -31,7 +31,10 @@ from shutil import copyfile
 from tkinter import Toplevel, Text, StringVar, Menu
 from tkinter.ttk import Checkbutton, Frame, Button, Separator, Menubutton, Label
 from mynoteslib.constants import CONFIG, TEXT_COLORS, sorting, text_ranges
+from mynoteslib.checkboxtreeview import CheckboxTreeview
+from mynoteslib.autoscrollbar import AutoScrollbar as Scrollbar
 from pickle import Pickler
+
 
 EXT_DICT = {_("Notes (.notes)"): '.notes',
             _("HTML file (.html)"): '.html',
@@ -221,31 +224,26 @@ def apply_formatting(balises, text_lines, obj_indexes):
 def md_rst_line_cleanup(line):
     """Strip line and remove space just after/before bold or italic start/end"""
     l = line
-    with open('/tmp/text', 'a') as f:
-        f.write('\nnewline')
-        if l[:2] == ' *' or l[:3] == ' ``':
-            l = l[1:]
-        for res in re.finditer(r'\*[^\*]+\*', l):
-            ch = res.group()
-            if not re.match(r'^\*[ ]+\*$', ch):
-                l = l.replace(ch, '*%s*' % ch[1:-1].strip(' '))
-        for res in re.finditer(r'``(.)+``', l):
-            ch = res.group()
-            f.write(str(res) + '\n')
-        for res in re.finditer(r'``[^``]+``', l):
-            ch = res.group()
-            l = l.replace(ch, '``%s``' % ch[2:-2].strip(' '))
-            f.write(str(res) + ' %r ' % ch + ' %r\n' % ch[2:-2].strip(' '))
-        f.write(line + '\n\n')
+    if l[:2] == ' *' or l[:3] == ' ``':
+        l = l[1:]
+    for res in re.finditer(r'\*[^\*]+\*', l):
+        ch = res.group()
+        if not re.match(r'^\*[ ]+\*$', ch):
+            l = l.replace(ch, '*%s*' % ch[1:-1].strip(' '))
+    for res in re.finditer(r'``(.)+``', l):
+        ch = res.group()
+    for res in re.finditer(r'``[^``]+``', l):
+        ch = res.group()
+        l = l.replace(ch, '``%s``' % ch[2:-2].strip(' '))
     return l
 
 
 def md_rst_list_enum_format(mode, text_lines):
     if mode == "list":
         for i, line in enumerate(text_lines):
-            if "\t•\t" in line:
-                line = line.replace("\t•\t", "* ")
             text_lines[i] = md_rst_line_cleanup(line)
+            if "\t•\t" in line:
+                text_lines[i] = text_lines[i].replace("\t•\t", "* ")
     elif mode == "enum":
         for i, line in enumerate(text_lines):
             res = re.match('^\t[0-9]+\.\t', line)
@@ -394,8 +392,9 @@ def note_to_html(data, master, export_data, datafiles):
                 if res:
                     ch = res.group()
                     line = line.replace(ch, ch[4:] + '<li>')
+                line = line.replace('</p>\n</li>', '</li>\n</p>')
                 t[i] = line
-        t = "<br>\n".join(t)
+        t = "\n".join(t)
         t = "<ul>\n%s\n</ul>" % t
     elif data["mode"] == "enum":
         for i, line in enumerate(t):
@@ -406,6 +405,7 @@ def note_to_html(data, master, export_data, datafiles):
                 if res:
                     ch = res.group()
                     line = line.replace(ch, ch[4:] + '<li>')
+                line = line.replace('</p>\n</li>', '</li>\n</p>')
                 t[i] = line
         t = "\n".join(t)
         t = "<ol>\n%s\n</ol>" % t
@@ -467,8 +467,8 @@ def note_to_md(data, master, export_data, datafiles):
             else:
                 formatting[i].append("☐ ")
         elif tp == "image":
-            if export_data and exists(val, datafiles):
-                val = export_filename(val)
+            if export_data and exists(val):
+                val = export_filename(val, datafiles)
             formatting[i].append("![%s](%s)" % (split(val)[-1], val))
 
     t = txt.get("1.0", "end").splitlines()
@@ -539,7 +539,8 @@ def note_to_rst(data, master, export_data, datafiles):
         elif tp == "image":
             if export_data and exists(val):
                 val = export_filename(val, datafiles)
-            name = split(val)[-1]
+            name = val.replace(' ', '\ ')
+#            name = split(val)[-1]
             formatting[i].append("|%s|" % name)
             images.append(".. |%s| image:: %s" % (name, val))
 
@@ -548,8 +549,8 @@ def note_to_rst(data, master, export_data, datafiles):
 
     apply_formatting(formatting, t, indexes)
     md_rst_list_enum_format(data['mode'], t)
-    t.extend(images)
-    return "\n\n".join(t).replace('\\', '\\\\')  # escape backslashes
+    t = "\n\n".join(t).replace('\\', '\\\\')  # escape backslashes
+    return t, images
 
 
 EXPORT_FCT = {'.rst': note_to_rst, '.md': note_to_md, '.html': note_to_html}
@@ -591,13 +592,15 @@ def merge_notes_md(cats):
 
 def merge_notes_rst(cats):
     text = ""
+    images = set()
     for cat in cats:
         if cats[cat]:   # skip empty categories
             cat_txt = _("Category: {category}").format(category=cat) + "\n"
             text += cat_txt
             text += "=" * len(cat_txt)
             text += "\n\n"
-            for title, txt in cats[cat]:
+            for title, (txt, img) in cats[cat]:
+                images = images.union(set(img))
                 text += title
                 text += "\n" + "-" * len(title) + "\n\n"
                 text += "\n\n"
@@ -610,6 +613,7 @@ def merge_notes_rst(cats):
         text = text[:-34]
         if text[-30:] == "-" * 30:
             text = text[:-30]
+    text = text + '\n\n' + '\n\n'.join(images)
     return text
 
 
@@ -618,16 +622,18 @@ MERGE_FCT = {'.rst': merge_notes_rst, '.md': merge_notes_md, '.html': merge_note
 
 class Export(Toplevel):
     """Category export dialog."""
-    def __init__(self, master):
+    def __init__(self, master, note_data):
         """Create export dialog."""
         Toplevel.__init__(self, master, class_='MyNotes')
         self.title(_("Export"))
-        self.resizable(False, False)
         self.grab_set()
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(3, weight=1)
+
+        self.note_data = note_data
         self.categories = CONFIG.options("Categories")
         self.categories.sort()
-        self.categories_to_export = []
-        self.only_visible = False
+        self.notes_to_export = []
         self.export_type = None
         self.export_data = False
 
@@ -641,66 +647,71 @@ class Export(Toplevel):
         mb = Menubutton(type_frame, menu=menu_type, textvariable=self.type, width=max([int(len(key) * 0.8) for key in EXT_DICT]))
         Label(type_frame, text=_('Export to')).pack(side='left', padx=4)
         mb.pack(side='left', padx=4)
-        type_frame.grid(sticky='w', pady=4)
+        type_frame.grid(row=0, columnspan=2, sticky='w', pady=4)
 
-        # select all checkbutton
-        self.ch_all = Checkbutton(self, text=_("Select all"),
-                                  command=self.select_all)
+        Separator(self).grid(columnspan=2, sticky="ew", padx=4, pady=4)
+
         # export only visible notes checkbutton
-        self.ch_only_visible = Checkbutton(self, text=_("Only visible notes"))
-        self.ch_all.grid(sticky="w", padx=4, pady=4)
-        self.ch_only_visible.grid(sticky="w", padx=4, pady=4)
-        Separator(self).grid(sticky="ew", padx=4, pady=4)
-        self.checkbuttons = []
-        # one checkbutton by category
+        self.ch_only_visible = Checkbutton(self, text=_("Only visible notes"),
+                                           command=self.select_only_visible)
+        self.ch_only_visible.grid(columnspan=2, sticky="w", padx=4, pady=4)
+
+        # note selection
+        self.tree = CheckboxTreeview(self, show='tree')
+        self.tree.grid(row=3, sticky="nsew", padx=4, pady=4)
+        scroll = Scrollbar(self, orient='vertical', command=self.tree.yview)
+        self.tree.configure(yscrollcommand=scroll.set)
+        scroll.grid(row=3, column=1, sticky='ns')
+
+        self.tree.insert('', 'end', 'root', text=_('Categories'))
         for cat in self.categories:
-            self.checkbuttons.append(Checkbutton(self, text=cat.capitalize(),
-                                                 command=self.toggle_select_all))
-            self.checkbuttons[-1].grid(sticky="w", padx=4, pady=4)
-        Separator(self).grid(sticky="ew", padx=4, pady=4)
+            self.tree.insert('root', 'end', cat, text=cat.capitalize())
+        for key, data in self.note_data.items():
+            self.tree.insert(data['category'], 'end', key, text=data['title'],
+                             tags=['visible'] if data['visible'] else [])
+        for cat in self.categories:
+            if not self.tree.get_children(cat):
+                self.tree.detach(cat)
+        self.tree.bind('<<Checked>>', self.toggle_select_visible)
+        self.tree.bind('<<Unchecked>>', self.toggle_select_visible)
+
+        Separator(self).grid(sticky="ew", columnspan=2, padx=4, pady=4)
         self.ch_export_data = Checkbutton(self, text=_('Export data (pictures and linked files)'))
-        self.ch_export_data.grid(sticky="w", padx=4, pady=4)
+        self.ch_export_data.grid(sticky="w", columnspan=2, padx=4, pady=4)
 
         frame = Frame(self)
-        frame.grid()
+        frame.grid(columnspan=2)
 
         Button(frame, text="Ok",
                command=self.ok).grid(row=0, column=0, sticky="w", padx=4, pady=4)
         Button(frame, text=_("Cancel"),
                command=self.destroy).grid(row=0, column=1, sticky="e", padx=4, pady=4)
-        self.ch_all.state(("selected",))
-        self.select_all()
+        self.tree.check_item('root')
+        self.tree.expand_all()
 
     def ok(self):
         """Validate choice."""
-        for ch, cat in zip(self.checkbuttons, self.categories):
-            if "selected" in ch.state():
-                self.categories_to_export.append(cat)
-        self.only_visible = "selected" in self.ch_only_visible.state()
+        self.notes_to_export = self.tree.get_checked()
         self.export_type = self.type.get()
         self.export_data = "selected" in self.ch_export_data.state()
         self.destroy()
 
-    def select_all(self):
-        """Select all categories."""
-        if ("selected" in self.ch_all.state()):
-            state = "selected"
-        else:
-            state = "!selected"
-        for ch in self.checkbuttons:
-            ch.state((state,))
+    def select_only_visible(self):
+        """Select only visible notes."""
+        for cat in self.categories:
+            for item in self.tree.get_children(cat):
+                if self.tree.tag_has('visible', item):
+                    self.tree.check_item(item)
+                else:
+                    self.tree.uncheck_item(item)
 
-    def toggle_select_all(self):
+    def toggle_select_visible(self, event):
         """Change select all checkbutton state when another checkbutton is clicked."""
-        b = 0
-        for ch in self.checkbuttons:
-            if "selected" in ch.state():
-                b += 1
-        if b == len(self.checkbuttons):
-            self.ch_all.state(("selected",))
-        else:
-            self.ch_all.state(("!selected",))
+        checked = list(self.tree.get_checked())
+        checked.sort()
+        visible = list(self.tree.tag_has('visible'))
+        visible.sort()
+        self.ch_only_visible.state(['!' * (visible != checked) + 'selected'])
 
     def get_export(self):
-        return self.export_type, self.categories_to_export, self.only_visible, self.export_data
-
+        return self.export_type, self.notes_to_export, self.export_data

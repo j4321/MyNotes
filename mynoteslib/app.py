@@ -812,14 +812,15 @@ class App(Tk):
         self.nb += 1
         self.make_notes_sticky()
 
-    def _generate(self, filename, extension, categories_to_export, only_visible, export_data):
+    def _generate(self, filename, extension, notes_to_export, export_data):
         datafiles = {}
-        cats = {cat: [] for cat in categories_to_export}
-        for key in self.note_data:
+        cats = {}
+        for key in notes_to_export:
             cat = self.note_data[key]["category"]
-            if cat in cats and ((not only_visible) or self.note_data[key]["visible"]):
-                cats[cat].append((self.note_data[key]["title"],
-                                  EXPORT_FCT[extension](self.note_data[key], self, export_data, datafiles)))
+            if cat not in cats:
+                cats[cat] = []
+            cats[cat].append((self.note_data[key]["title"],
+                              EXPORT_FCT[extension](self.note_data[key], self, export_data, datafiles)))
         text = MERGE_FCT[extension](cats)
         if export_data:
             make_archive(filename, datafiles, extension, text)
@@ -827,29 +828,27 @@ class App(Tk):
             with open(filename, 'w') as file:
                 file.write(text)
 
-    def _export_pickle(self, filename, extension, categories_to_export, only_visible, export_data):
+    def _export_pickle(self, filename, extension, notes_to_export, export_data):
         """pickle export (same format as backups)"""
         note_data = {}
         datafiles = {}
         latexfiles = {}
-        for key in self.note_data:
-            if self.note_data[key]["category"] in categories_to_export:
-                if (not only_visible) or self.note_data[key]["visible"]:
-                    note_data[key] = self.note_data[key].copy()
-                    if export_data:
-                        note_data[key]["inserted_objects"] = self.note_data[key]["inserted_objects"].copy()
-                        note_data[key]["links"] = self.note_data[key]["links"].copy()
-                        for link_id, link in tuple(note_data[key]["links"].items()):
-                            if os.path.exists(link):
-                                link = export_filename(link, datafiles)
-                                note_data[key]["links"][link_id] = link
-                        for ind, (obj_type, val) in tuple(note_data[key]["inserted_objects"].items()):
-                            if obj_type == 'image':
-                                if os.path.split(val)[0] == PATH_LATEX:
-                                    val = export_filename(val, latexfiles, 'latex')
-                                else:
-                                    val = export_filename(val, datafiles)
-                                note_data[key]["inserted_objects"][ind] = (obj_type, val)
+        for key in notes_to_export:
+            note_data[key] = self.note_data[key].copy()
+            if export_data:
+                note_data[key]["inserted_objects"] = self.note_data[key]["inserted_objects"].copy()
+                note_data[key]["links"] = self.note_data[key]["links"].copy()
+                for link_id, link in tuple(note_data[key]["links"].items()):
+                    if os.path.exists(link):
+                        link = export_filename(link, datafiles)
+                        note_data[key]["links"][link_id] = link
+                for ind, (obj_type, val) in tuple(note_data[key]["inserted_objects"].items()):
+                    if obj_type == 'image':
+                        if os.path.split(val)[0] == PATH_LATEX:
+                            val = export_filename(val, latexfiles, 'latex')
+                        else:
+                            val = export_filename(val, datafiles)
+                        note_data[key]["inserted_objects"][ind] = (obj_type, val)
         if export_data:
             make_archive(filename, datafiles, extension, note_data, latexfiles, pickle=True)
         else:
@@ -859,10 +858,10 @@ class App(Tk):
 
     def export_notes(self):
         """Note export."""
-        export = Export(self)
+        export = Export(self, self.note_data)
         self.wait_window(export)
-        export_type, categories_to_export, only_visible, export_data = export.get_export()
-        if not categories_to_export:
+        export_type, notes_to_export, export_data = export.get_export()
+        if not notes_to_export:
             return
         extension = EXT_DICT[export_type]
 
@@ -885,11 +884,12 @@ class App(Tk):
                                         title=_('Export Notes As'))
         if not fichier:
             return
+        print(fichier, export_type, notes_to_export, export_data)
         try:
             if extension in EXPORT_FCT:
-                self._generate(fichier, extension, categories_to_export, only_visible, export_data)
+                self._generate(fichier, extension, notes_to_export, export_data)
             else:
-                self._export_pickle(fichier, extension, categories_to_export, only_visible, export_data)
+                self._export_pickle(fichier, extension, notes_to_export, export_data)
 
         except Exception as e:
             try:
