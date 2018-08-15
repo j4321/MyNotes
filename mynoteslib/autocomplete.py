@@ -1,16 +1,17 @@
 #! /usr/bin/python3
 # -*- coding:Utf-8 -*-
 """
-My Notes - Sticky notes/post-it
+MyNotes - Sticky notes/post-it
 Copyright 2016-2017 Juliette Monsel <j_4321@protonmail.com>
-The tcl part of the code was take from http://wiki.tcl.tk/15780
+The tcl part of the code was taken from http://wiki.tcl.tk/15780 and
+written by Paweł Salawa.
 
-My Notes is free software: you can redistribute it and/or modify
+MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-My Notes is distributed in the hope that it will be useful,
+MyNotes is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.

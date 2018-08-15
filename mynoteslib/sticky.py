@@ -1,15 +1,15 @@
 #! /usr/bin/python3
 # -*- coding:Utf-8 -*-
 """
-My Notes - Sticky notes/post-it
+MyNotes - Sticky notes/post-it
 Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
 
-My Notes is free software: you can redistribute it and/or modify
+MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-My Notes is distributed in the hope that it will be useful,
+MyNotes is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -25,17 +25,17 @@ Sticky note class
 from tkinter import Toplevel, StringVar, Menu, TclError
 from tkinter.ttk import  Style, Sizegrip, Entry, Label, Button, Frame
 from PIL.ImageTk import PhotoImage
+from PIL import Image
 import os
 import re
 from time import strftime
 from mynoteslib.constants import TEXT_COLORS, askopenfilename,\
     PATH_LATEX, LATEX, CONFIG, COLORS, IM_LOCK, IM_CLIP, sorting,\
-    math_to_image, EWMH, INV_COLORS
+    math_to_image, EWMH, INV_COLORS, open_url
 from mynoteslib.autoscrollbar import AutoScrollbar
 from mynoteslib.symbols import pick_symbol
 from mynoteslib.mytext import MyText
 from mynoteslib.messagebox import showerror, askokcancel
-from webbrowser import open as open_url
 from time import time
 
 
@@ -60,6 +60,7 @@ class Sticky(Toplevel):
 
         # --- window properties
         self.id = key
+        self._date = kwargs.get('date', '??')
         self.is_locked = not (kwargs.get("locked", False))
         self.images = []
         self.links_click_id = {}  # delay click effect to avoid triggering <1> with <Double-1>
@@ -94,9 +95,14 @@ class Sticky(Toplevel):
                                    value=kwargs.get("title", _("Title")))
         self.title_label = Label(self.titlebar,
                                  textvariable=self.title_var,
-                                 anchor="center",
+                                 anchor="e",
                                  style=self.id + ".TLabel",
                                  font=font_title)
+        self.date_label = Label(self.titlebar,
+                                text="",
+                                anchor="w",
+                                style=self.id + ".TLabel",
+                                font=font_title)
         self.title_entry = Entry(self.titlebar, textvariable=self.title_var,
                                  exportselection=False,
                                  justify="center", font=font_title)
@@ -114,17 +120,24 @@ class Sticky(Toplevel):
         if CONFIG.get("General", "buttons_position") == "right":
             # right = lock icon - title - roll - close
             self.titlebar.columnconfigure(1, weight=1)
-            self.roll.grid(row=0, column=2, sticky="e")
-            self.close.grid(row=0, column=3, sticky="e", padx=(0,2))
+            self.titlebar.columnconfigure(2, weight=1)
+            self.roll.grid(row=0, column=3, sticky="e")
+            self.close.grid(row=0, column=4, sticky="e", padx=(0,2))
             self.cadenas.grid(row=0, column=0, sticky="w")
             self.title_label.grid(row=0, column=1, sticky="ew", pady=(1,0))
+            self.date_label.grid(row=0, column=2, sticky="ew", pady=(1,0))
         else:
             # left = close - roll - title - lock icon
             self.titlebar.columnconfigure(2, weight=1)
+            self.titlebar.columnconfigure(3, weight=1)
             self.roll.grid(row=0, column=1, sticky="w")
             self.close.grid(row=0, column=0, sticky="w", padx=(2,0))
-            self.cadenas.grid(row=0,column=3, sticky="e")
+            self.cadenas.grid(row=0, column=4, sticky="e")
             self.title_label.grid(row=0, column=2, sticky="ew", pady=(1,0))
+            self.date_label.grid(row=0, column=3, sticky="ew", pady=(1,0))
+
+        if CONFIG.getboolean('General', 'date_in_title', fallback=True):
+            self.date_label.configure(text='- ' + self._date)
 
         # -------- body
         # corner grip
@@ -301,18 +314,22 @@ class Sticky(Toplevel):
             if indices:
                 self.txt.tag_add(tag, *indices)
 
-        for link in kwargs.get("links", {}).values():
-            self.nb_links += 1
-            self.txt.links[self.nb_links] = link
-            self.links_click_id[self.nb_links] = ""
-            lid = "link#%i" % self.nb_links
+        # restore links
+        links = kwargs.get("links", {})
+        for link_nb, link in links.items():
+            self.txt.links[link_nb] = link
+            self.links_click_id[link_nb] = ""
+            lid = "link#%i" % link_nb
             self.txt.tag_bind(lid,
                               "<Button-1>",
-                              lambda e, lnb=self.nb_links: self.open_link(lnb))
+                              lambda e, lnb=link_nb: self.open_link(lnb))
             self.txt.tag_bind(lid,
                               "<Double-Button-1>",
-                              lambda e, lnb=self.nb_links: self.edit_link(lnb))
+                              lambda e, lnb=link_nb: self.edit_link(lnb))
+        if links:
+            self.nb_links = max(links)
 
+        # restore latex
         for img, latex in latex_data.items():
             self.txt.latex[img] = latex
             if LATEX:
@@ -355,6 +372,13 @@ class Sticky(Toplevel):
         self.title_label.bind('<Button-3>', self.show_menu)
         self.title_label.bind('<Button-4>', self.mouse_roll)
         self.title_label.bind('<Button-5>', self.mouse_roll)
+        self.date_label.bind("<Double-Button-1>", self.edit_title)
+        self.date_label.bind("<ButtonPress-1>", self.start_move)
+        self.date_label.bind("<ButtonRelease-1>", self.stop_move)
+        self.date_label.bind("<B1-Motion>", self.move)
+        self.date_label.bind('<Button-3>', self.show_menu)
+        self.date_label.bind('<Button-4>', self.mouse_roll)
+        self.date_label.bind('<Button-5>', self.mouse_roll)
 
         self.title_entry.bind("<Return>", lambda e: self.title_entry.place_forget())
         self.title_entry.bind("<FocusOut>", lambda e: self.title_entry.place_forget())
@@ -421,7 +445,7 @@ class Sticky(Toplevel):
                            background=[("active", self.color)])
             self.style.map("roll" + self.id +  ".TLabel",
                            background=[("active", self.color)])
-            self.scroll.configure(style='%s.Vertical.TScrollbar' % INV_COLORS[value])
+            self.scroll.configure(style='%s.Vertical.TScrollbar' % value)
             self.configure(bg=self.color)
             self.txt.configure(bg=self.color)
 
@@ -487,6 +511,7 @@ class Sticky(Toplevel):
             if tag not in ["sel", "todolist", "list", "enum"]:
                 data["tags"][tag] = [index.string for index in self.txt.tag_ranges(tag)]
         data["title"] = self.title_var.get()
+        data["date"] = self._date
         data["geometry"] = self.save_geometry
         data["category"] = self.category.get()
         data["color"] = self.color
@@ -777,7 +802,9 @@ class Sticky(Toplevel):
         self.title_entry.place(x=self.title_label.winfo_x() + 5,
                                y=self.title_label.winfo_y(),
                                anchor="nw",
-                               width=self.title_label.winfo_width()-10)
+                               width=self.title_label.winfo_width() + self.date_label.winfo_width() -10)
+        self.title_entry.selection_range(0, 'end')
+        self.title_entry.focus_set()
 
     def start_move(self, event):
         """Start moving the note."""
@@ -807,16 +834,8 @@ class Sticky(Toplevel):
         """Save note."""
         data = self.save_info()
         data["visible"] = True
-        if self.id in self.master.note_data:
-            data2 = {key:self.master.note_data[self.id][key] for key in data}
-            if data != data2:
-                data['mtime'] = int(time())  # last modification time in seconds since epoch
-                self.master.note_data[self.id] = data
-                self.master.save()
-        else:
-            data['mtime'] = int(time())  # last modification time in seconds since epoch
-            self.master.note_data[self.id] = data
-            self.master.save()
+        self.master.note_data[self.id] = data
+        self.master.save()
 
     def mouse_roll(self, event):
         if event.num == 5 and not self.txt.winfo_ismapped():
@@ -881,19 +900,26 @@ class Sticky(Toplevel):
         if CONFIG.get("General", "buttons_position") == "right":
             # right = lock icon - title - roll - close
             self.titlebar.columnconfigure(1, weight=1)
-            self.titlebar.columnconfigure(2, weight=0)
-            self.roll.grid(row=0, column=2, sticky="e")
-            self.close.grid(row=0, column=3, sticky="e", padx=(0,2))
+            self.titlebar.columnconfigure(2, weight=1)
+            self.roll.grid(row=0, column=3, sticky="e")
+            self.close.grid(row=0, column=4, sticky="e", padx=(0,2))
             self.cadenas.grid(row=0, column=0, sticky="w")
             self.title_label.grid(row=0, column=1, sticky="ew", pady=(1,0))
+            self.date_label.grid(row=0, column=2, sticky="ew", pady=(1,0))
         else:
             # left = close - roll - title - lock icon
-            self.titlebar.columnconfigure(1, weight=0)
             self.titlebar.columnconfigure(2, weight=1)
+            self.titlebar.columnconfigure(3, weight=1)
             self.roll.grid(row=0, column=1, sticky="w")
             self.close.grid(row=0, column=0, sticky="w", padx=(2,0))
-            self.cadenas.grid(row=0,column=3, sticky="e")
+            self.cadenas.grid(row=0, column=4, sticky="e")
             self.title_label.grid(row=0, column=2, sticky="ew", pady=(1,0))
+            self.date_label.grid(row=0, column=3, sticky="ew", pady=(1,0))
+
+        if CONFIG.getboolean('General', 'date_in_title', fallback=True):
+            self.date_label.configure(text='- ' + self._date)
+        else:
+            self.date_label.configure(text='')
 
     # --- Text edition
     # ---* --Link

@@ -1,15 +1,15 @@
 #! /usr/bin/python3
 # -*- coding:Utf-8 -*-
 """
-My Notes - Sticky notes/post-it
+MyNotes - Sticky notes/post-it
 Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
 
-My Notes is free software: you can redistribute it and/or modify
+MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-My Notes is distributed in the hope that it will be useful,
+MyNotes is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -143,32 +143,34 @@ class MyText(Text):
         self.add_undo_sep()
 
     def undo(self, event=None):
-        try:
-            items = []
-            # skip empty sets
-            while not items:
-                items = self._undo_stack.pop()
-        except IndexError:
-            # empty stack
-            self._undo_stack.append([])
-        else:
-            self._redo_stack.append(items)
-            for item in reversed(items):
-                self._undo_single(item)
-            if not self._undo_stack:
+        if self.cget("state") != "disabled":
+            try:
+                items = []
+                # skip empty sets
+                while not items:
+                    items = self._undo_stack.pop()
+            except IndexError:
+                # empty stack
                 self._undo_stack.append([])
+            else:
+                self._redo_stack.append(items)
+                for item in reversed(items):
+                    self._undo_single(item)
+                if not self._undo_stack:
+                    self._undo_stack.append([])
         return "break"
 
     def redo(self, event=None):
-        try:
-            items = self._redo_stack.pop()
-        except IndexError:
-            # empty stack
-            pass
-        else:
-            self._undo_stack.append(items)
-            for item in items:
-                self._redo_single(item)
+        if self.cget("state") != "disabled":
+            try:
+                items = self._redo_stack.pop()
+            except IndexError:
+                # empty stack
+                pass
+            else:
+                self._undo_stack.append(items)
+                for item in items:
+                    self._redo_single(item)
         return "break"
 
     def add_undo_sep(self):
@@ -214,6 +216,8 @@ class MyText(Text):
             self.checkbox_create(item[1], item[2])
         elif item[0] == 'insert':
             self.insert(item[1], item[3], *item[4])
+            if self.mode != "note":
+                self.tag_add(self.mode, "1.0", "end")
         elif item[0] == 'link':
             self.links[item[1]] = item[3]
         elif item[0] == 'delete':
@@ -505,6 +509,8 @@ class MyText(Text):
                     self.tag_add_undoable("bold-italic", d, f)
                     self.tag_remove_undoable("italic", d, f)
                     self.tag_remove_undoable("bold", d, f)
+            else:
+                self.tag_add_undoable(style, "sel.first", "sel.last")
             self.add_undo_sep()
 
     def toggle_underline(self):

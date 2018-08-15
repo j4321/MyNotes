@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 MyNotes - System tray unread mail checker
-Copyright 2016 Juliette Monsel <j_4321@protonmail.com>
+Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
 based on code by Michael Lange <klappnase@web.de> copyright 2010
 
 MyNotes is free software: you can redistribute it and/or modify
@@ -210,8 +210,8 @@ class TrayIcon(tkinter.BaseWidget, tkinter.Wm):
         self.update()
 
     def loop(self, tk_window):
-        # no need to update since it is part of the tk mainloop
-        tk_window.loop_id = ""
+        self.update_idletasks()
+        tk_window.loop_id = tk_window.after(10, self.loop, tk_window)
 
     def bind_left_click(self, command):
         self.bind('<1>', lambda e: command())

@@ -1,18 +1,37 @@
 My Notes - Sticky notes/post-it
 ===============================
-Copyright 2016 Juliette Monsel <j_4321@protonmail.com>
+Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
 
 Changelog
 ---------
 
 - Version 2.4.0
     * Add scrollbars to notes
-    * Improved undo (Ctrl+Z)/redo (Ctrl+Y): works with text, image, links,
+    * Add AutoCorrect feature: automatic replacement of text (e.g. -> becomes →)
+    * Add possibility to show/hide all notes from command line with the
+      --show-all/--hide-all options
+    * Improve undo (Ctrl+Z)/redo (Ctrl+Y): works with text, image, links,
       checkboxes, latex and formatting
+    * Improve note export:
+        + Improve export dialog
+        + Improve HTML export
+        + Replace .txt export option by .rst and .md export options
+        + Export as archive containing data (images and local files linked to notes)
+    * Add possibility to backup with data (as archive)
+    * Add note import / restoration from archive containing data + .notes file
     * Refocus on note after LaTeX/link/image insertion
     * Improve note manager: group deletion, change category, visibility
-    * Add AutoCorrect feature: automatic replacement of text (e.g. -> becomes →)
+    * Improve note locking: no editing at all, locked position
     * Re-create missing LaTeX formulas
+    * Remove unused categories after backup restoration
+    * Fix link restoration
+
+- Version 2.3.3
+    * Fix German translation
+    * Note's title no longer resized when the lock symbol appears
+
+- Version 2.3.2
+    * Add German translation
 
 - Version 2.3.1
     * Fix menu for tk GUI toolkit

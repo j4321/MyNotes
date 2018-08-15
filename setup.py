@@ -10,6 +10,7 @@ data_files = [("/usr/share/pixmaps", ["mynotes.svg"]),
               ("/usr/share/man/man1", ["mynotes.1.gz"]),
               ("/usr/share/mynotes/images", images),
               ("/usr/share/locale/en_US/LC_MESSAGES/", ["mynoteslib/locale/en_US/LC_MESSAGES/MyNotes.mo"]),
+              ("/usr/share/locale/de_DE/LC_MESSAGES/", ["mynoteslib/locale/de_DE/LC_MESSAGES/MyNotes.mo"]),
               ("/usr/share/locale/nl_NL/LC_MESSAGES/", ["mynoteslib/locale/nl_NL/LC_MESSAGES/MyNotes.mo"]),
               ("/usr/share/locale/fr_FR/LC_MESSAGES/", ["mynoteslib/locale/fr_FR/LC_MESSAGES/MyNotes.mo"]),
               ("/usr/share/applications", ["mynotes.desktop"])]
@@ -51,5 +52,5 @@ can be inserted in the notes. The style of the text can be changed
 (alignment, style).
 """,
       requires=["tkinter", "sys", "os", "locale", "gettext", 're', 'pillow',
-                'configparser', 'subprocess', 'time', 'shutil', 'html',
-                'pickle', 'setuptools', 'ewmh', 'easywebdav', 'ftplib'])
+                'configparser', 'subprocess', 'time', 'shutil', 'html', 'signal',
+                'pickle', 'ewmh', 'argparse', 'easywebdav', 'ftplib'])
