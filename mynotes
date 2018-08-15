@@ -32,19 +32,34 @@ from mynoteslib.constants import save_config, PIDFILE
 from mynoteslib.app import App
 from mynoteslib.messagebox import showerror
 import logging
+from mynoteslib.version import __version__
+import argparse
 
-# vérifie si mynotes est déjà lancé
+# parse command line arguments
+parser = argparse.ArgumentParser(description=_("MyNotes - Post-it system tray app"),
+                                 epilog=_("Report bugs to https://github.com/j4321/MyNotes/issues."))
+parser.add_argument('-V', '--version', help=_('show version and exit'), action='store_true')
+group = parser.add_mutually_exclusive_group()
+group.add_argument('-H', '--hide-all', help=_('hide all notes'), action='store_true')
+group.add_argument('-S', '--show-all', help=_('show all notes'), action='store_true')
+args = parser.parse_args()
+
+if args.version:
+    print('mynotes ' + __version__)
+    sys.exit()
+
 pid = str(os.getpid())
 
+# check weher MyNotes is already running
 if os.path.isfile(PIDFILE):
     with open(PIDFILE) as fich:
         old_pid = fich.read().strip()
     if os.path.exists("/proc/%s" % old_pid):
-        if '--show-all' in sys.argv:
+        if args.show_all:
             # send signal to mynotes to show all notes
             os.kill(int(old_pid), signal.SIGUSR1)
             sys.exit()
-        elif '--hide-all' in sys.argv:
+        elif args.hide_all:
             # send signal to mynotes to hide all notes
             os.kill(int(old_pid), signal.SIGUSR2)
             sys.exit()
@@ -60,8 +75,9 @@ if os.path.isfile(PIDFILE):
         # it is an old pid file (certainly due to session logout then login)
         os.remove(PIDFILE)
 open(PIDFILE, 'w').write(pid)
+
 try:
-    app = App(*sys.argv[1:])
+    app = App(args)
     app.mainloop()
 except Exception as e:
     showerror(_("Error"), str(type(e)), traceback.format_exc(), True)

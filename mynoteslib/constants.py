@@ -394,6 +394,7 @@ gettext.textdomain(APP_NAME)
 LANG = gettext.translation(APP_NAME, PATH_LOCALE,
                            languages=[LANGUE], fallback=True)
 LANG.install()
+gettext.gettext = LANG.gettext
 
 
 # --- default categories

@@ -59,7 +59,7 @@ class App(Tk):
 
     Put an icon in the system tray with a right click menu to create notes.
     """
-    def __init__(self, *args):
+    def __init__(self, args):
         Tk.__init__(self, className='MyNotes')
         self.withdraw()
         self.notes = {}
@@ -319,13 +319,14 @@ class App(Tk):
         for ev in evs:
             self.bind_class("Text", ev, self.highlight_checkboxes, True)
 
-        if '--show-all' in args:
+        if args.show_all:
             self.show_all()
-        elif '--hide-all' in args:
+        elif args.hide_all:
             self.hide_all()
 
         # react to mynotes --show-all in command line
         signal.signal(signal.SIGUSR1, lambda *args: self.show_all())
+        # react to mynotes --hide-all in command line
         signal.signal(signal.SIGUSR2, lambda *args: self.hide_all())
 
         # check for updates
