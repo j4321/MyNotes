@@ -1,15 +1,15 @@
 #! /usr/bin/python3
 # -*- coding:Utf-8 -*-
 """
-My Notes - Sticky notes/post-it
+MyNotes - Sticky notes/post-it
 Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
 
-My Notes is free software: you can redistribute it and/or modify
+MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-My Notes is distributed in the hope that it will be useful,
+MyNotes is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -21,9 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Main class
 """
 
-from tkinter import Tk, TclError
+from tkinter import Tk, TclError, Toplevel
 from tkinter import PhotoImage as tkPhotoImage
-from tkinter.ttk import Style
+from tkinter.ttk import Style, Entry, Label, Button, Checkbutton
 from tkinter.font import families
 from PIL import Image
 from PIL.ImageTk import PhotoImage
@@ -280,6 +280,19 @@ class App(Tk):
             else:
                 backup()
 
+            for i, key in enumerate(note_data):
+                self.note_data["%i" % i] = note_data[key]
+
+            for key in self.note_data:
+                data = self.note_data[key]
+                cat = data["category"]
+                if not CONFIG.has_option("Categories", cat):
+                    CONFIG.set("Categories", cat, data["color"])
+                if data["visible"]:
+                    self.notes[key] = Sticky(self, key, **data)
+                else:
+                    self.add_note_to_menu(key, data["title"], cat)
+
         # --- Sync
         self.password = ""
 
@@ -304,21 +317,8 @@ class App(Tk):
             else:
                 CONFIG.set("Sync", "on", "False")
         if not CONFIG.getboolean("Sync", "on"):
-            self.icon.menu.disable_item(19)
-            self.icon.menu.disable_item(18)
-     
-            for i, key in enumerate(note_data):
-                self.note_data["%i" % i] = note_data[key]
+            self.icon.menu.disable_item(_("Synchronize"))
 
-            for key in self.note_data:
-                data = self.note_data[key]
-                cat = data["category"]
-                if not CONFIG.has_option("Categories", cat):
-                    CONFIG.set("Categories", cat, data["color"])
-                if data["visible"]:
-                    self.notes[key] = Sticky(self, key, **data)
-                else:
-                    self.add_note_to_menu(key, data["title"], cat)
         self.nb = len(self.note_data)
         self.update_menu()
         self.update_notes()
@@ -782,7 +782,7 @@ class App(Tk):
                             CONFIG.getint("Sync", "port"))
                 ftp.login(user=CONFIG.get("Sync", "username"), passwd=self.spassword)
             return True
-        except ftplib.error_perm as e:
+        except ftplib.error_perm:
             showerror(_("Error"), _("Wrong login information."))
             return False
         except Exception as e:
@@ -1088,11 +1088,9 @@ class App(Tk):
             note.update_text_font()
             note.update_titlebar()
         if CONFIG.getboolean("Sync", "on"):
-            self.icon.menu.enable_item(19)
-            self.icon.menu.enable_item(18)
+            self.icon.menu.enable_item(_("Synchronize"))
         else:
-            self.icon.menu.disable_item(19)
-            self.icon.menu.disable_item(18)
+            self.icon.menu.disable_item(_("Synchronize"))
 
     def delete_cat(self, category):
         """Delete all notes belonging to category."""
