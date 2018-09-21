@@ -32,6 +32,7 @@ Install
 - Source code
 
     First, install the missing dependencies among:
+    
         - Tkinter (Python wrapper for Tk)
         - Tktray https://code.google.com/archive/p/tktray/downloads
         - ewmh https://pypi.python.org/pypi/ewmh
