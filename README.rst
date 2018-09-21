@@ -1,6 +1,6 @@
 MyNotes - Sticky notes/post-it
 ==============================
-Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
+|Release|_ |Linux| |License|_
 
 MyNotes is a sticky note application. An icon appears in the system tray
 and from it you can create and manage your sticky notes. Notes can be
@@ -36,16 +36,21 @@ Install
         - Tktray https://code.google.com/archive/p/tktray/downloads
         - ewmh https://pypi.python.org/pypi/ewmh
         - optional dependency: matplotlib + texlive for basic LaTeX formula support
+        
     For instance, in Ubuntu/Debian you will need to install the following packages:
     python3-tk, tk-tktray, python3-ewmh (available in >= 17.04 only),
     python3-pil, python3-pil.imagetk
 
     ewmh can be installed with pip:
+    
     ::
+    
         $ sudo pip3 install ewmh
 
     Then install the application:
+    
     ::
+    
         $ sudo python3 setup.py install
 
 You can now launch it from `Menu > Utility > MyNotes`. You can launch
@@ -63,3 +68,11 @@ If you encounter bugs or if you have suggestions, please open an issue
 on `GitHub <https://github.com/j4321/MyNotes/issues>`__ or write me
 an email at <j_4321@protonmail.com>.
 
+
+.. |Release| image:: https://badge.fury.io/gh/j4321%2FMyNotes.svg
+    :alt: Latest Release
+.. _Release: https://badge.fury.io/gh/j4321%2FMyNotes
+.. |Linux| image:: https://img.shields.io/badge/platform-Linux-blue.svg
+    :alt: Linux
+.. |License| image:: https://img.shields.io/github/license/j4321/MyNotes.svg
+.. _License: https://www.gnu.org/licenses/gpl-3.0.en.html
