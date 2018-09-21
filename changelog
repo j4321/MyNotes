@@ -5,6 +5,10 @@ Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
 Changelog
 ---------
 
+- Version 2.4.1
+    * Fix archive backup
+    * Add --version and --help command line arguments and -S, -H abbreviations of --show-all and --hide-all
+
 - Version 2.4.0
     * Add scrollbars to notes
     * Add AutoCorrect feature: automatic replacement of text (e.g. -> becomes →)
@@ -143,3 +147,4 @@ Changelog
 
 - Version 1.0.0
     * Initial release
+

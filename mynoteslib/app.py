@@ -594,8 +594,8 @@ class App(Tk):
                 name, ext = os.path.splitext(name)
             export_data = '.tar' in exts
             try:
-                self._export_pickle(fichier, '.notes',
-                                    CONFIG.options('Categories'), False, export_data)
+                self._export_pickle(fichier, '.notes', list(self.note_data.keys()),
+                                    export_data)
             except Exception as e:
                 try:
                     report_msg = e.strerror != 'Permission denied'
