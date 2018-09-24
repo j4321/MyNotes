@@ -261,7 +261,11 @@ def export_filename(filepath, datafiles, local_dir='data'):
     """For rst, md and html"""
     path, name = split(filepath)
     name, ext = splitext(name)
-    if name in datafiles:
+    if filepath in datafiles.values():
+        # file is already in archive
+        i = list(datafiles.values()).index(filepath)
+        return join(local_dir, list(datafiles.keys())[i])
+    if name + ext in datafiles:
         name = name + '-%i'
         i = 1
         while name % i + ext in datafiles:
