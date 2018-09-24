@@ -5,7 +5,7 @@ from setuptools import setup
 
 import os
 images = [os.path.join("mynoteslib/images/", img) for img in os.listdir("mynoteslib/images/")]
-data_files = [("/usr/share/pixmaps", ["mynotes.svg"]),
+data_files = [("/usr/share/pixmaps", ["mynotes.svg", "mynotes-tray.svg"]),
               ("/usr/share/doc/mynotes", ["README.rst", "changelog"]),
               ("/usr/share/man/man1", ["mynotes.1.gz"]),
               ("/usr/share/mynotes/images", images),
