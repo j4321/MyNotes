@@ -8,6 +8,7 @@ Changelog
 - Version 2.4.2
     * Don't copy duplicate files for backups with data
     * Make gtk / qt tray icon themeable (fetch it from current theme)
+    * Add pop-up dialog to confirm unused data deletion
 
 - Version 2.4.1
     * Fix archive backup
