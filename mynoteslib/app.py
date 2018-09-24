@@ -185,7 +185,7 @@ class App(Tk):
                                 master=self)
 
         self.protocol("WM_DELETE_WINDOW", self.quit)
-        self.icon = TrayIcon(cst.ICON)
+        self.icon = TrayIcon(cst.ICON, fallback_icon_path=cst.IM_ICON_48)
 
         # --- Clipboards
         self.clipboard = ''

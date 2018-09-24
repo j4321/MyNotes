@@ -78,7 +78,7 @@ class SubMenu(tkinter.Menu):
 
 
 class TrayIcon(tkinter.BaseWidget, tkinter.Wm):
-    def __init__(self, icon, master=None, cnf={}, **kw):
+    def __init__(self, icon, master=None, fallback_icon_path=None, cnf={}, **kw):
         '''
             Create a new icon for the system tray. The application managing the
             system tray is notified about the new icon. It normally results in the

@@ -92,9 +92,9 @@ if not os.path.exists(PATH_LATEX):
 
 
 # --- images files
-IM_ICON = os.path.join(PATH_IMAGES, "mynotes.png")
-IM_ICON_24 = os.path.join(PATH_IMAGES, "mynotes24.png")
-IM_ICON_48 = os.path.join(PATH_IMAGES, "mynotes48.png")
+ICON_NAME = "mynotes-tray"  # gtk / qt tray icon
+IM_TKTRAY_ICON = os.path.join(PATH_IMAGES, "mynotes.png")  # tk tray icon
+IM_ICON_48 = os.path.join(PATH_IMAGES, "mynotes48.png")    # for the tk dialogs
 IM_CLOSE = os.path.join(PATH_IMAGES, "close.png")
 IM_CLOSE_ACTIVE = os.path.join(PATH_IMAGES, "close_active.png")
 IM_ROLL = os.path.join(PATH_IMAGES, "roll.png")
@@ -367,9 +367,9 @@ if not TOOLKITS.get(GUI):
     CONFIG.set("General", "trayicon", GUI)
 
 if GUI == 'tk':
-    ICON = IM_ICON
+    ICON = IM_TKTRAY_ICON
 else:
-    ICON = IM_ICON_48
+    ICON = ICON_NAME
 
 # --- language
 setlocale(LC_ALL, '')
