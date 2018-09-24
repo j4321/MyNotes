@@ -5,6 +5,11 @@ Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
 Changelog
 ---------
 
+- Version 2.4.2
+    * Don't copy duplicate files for backups with data
+    * Make gtk / qt tray icon themeable (fetch it from current theme)
+    * Add pop-up dialog to confirm unused data deletion
+
 - Version 2.4.1
     * Fix archive backup
     * Add --version and --help command line arguments and -S, -H abbreviations of --show-all and --hide-all

@@ -28,6 +28,7 @@ from tkinter.font import families
 from PIL import Image
 from PIL.ImageTk import PhotoImage
 import os
+import filecmp
 import re
 import traceback
 from shutil import copy, copyfile
@@ -938,19 +939,31 @@ class App(Tk):
     def _load_notes_with_data(self, filename, cleanup_cat=False):
         """Load notes and data from archive."""
 
-        def get_name(path, local_files, latex=False):
+        def get_name_latex(path, local_files):
             name, ext = os.path.splitext(os.path.split(path)[1])
             if name + ext in local_files:
-                if latex:
-                    name = '%i'
-                else:
-                    name = name + '-%i'
+                name = '%i'
                 i = 0
                 while name % i + ext in local_files:
                     i += 1
                 name = name % i
             local_files.append(name + ext)
             return name + ext
+
+        def get_name_data(path, local_files):
+            name, ext = os.path.splitext(os.path.split(path)[1])
+            if name + ext in local_files:
+                if filecmp.cmp(os.path.join(PATH_LOCAL_DATA, name + ext), path, False):
+                    return name + ext, False  # non need to copy file
+                name = name + '-%i'
+                i = 0
+                while name % i + ext in local_files:
+                    if filecmp.cmp(os.path.join(PATH_LOCAL_DATA, name % i + ext), path, False):
+                        return name % i + ext, False  # non need to copy file
+                    i += 1
+                name = name % i
+            local_files.append(name + ext)
+            return name + ext, True
 
         with TemporaryDirectory() as tmpdir:
             # extract archive
@@ -986,16 +999,18 @@ class App(Tk):
                         if link in copied_tmp_datafiles:
                             new_link = copied_tmp_datafiles[link]
                         else:
-                            new_link = os.path.join(PATH_LOCAL_DATA, get_name(link, local_datafiles))
+                            new_name, copy_file = get_name_data(link_path, local_datafiles)
+                            new_link = os.path.join(PATH_LOCAL_DATA, new_name)
                             copied_tmp_datafiles[link] = new_link
-                            copyfile(link_path, new_link)
+                            if copy_file:
+                                copyfile(link_path, new_link)
                         self.note_data[note_id]["links"][link_id] = new_link
                 # copy images
                 for ind, (obj_type, val) in tuple(data["inserted_objects"].items()):
                     if obj_type == 'image':
                         path, name = os.path.split(val)
                         if path == 'latex':
-                            new_val = os.path.join(PATH_LATEX, get_name(val, local_latexfiles, True))
+                            new_val = os.path.join(PATH_LATEX, get_name_latex(val, local_latexfiles))
                             latex_val = self.note_data[note_id]['latex'][os.path.split(val)[1]]
                             del self.note_data[note_id]['latex'][os.path.split(val)[1]]
                             del self.note_data[note_id]['tags'][os.path.split(val)[1]]
@@ -1004,9 +1019,11 @@ class App(Tk):
                             if val in copied_tmp_datafiles:
                                 new_val = copied_tmp_datafiles[val]
                             else:
-                                new_val = os.path.join(PATH_LOCAL_DATA, get_name(val, local_datafiles))
+                                new_name, copy_file = get_name_data(os.path.join(tmppath, val), local_datafiles)
+                                new_val = os.path.join(PATH_LOCAL_DATA, new_name)
                                 copied_tmp_datafiles[val] = new_val
-                                copyfile(os.path.join(tmppath, val), new_val)
+                                if copy_file:
+                                    copyfile(os.path.join(tmppath, val), new_val)
                         self.note_data[note_id]["inserted_objects"][ind] = (obj_type, new_val)
 
                 if data["visible"]:
@@ -1069,6 +1086,7 @@ class App(Tk):
         for img in data_stored:
             if img not in data_used:
                 os.remove(os.path.join(PATH_LOCAL_DATA, img))
+
 
     def quit(self):
         self.destroy()
