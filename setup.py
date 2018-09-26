@@ -50,6 +50,4 @@ category has a color. Images, checkboxes and a few predefined symbols
 can be inserted in the notes. The style of the text can be changed
 (alignment, style).
 """,
-      requires=["tkinter", "sys", "os", "locale", "gettext", 're', 'pillow',
-                'configparser', 'subprocess', 'time', 'shutil', 'html', 'signal',
-                'pickle', 'ewmh', 'argparse'])
+      install_requires=['Pillow', 'ewmh'])
