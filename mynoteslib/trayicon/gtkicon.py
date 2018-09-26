@@ -98,18 +98,27 @@ class SubMenu(Gtk.Menu):
 
 class TrayIcon:
     """Gtk system tray icon."""
-    def __init__(self, icon, appid="TrayIcon", **kwargs):
+    def __init__(self, icon, fallback_icon_path, appid="TrayIcon", **kwargs):
         self.menu = SubMenu()
 
+        icon_exists = Gtk.IconTheme.get_default().has_icon(icon)
+
         if APPIND_SUPPORT == 1:
-            self.tray_icon = AppIndicator3.Indicator.new(
-                appid, icon, AppIndicator3.IndicatorCategory.APPLICATION_STATUS)
+            if icon_exists:
+                self.tray_icon = AppIndicator3.Indicator.new(appid, icon,
+                                                             AppIndicator3.IndicatorCategory.APPLICATION_STATUS)
+            else:
+                self.tray_icon = AppIndicator3.Indicator.new(appid,
+                                                             fallback_icon_path,
+                                                             AppIndicator3.IndicatorCategory.APPLICATION_STATUS)
             self.tray_icon.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
             self.tray_icon.set_menu(self.menu)
             self.change_icon = self._change_icon_appind
         else:
-            self.tray_icon = Gtk.StatusIcon()
-            self.tray_icon.set_from_file(icon)
+            if icon_exists:
+                self.tray_icon = Gtk.StatusIcon.new_from_icon_name(icon)
+            else:
+                self.tray_icon = Gtk.StatusIcon.new_from_file(fallback_icon_path)
             self.tray_icon.connect('popup-menu', self._on_popup_menu)
             self.change_icon = self._change_icon_fallback
 

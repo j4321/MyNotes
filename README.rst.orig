@@ -1,6 +1,11 @@
 MyNotes - Sticky notes/post-it
 ==============================
+<<<<<<< HEAD
 |Release|_ |Linux| |License|_
+=======
+
+Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
+>>>>>>> 030a220e1fb13495f74f8dce8b9ff06b572d0c9f
 
 MyNotes is a sticky note application. An icon appears in the system tray
 and from it you can create and manage your sticky notes. Notes can be
@@ -21,7 +26,7 @@ Install
 
 - Ubuntu
 
-    MyNotes is available in the PPA `ppa:j-4321-i/ppa <https://launchpad.net/~j-4321-i/+archive/ubuntu/ppa>`__.
+    MyNotes is available in the PPA `ppa:j-4321-i/ppa`.
 
     ::
 
@@ -32,7 +37,6 @@ Install
 - Source code
 
     First, install the missing dependencies among:
-    
         - Tkinter (Python wrapper for Tk)
         - Tktray https://code.google.com/archive/p/tktray/downloads
         - ewmh https://pypi.python.org/pypi/ewmh
@@ -70,6 +74,7 @@ on `GitHub <https://github.com/j4321/MyNotes/issues>`__ or write me
 an email at <j_4321@protonmail.com>.
 
 
+<<<<<<< HEAD
 .. |Release| image:: https://badge.fury.io/gh/j4321%2FMyNotes.svg
     :alt: Latest Release
 .. _Release: https://badge.fury.io/gh/j4321%2FMyNotes
@@ -77,3 +82,5 @@ an email at <j_4321@protonmail.com>.
     :alt: Linux
 .. |License| image:: https://img.shields.io/github/license/j4321/MyNotes.svg
 .. _License: https://www.gnu.org/licenses/gpl-3.0.en.html
+=======
+>>>>>>> 030a220e1fb13495f74f8dce8b9ff06b572d0c9f

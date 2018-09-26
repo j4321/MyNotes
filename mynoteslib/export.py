@@ -34,7 +34,7 @@ from mynoteslib.constants import CONFIG, TEXT_COLORS, sorting, text_ranges
 from mynoteslib.checkboxtreeview import CheckboxTreeview
 from mynoteslib.autoscrollbar import AutoScrollbar as Scrollbar
 from pickle import Pickler
-
+import filecmp
 
 EXT_DICT = {_("Notes (.notes)"): '.notes',
             _("HTML file (.html)"): '.html',
@@ -261,10 +261,20 @@ def export_filename(filepath, datafiles, local_dir='data'):
     """For rst, md and html"""
     path, name = split(filepath)
     name, ext = splitext(name)
-    if name in datafiles:
+    if filepath in datafiles.values():
+        # file is already in archive
+        i = list(datafiles.values()).index(filepath)
+        return join(local_dir, list(datafiles.keys())[i])
+    if name + ext in datafiles:
+        if filecmp.cmp(filepath, datafiles[name + ext], shallow=False):
+            # the file are identical
+            return join(local_dir, name + ext)
         name = name + '-%i'
         i = 1
         while name % i + ext in datafiles:
+            if filecmp.cmp(filepath, datafiles[name % i + ext], shallow=False):
+                # the file are identical
+                return join(local_dir, name % i + ext)
             i += 1
         name = name % i
     datafiles[name + ext] = filepath

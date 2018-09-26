@@ -389,8 +389,9 @@ class Config(Toplevel):
             self.title_var.set(_('Title'))
 
     def cleanup(self):
-        """Remove unused latex images."""
+        """Remove unused local data and latex images."""
         self.master.cleanup()
+        showinfo(_('Information'), _('Unused local data have been cleaned up.'))
 
     def validate_font_size(self, combo, d, ch, V):
         """Validation of the size entry content."""

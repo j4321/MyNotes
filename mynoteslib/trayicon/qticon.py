@@ -100,9 +100,10 @@ class SubMenu(QMenu):
 
 class TrayIcon(QApplication):
 
-    def __init__(self, icon, **kwargs):
+    def __init__(self, icon, fallback_icon_path, **kwargs):
         QApplication.__init__(self, sys.argv)
-        self._icon = QIcon(icon)
+        self._fallback_icon = QIcon(fallback_icon_path)
+        self._icon = QIcon.fromTheme(icon, self._fallback_icon)
         self.tray_icon = QSystemTrayIcon()
         self.tray_icon.setIcon(self._icon)
 
