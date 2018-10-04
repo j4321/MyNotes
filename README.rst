@@ -1,6 +1,6 @@
 MyNotes - Sticky notes/post-it
 ==============================
-|Release|_ |Linux| |License|_
+|Release| |Linux| |License|
 
 MyNotes is a sticky note application. An icon appears in the system tray
 and from it you can create and manage your sticky notes. Notes can be
@@ -34,15 +34,20 @@ Install
     First, install the missing dependencies among:
     
         - Tkinter (Python wrapper for Tk)
-        - Tktray https://code.google.com/archive/p/tktray/downloads
         - ewmh https://pypi.python.org/pypi/ewmh
         - optional dependency: matplotlib + texlive for basic LaTeX formula support
         
+    You also need to have at least one of the following GUI toolkits for the system tray icon:
+    
+        - Tktray https://code.google.com/archive/p/tktray/downloads
+        - PyGTK http://www.pygtk.org/downloads.html
+        - PyQt5, PyQt4 or PySide
+        
     For instance, in Ubuntu/Debian you will need to install the following packages:
-    python3-tk, tk-tktray, python3-ewmh (available in >= 17.04 only),
+    python3-tk, tk-tktray (or python3-gi or python3-pyqt5), python3-ewmh (available in >= 17.04 only),
     python3-pil, python3-pil.imagetk
 
-    ewmh can be installed with pip:
+    ewmh can also be installed with pip:
     
     ::
     
@@ -54,8 +59,9 @@ Install
     
         $ sudo python3 setup.py install
 
-You can now launch it from `Menu > Utility > MyNotes`. You can launch
-it from the command line with `mynotes`.
+
+You can now launch it from *Menu > Utility > MyNotes*. You can launch
+it from the command line with ``mynotes``.
 
 
 Troubleshooting
@@ -72,8 +78,9 @@ an email at <j_4321@protonmail.com>.
 
 .. |Release| image:: https://badge.fury.io/gh/j4321%2FMyNotes.svg
     :alt: Latest Release
-.. _Release: https://badge.fury.io/gh/j4321%2FMyNotes
+    :target: https://badge.fury.io/gh/j4321%2FMyNotes
 .. |Linux| image:: https://img.shields.io/badge/platform-Linux-blue.svg
     :alt: Linux
 .. |License| image:: https://img.shields.io/github/license/j4321/MyNotes.svg
-.. _License: https://www.gnu.org/licenses/gpl-3.0.en.html
+    :target: https://www.gnu.org/licenses/gpl-3.0.en.html
+    :alt: License - GPLv3
