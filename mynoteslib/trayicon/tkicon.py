@@ -26,6 +26,7 @@ system tray manager.
 """
 
 import tkinter
+from PIL.ImageTk import PhotoImage
 
 
 class SubMenu(tkinter.Menu):
@@ -160,7 +161,7 @@ class TrayIcon(tkinter.BaseWidget, tkinter.Wm):
                 master = tkinter._default_root
         self.TktrayVersion = master.tk.call('package', 'require', 'tktray')
 
-        self._icon = tkinter.PhotoImage(master=master, file=icon)
+        self._icon = PhotoImage(master=master, file=icon)
         kw['image'] = self._icon
 
         # stolen from tkinter.Toplevel
