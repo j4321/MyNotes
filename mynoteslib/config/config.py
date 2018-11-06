@@ -27,7 +27,7 @@ from mynoteslib.messagebox import showinfo
 from mynoteslib.autocomplete import AutoCompleteCombobox
 from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator
 from tkinter.ttk import Notebook, Combobox, Frame, Menubutton, Checkbutton
-from mynoteslib.constants import CONFIG, save_config, COLORS, SYMBOLS, LATEX,\
+from mynoteslib.constants import CONFIG, save_config, COLORS, SYMBOLS,\
     LANGUAGES, REV_LANGUAGES, TOOLKITS, AUTOCORRECT
 from mynoteslib.config.categories import CategoryManager
 from mynoteslib.config.autocorrect import AutoCorrectConfig
@@ -510,7 +510,7 @@ class Config(Toplevel):
 
     def translate(self):
         """Show information dialog about language change."""
-        showinfo("Information",
+        showinfo(_("Information"),
                  _("The language setting will take effect after restarting the application"),
                  parent=self)
 
