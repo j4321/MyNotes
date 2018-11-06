@@ -25,7 +25,7 @@ setup(name="mynotes",
       author_email="j_4321@protonmail.com",
       license='GPLv3',
       classifiers=[
-          'Development Status :: 4 - Beta',
+          'Development Status :: 5 - Production/Stable',
           'Environment :: X11 Applications',
           'Intended Audience :: End Users/Desktop',
           'Topic :: Text Editors',
