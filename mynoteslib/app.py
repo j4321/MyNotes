@@ -309,6 +309,7 @@ class App(Tk):
         self.bind_class('Text', '<Control-c>', self.copy_text)
         self.bind_class('Text', '<Control-v>', self.paste_text)
         self.bind_class('Text', '<Double-1>', self.select_word)
+        self.bind_class('Text', '<Button-1>', lambda e: e.widget.focus_set(), True)
         # highlight checkboxes when inside text selection
         self.bind_class("Text", "<ButtonPress-1>", self.highlight_checkboxes, True)
         self.bind_class("Text", "<ButtonRelease-1>", self.highlight_checkboxes, True)
