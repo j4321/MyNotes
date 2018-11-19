@@ -14,3 +14,4 @@ mynotes.egg-info
 mynotes.pid
 .coverage
 htmlcov/
+*.project
