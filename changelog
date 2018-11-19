@@ -5,6 +5,9 @@ Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
 Changelog
 ---------
 
+-Version 2.4.3
+    * Improve detection of already running instances (less often ask to delete pidfile)
+    
 - Version 2.4.2
     * Don't copy duplicate files for backups with data
     * Make gtk / qt tray icon themeable (fetch it from current theme)
