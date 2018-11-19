@@ -1088,6 +1088,5 @@ class App(Tk):
             if img not in data_used:
                 os.remove(os.path.join(PATH_LOCAL_DATA, img))
 
-
     def quit(self):
         self.destroy()

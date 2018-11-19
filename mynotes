@@ -55,24 +55,30 @@ if os.path.isfile(PIDFILE):
     with open(PIDFILE) as fich:
         old_pid = fich.read().strip()
     if os.path.exists("/proc/%s" % old_pid):
-        if args.show_all:
-            # send signal to mynotes to show all notes
-            os.kill(int(old_pid), signal.SIGUSR1)
-            sys.exit()
-        elif args.hide_all:
-            # send signal to mynotes to hide all notes
-            os.kill(int(old_pid), signal.SIGUSR2)
-            sys.exit()
+        with open("/proc/%s/cmdline" % old_pid) as file:
+            cmdline = file.read()
+        if 'mynotes' in cmdline:    # MyNotes is already runnning
+            if args.show_all:
+                # send signal to mynotes to show all notes
+                os.kill(int(old_pid), signal.SIGUSR1)
+                sys.exit()
+            elif args.hide_all:
+                # send signal to mynotes to hide all notes
+                os.kill(int(old_pid), signal.SIGUSR2)
+                sys.exit()
+            else:
+                # MyNotes is already runnning
+                root = Tk()
+                root.withdraw()
+                s = Style(root)
+                s.theme_use("clam")
+                showerror(_("Error"), _("MyNotes is already running, if not delete ~/.mynotes/mynotes.pid."))
+                sys.exit()
         else:
-            # MyNotes is already runnning
-            root = Tk()
-            root.withdraw()
-            s = Style(root)
-            s.theme_use("clam")
-            showerror(_("Error"), _("MyNotes is already running, if not delete ~/.mynotes/mynotes.pid."))
-            sys.exit()
+            # it is an old .pid file
+            os.remove(PIDFILE)
     else:
-        # it is an old pid file (certainly due to session logout then login)
+        # it is an old pid file
         os.remove(PIDFILE)
 open(PIDFILE, 'w').write(pid)
 
