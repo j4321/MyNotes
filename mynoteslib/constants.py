@@ -376,7 +376,7 @@ setlocale(LC_ALL, '')
 
 APP_NAME = "MyNotes"
 
-LANGUAGES = {"fr": "Français", "en": "English", "nl": "Nederlands", "de": "Deutsch"}
+LANGUAGES = {"fr": "Français", "en": "English", "nl": "Nederlands", "de": "Deutsch", "ca": "Català", "es": "Español"}
 REV_LANGUAGES = {val: key for key, val in LANGUAGES.items()}
 
 if LANGUE not in LANGUAGES:
