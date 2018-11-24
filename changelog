@@ -6,7 +6,9 @@ Changelog
 ---------
 
 -Version 2.4.3
+    * Add Spanish and Catalan translations (thanks to Adolfo Jayme-Barrientos <fitojb@ubuntu.com>)
     * Improve detection of already running instances (less often ask to delete pidfile)
+    * Make locked notes text copyable
     
 - Version 2.4.2
     * Don't copy duplicate files for backups with data
@@ -43,7 +45,7 @@ Changelog
     * Note's title no longer resized when the lock symbol appears
 
 - Version 2.3.2
-    * Add German translation
+    * Add German translation (thanks to Detlef Kleiss)
 
 - Version 2.3.1
     * Fix menu for tk GUI toolkit
@@ -69,7 +71,7 @@ Changelog
     * Make it clear that links can point to either a file or an URL
 
 - Version 2.2.0
-    * Add Dutch translation
+    * Add Dutch translation (thanks to Heimen Stoffels <vistausss@outlook.com>)
     * Add note manager to delete easily notes
     * Add autoscrollbar to error messagebox
     * Add category renaming by double click on the category name in Preference dialog
