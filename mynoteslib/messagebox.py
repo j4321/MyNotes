@@ -221,7 +221,9 @@ class ShowError(Toplevel):
         b.pack(padx=10, pady=(4, 10))
         self.update_idletasks()
         bbox = display.bbox('end - 1c')
-        if display.winfo_height() - bbox[1] - bbox[3] > 10:
+        if bbox is None:
+            display.configure(height=h + 1)
+        elif display.winfo_height() - bbox[1] - bbox[3] > 10:
             display.configure(height=h - 1)
         self.grab_set()
         b.focus_set()
