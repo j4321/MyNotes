@@ -25,7 +25,7 @@ Configuration Window
 from tkinter import Toplevel, StringVar, Menu, Text, BooleanVar
 from mynoteslib.messagebox import showinfo
 from mynoteslib.autocomplete import AutoCompleteCombobox
-from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator
+from tkinter.ttk import Label, Radiobutton, Button, Style, Separator
 from tkinter.ttk import Notebook, Combobox, Frame, Menubutton, Checkbutton
 from mynoteslib.constants import CONFIG, save_config, COLORS, SYMBOLS,\
     LANGUAGES, REV_LANGUAGES, TOOLKITS, AUTOCORRECT
@@ -165,20 +165,8 @@ class Config(Toplevel):
                                          variable=self.gui,
                                          command=self.change_gui)
         # --- * ---- opacity
-        # opacity_frame = Frame(general_settings)
-        # opacity_frame.columnconfigure(1, weight=1)
-        # self.opacity_scale = Scale(opacity_frame, orient="horizontal", length=200,
-                                   # from_=0, to=100,
-                                   # value=CONFIG.get("General", "opacity"),
-                                   # command=self.display_label)
-        # self.opacity_label = Label(opacity_frame,
-                                   # text="{val}%".format(val=self.opacity_scale.get()))
-        # Label(opacity_frame,
-              # text=_("Opacity")).grid(row=0, column=0, sticky="w", padx=4, pady=4)
-        self.opacity = OpacityFrame(general_settings, CONFIG.getint("General", "opacity"))
-        # self.opacity_scale.grid(row=0, column=1, padx=(4, 50), pady=4)
-        # self.opacity_label.place(in_=self.opacity_scale, relx=1, rely=0.5,
-                                 # anchor="w", bordermode="outside")
+        self.opacity = OpacityFrame(general_settings,
+                                    CONFIG.getint("General", "opacity"))
         # --- * ---- position
         frame_position = Frame(general_settings)
         self.position = StringVar(self, CONFIG.get("General", "position"))
