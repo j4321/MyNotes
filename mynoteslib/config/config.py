@@ -29,9 +29,10 @@ from tkinter.ttk import Label, Radiobutton, Button, Scale, Style, Separator
 from tkinter.ttk import Notebook, Combobox, Frame, Menubutton, Checkbutton
 from mynoteslib.constants import CONFIG, save_config, COLORS, SYMBOLS,\
     LANGUAGES, REV_LANGUAGES, TOOLKITS, AUTOCORRECT
-from mynoteslib.config.categories import CategoryManager
-from mynoteslib.config.autocorrect import AutoCorrectConfig
 from mynoteslib.autoscrollbar import AutoScrollbar
+from .categories import CategoryManager
+from .autocorrect import AutoCorrectConfig
+from .opacity import OpacityFrame
 from tkinter import font
 from time import strftime
 
@@ -72,6 +73,63 @@ class Config(Toplevel):
         self.notebook.pack(expand=True, fill="both")
 
         # --- * General settings
+        self._init_general()
+
+        # --- * Font settings
+        self._init_font()
+
+        # --- * Categories
+        self.category_settings = CategoryManager(self.notebook, master)
+        self.notebook.add(self.category_settings, text=_("Categories"),
+                          sticky="ewsn", padding=4)
+        # --- * Symbols
+        size = CONFIG.get("Font", "text_size")
+        family = CONFIG.get("Font", "text_family")
+        symbols_settings = Frame(self.notebook, padding=4)
+        self.notebook.add(symbols_settings, text=_("Symbols"),
+                          sticky="ewsn", padding=4)
+        txt_frame = Frame(symbols_settings, relief="sunken", borderwidth=1,
+                          style="text.TFrame")
+        txt_frame.rowconfigure(0, weight=1)
+        txt_frame.columnconfigure(0, weight=1)
+        self.symbols = Text(txt_frame, width=1, height=1, highlightthickness=0,
+                            spacing2=5, spacing1=5, relief="flat", padx=4, pady=4,
+                            font="%s %s" % (family.replace(" ", "\ "), size))
+        scroll_y = AutoScrollbar(txt_frame, orient='vertical',
+                                 command=self.symbols.yview)
+        self.symbols.configure(yscrollcommand=scroll_y.set)
+
+        self.symbols.insert("1.0", CONFIG.get("General", "symbols"))
+        Label(symbols_settings, text=_("Available symbols")).pack(padx=4, pady=4)
+        txt_frame.pack(fill="both", expand=True, padx=4, pady=4)
+        self.symbols.grid(sticky='ewns')
+        scroll_y.grid(row=0, column=1, sticky='ns')
+        Button(symbols_settings, text=_('Reset'),
+               command=self.reset_symbols).pack(padx=4, pady=4)
+
+        # --- * AutoCorrect
+        self.autocorrect_settings = AutoCorrectConfig(self.notebook, master)
+        self.notebook.add(self.autocorrect_settings, text=_("AutoCorrect"),
+                          sticky="ewsn", padding=4)
+
+        # --- Ok/Cancel buttons
+        Button(okcancel_frame, text="Ok",
+               command=self.ok).grid(row=1, column=0, padx=4, pady=10, sticky="e")
+        Button(okcancel_frame, text=_("Cancel"),
+               command=self.destroy).grid(row=1, column=1, padx=4, pady=10, sticky="w")
+        # --- bindings
+        self.font_family.bind('<<ComboboxSelected>>', self.update_preview)
+        self.font_family.bind('<Return>', self.update_mono_preview)
+        self.mono_family.bind('<<ComboboxSelected>>', self.update_preview)
+        self.mono_family.bind('<Return>', self.update_mono_preview)
+        self.font_size.bind('<<ComboboxSelected>>', self.update_preview, add=True)
+        self.font_size.bind('<Return>', self.update_preview, add=True)
+        self.fonttitle_family.bind('<<ComboboxSelected>>', self.update_preview_title)
+        self.fonttitle_size.bind('<<ComboboxSelected>>', self.update_preview_title, add=True)
+        self.fonttitle_family.bind('<Return>', self.update_preview_title)
+        self.fonttitle_size.bind('<Return>', self.update_preview_title, add=True)
+
+    def _init_general(self):
         general_settings = Frame(self.notebook, padding=4)
         general_settings.columnconfigure(0, weight=1)
         self.notebook.add(general_settings, text=_("General"),
@@ -107,19 +165,20 @@ class Config(Toplevel):
                                          variable=self.gui,
                                          command=self.change_gui)
         # --- * ---- opacity
-        opacity_frame = Frame(general_settings)
-        opacity_frame.columnconfigure(1, weight=1)
-        self.opacity_scale = Scale(opacity_frame, orient="horizontal", length=200,
-                                   from_=0, to=100,
-                                   value=CONFIG.get("General", "opacity"),
-                                   command=self.display_label)
-        self.opacity_label = Label(opacity_frame,
-                                   text="{val}%".format(val=self.opacity_scale.get()))
-        Label(opacity_frame,
-              text=_("Opacity")).grid(row=0, column=0, sticky="w", padx=4, pady=4)
-        self.opacity_scale.grid(row=0, column=1, padx=(4, 50), pady=4)
-        self.opacity_label.place(in_=self.opacity_scale, relx=1, rely=0.5,
-                                 anchor="w", bordermode="outside")
+        # opacity_frame = Frame(general_settings)
+        # opacity_frame.columnconfigure(1, weight=1)
+        # self.opacity_scale = Scale(opacity_frame, orient="horizontal", length=200,
+                                   # from_=0, to=100,
+                                   # value=CONFIG.get("General", "opacity"),
+                                   # command=self.display_label)
+        # self.opacity_label = Label(opacity_frame,
+                                   # text="{val}%".format(val=self.opacity_scale.get()))
+        # Label(opacity_frame,
+              # text=_("Opacity")).grid(row=0, column=0, sticky="w", padx=4, pady=4)
+        self.opacity = OpacityFrame(general_settings, CONFIG.getint("General", "opacity"))
+        # self.opacity_scale.grid(row=0, column=1, padx=(4, 50), pady=4)
+        # self.opacity_label.place(in_=self.opacity_scale, relx=1, rely=0.5,
+                                 # anchor="w", bordermode="outside")
         # --- * ---- position
         frame_position = Frame(general_settings)
         self.position = StringVar(self, CONFIG.get("General", "position"))
@@ -129,11 +188,11 @@ class Config(Toplevel):
                                                             sticky="w",
                                                             padx=4, pady=4)
         Radiobutton(frame_position, text=_("Always above"), value="above",
-                    variable=self.position).grid(row=1, column=0)
+                    variable=self.position).grid(row=1, column=0, padx=4)
         Radiobutton(frame_position, text=_("Always below"), value="below",
-                    variable=self.position).grid(row=1, column=1)
+                    variable=self.position).grid(row=1, column=1, padx=4)
         Radiobutton(frame_position, text=_("Normal"), value="normal",
-                    variable=self.position).grid(row=1, column=2)
+                    variable=self.position).grid(row=1, column=2, padx=4)
         # --- * ---- titlebar
         self.titlebar_disposition = StringVar(self, CONFIG.get("General",
                                                                "buttons_position"))
@@ -152,9 +211,9 @@ class Config(Toplevel):
               text=_("Title bar disposition")).grid(row=0, columnspan=4,
                                                     sticky="w", padx=4, pady=4)
         Radiobutton(frame_titlebar, value="right",
-                    variable=self.titlebar_disposition).grid(row=1, column=0)
+                    variable=self.titlebar_disposition).grid(row=1, column=0, padx=4)
         right = Frame(frame_titlebar, style="titlebar.TFrame")
-        right.grid(row=1, column=1, sticky="ew")
+        right.grid(row=1, column=1, sticky="ew", padx=4)
 
         def select_right(event):
             self.titlebar_disposition.set("right")
@@ -184,7 +243,7 @@ class Config(Toplevel):
         date_in_title = Checkbutton(frame_titlebar, variable=self.date_in_title,
                                     text=_('Display creation date in title'),
                                     command=self.toggle_date)
-        date_in_title.grid(row=2, columnspan=4, sticky='w', pady=4)
+        date_in_title.grid(row=2, columnspan=4, sticky='w', pady=4, padx=4)
         self.toggle_date()
         # --- * ---- placement
         lang_frame.grid(sticky="w")
@@ -193,7 +252,8 @@ class Config(Toplevel):
         gui_frame.grid(sticky="w")
         Separator(general_settings,
                   orient="horizontal").grid(sticky="ew", pady=10)
-        opacity_frame.grid(sticky='w')
+        # opacity_frame.grid(sticky='w')
+        self.opacity.grid(sticky='w', padx=4)
         Separator(general_settings,
                   orient="horizontal").grid(sticky="ew", pady=10)
         frame_position.grid(sticky="ew")
@@ -208,7 +268,7 @@ class Config(Toplevel):
                text=_('Delete unused local data'),
                command=self.cleanup).grid(padx=4, pady=4, sticky='w')
 
-        # --- * Font settings
+    def _init_font(self):
         font_settings = Frame(self.notebook, padding=4)
         font_settings.columnconfigure(1, weight=1)
         self.notebook.add(font_settings, text=_("Font"),
@@ -321,55 +381,6 @@ class Config(Toplevel):
         self.update_preview()
         self.update_preview_title()
 
-        # --- * Categories
-        self.category_settings = CategoryManager(self.notebook, master)
-        self.notebook.add(self.category_settings, text=_("Categories"),
-                          sticky="ewsn", padding=4)
-        # --- * Symbols
-        symbols_settings = Frame(self.notebook, padding=4)
-        self.notebook.add(symbols_settings, text=_("Symbols"),
-                          sticky="ewsn", padding=4)
-        txt_frame = Frame(symbols_settings, relief="sunken", borderwidth=1,
-                          style="text.TFrame")
-        txt_frame.rowconfigure(0, weight=1)
-        txt_frame.columnconfigure(0, weight=1)
-        self.symbols = Text(txt_frame, width=1, height=1, highlightthickness=0,
-                            spacing2=5, spacing1=5, relief="flat", padx=4, pady=4,
-                            font="%s %s" % (family.replace(" ", "\ "), size))
-        scroll_y = AutoScrollbar(txt_frame, orient='vertical',
-                                 command=self.symbols.yview)
-        self.symbols.configure(yscrollcommand=scroll_y.set)
-
-        self.symbols.insert("1.0", CONFIG.get("General", "symbols"))
-        Label(symbols_settings, text=_("Available symbols")).pack(padx=4, pady=4)
-        txt_frame.pack(fill="both", expand=True, padx=4, pady=4)
-        self.symbols.grid(sticky='ewns')
-        scroll_y.grid(row=0, column=1, sticky='ns')
-        Button(symbols_settings, text=_('Reset'),
-               command=self.reset_symbols).pack(padx=4, pady=4)
-
-        # --- * AutoCorrect
-        self.autocorrect_settings = AutoCorrectConfig(self.notebook, master)
-        self.notebook.add(self.autocorrect_settings, text=_("AutoCorrect"),
-                          sticky="ewsn", padding=4)
-
-        # --- Ok/Cancel buttons
-        Button(okcancel_frame, text="Ok",
-               command=self.ok).grid(row=1, column=0, padx=4, pady=10, sticky="e")
-        Button(okcancel_frame, text=_("Cancel"),
-               command=self.destroy).grid(row=1, column=1, padx=4, pady=10, sticky="w")
-        # --- bindings
-        self.font_family.bind('<<ComboboxSelected>>', self.update_preview)
-        self.font_family.bind('<Return>', self.update_mono_preview)
-        self.mono_family.bind('<<ComboboxSelected>>', self.update_preview)
-        self.mono_family.bind('<Return>', self.update_mono_preview)
-        self.font_size.bind('<<ComboboxSelected>>', self.update_preview, add=True)
-        self.font_size.bind('<Return>', self.update_preview, add=True)
-        self.fonttitle_family.bind('<<ComboboxSelected>>', self.update_preview_title)
-        self.fonttitle_size.bind('<<ComboboxSelected>>', self.update_preview_title, add=True)
-        self.fonttitle_family.bind('<Return>', self.update_preview_title)
-        self.fonttitle_size.bind('<Return>', self.update_preview_title, add=True)
-
     def reset_symbols(self):
         self.symbols.delete('1.0', 'end')
         self.symbols.insert('1.0', SYMBOLS)
@@ -450,7 +461,7 @@ class Config(Toplevel):
             style = style[:-1]
 
         # --- opacity
-        opacity = "%i" % float(self.opacity_scale.get())
+        opacity = "%i" % self.opacity.get()
 
         # --- language
         language = REV_LANGUAGES[self.lang.get()]
