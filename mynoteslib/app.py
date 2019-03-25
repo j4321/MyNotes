@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 MyNotes - Sticky notes/post-it
-Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
+Copyright 2016-2019 Juliette Monsel <j_4321@protonmail.com>
 
 MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -441,13 +441,13 @@ class App(Tk):
                         tags1 = c[1][1]
                 for c in self.clipboard_content:
                     index = txt.index('insert')
-                    if c[0] is 'image':
+                    if c[0] == 'image':
                         img, name, tags, latex = c[1]
                         if latex and cst.LATEX:
                             txt.master.create_latex(latex, index)
                         else:
                             txt.image_create_undoable(index, align='bottom', image=img, name=name)
-                    elif c[0] is 'checkbox':
+                    elif c[0] == 'checkbox':
                         state, tags = c[1]
                         txt.checkbox_create_undoable(index, state)
                         txt.update_idletasks()
