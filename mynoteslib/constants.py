@@ -303,6 +303,7 @@ else:
     CONFIG.set("General", "trayicon", "")
     value = "\t".join(["%s %s" % (key, val) for key, val in AUTOCORRECT.items()])
     CONFIG.set("General", "autocorrect", value)
+    CONFIG.set("General", "splash_supported", str(os.environ.get('DESKTOP_SESSION') != 'plasma'))
     CONFIG.add_section("Font")
     CONFIG.set("Font", "text_family", "TkDefaultFont")
     CONFIG.set("Font", "text_size", "12")

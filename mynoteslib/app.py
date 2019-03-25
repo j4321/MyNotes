@@ -550,6 +550,8 @@ class App(Tk):
             try:
                 if re.match(r'mynotes[0-9]+', w.get_wm_name()):
                     cst.EWMH.setWmState(w, 1, '_NET_WM_STATE_STICKY')
+                    cst.EWMH.setWmState(w, 1, '_NET_WM_STATE_SKIP_TASKBAR')
+                    cst.EWMH.setWmState(w, 1, '_NET_WM_STATE_SKIP_PAGER')
             except TypeError:
                 pass   # some windows have name b''
         cst.EWMH.display.flush()

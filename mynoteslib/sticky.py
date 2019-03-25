@@ -68,7 +68,10 @@ class Sticky(Toplevel):
         self.nb_files = 0
         self.title('mynotes%s' % key)
         self.protocol("WM_DELETE_WINDOW", self.hide)
-        self.attributes("-type", "splash")
+        if CONFIG.getboolean('General', 'splash_supported', fallback=True):
+            self.attributes('-type', 'splash')
+        else:
+            self.attributes('-type', 'toolbar')
         self.attributes("-alpha", CONFIG.getint("General", "opacity") / 100)
         self.rowconfigure(1, weight=1)
         self.minsize(10, 10)
@@ -548,6 +551,7 @@ class Sticky(Toplevel):
 
     def set_position_above(self):
         """Make note always above the other windows."""
+        self.attributes('-type', 'dock')
         self.focus_force()
         self.update_idletasks()
         w = EWMH.getActiveWindow()
@@ -565,10 +569,14 @@ class Sticky(Toplevel):
             EWMH.setWmState(w, 1, '_NET_WM_STATE_ABOVE')
             EWMH.setWmState(w, 0, '_NET_WM_STATE_BELOW')
             EWMH.display.flush()
+            if not CONFIG.getboolean('General', 'splash_supported', fallback=True):
+                self.withdraw()
+                self.deiconify()
         self.save_note()
 
     def set_position_below(self):
         """Make note always below the other windows."""
+        self.attributes('-type', 'desktop')
         self.focus_force()
         self.update_idletasks()
         w = EWMH.getActiveWindow()
@@ -586,6 +594,9 @@ class Sticky(Toplevel):
             EWMH.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
             EWMH.setWmState(w, 1, '_NET_WM_STATE_BELOW')
             EWMH.display.flush()
+            if not CONFIG.getboolean('General', 'splash_supported', fallback=True):
+                self.withdraw()
+                self.deiconify()
         self.save_note()
 
     def set_position_normal(self):
@@ -607,6 +618,12 @@ class Sticky(Toplevel):
             EWMH.setWmState(w, 0, '_NET_WM_STATE_BELOW')
             EWMH.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
             EWMH.display.flush()
+            if CONFIG.getboolean('General', 'splash_supported', fallback=True):
+                self.attributes('-type', 'splash')
+            else:
+                self.attributes('-type', 'toolbar')
+                self.withdraw()
+                self.deiconify()
         self.save_note()
 
     def set_mode_note(self):
