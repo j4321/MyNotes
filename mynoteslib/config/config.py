@@ -260,7 +260,7 @@ class Config(Toplevel):
         Separator(general_settings,
                   orient="horizontal").grid(sticky="ew", pady=10)
         self.splash_support = Checkbutton(general_settings,
-                                          text=_("Check this box if the widgets disappear when you click"))
+                                          text=_("Check this box if the notes disappear when you click"))
         self.splash_support.grid(padx=4, pady=4, sticky='w')
         if not CONFIG.getboolean('General', 'splash_supported', fallback=True):
             self.splash_support.state(('selected', '!alternate'))
