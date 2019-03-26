@@ -45,7 +45,7 @@ class Config(Toplevel):
         self.title(_("Preferences"))
         self.grab_set()
         self.protocol("WM_DELETE_WINDOW", self.quit)
-        self.changes = {}, {}, False
+        self.changes = {}, {}, False, False
         self.minsize(width=430, height=450)
 
         # --- style
@@ -411,6 +411,9 @@ class Config(Toplevel):
 
     def ok(self):
         """Validate configuration."""
+        # --- splash supported
+        splash_supp = not self.splash_support.instate(('selected',))
+        splash_change = splash_supp != CONFIG.getboolean("General", "splash_supported", fallback=True)
         # --- font
         # mono
         mono = self.mono_family.get()
@@ -483,7 +486,7 @@ class Config(Toplevel):
         CONFIG.set("General", "symbols", "".join(symbols))
         CONFIG.set("General", "trayicon", self.gui.get().lower())
         CONFIG.set("General", "autocorrect", autocorrect)
-        CONFIG.set('General', 'splash_supported', str(not self.splash_support.instate(('selected',))))
+        CONFIG.set('General', 'splash_supported', str(splash_supp))
 
         CONFIG.set("Font", "text_size", size)
         CONFIG.set("Font", "text_family", family)
@@ -514,7 +517,7 @@ class Config(Toplevel):
                 CONFIG.set("Categories", new_name,
                            COLORS[self.category_settings.get_color(cat)])
         save_config()
-        self.changes = col_changes, name_changes, new_cat
+        self.changes = col_changes, name_changes, new_cat, splash_change
         self.destroy()
 
     def get_changes(self):

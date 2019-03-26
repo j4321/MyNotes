@@ -712,7 +712,7 @@ class App(Tk):
         """Launch the setting manager."""
         conf = Config(self)
         self.wait_window(conf)
-        col_changes, name_changes, new_cat = conf.get_changes()
+        col_changes, name_changes, new_cat, splash_change = conf.get_changes()
         if new_cat or col_changes or name_changes:
             self.update_notes(col_changes, name_changes)
             self.update_menu()
@@ -722,6 +722,8 @@ class App(Tk):
             note.update_title_font()
             note.update_text_font()
             note.update_titlebar()
+            if splash_change:
+                note.update_position()
 
     def delete_cat(self, category):
         """Delete all notes belonging to category."""
