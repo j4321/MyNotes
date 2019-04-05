@@ -35,6 +35,10 @@ Below are the steps to create a translation and compile it and submit a pull req
 
 6. Submit a pull request
 
+If you don't feel comfortable with the compilation of the translation, 
+you can skip step 4 and directly submit the pull request, I will take care
+of it.
+
 ## Other contributions
 
 If you have an idea, feel free to open an issue to describe it.

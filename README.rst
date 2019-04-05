@@ -11,6 +11,9 @@ environment supports compositing, the opacity of the notes can be modified.
 MyNotes is designed for Linux. It is written in Python 3 and relies
 mostly on the Tk GUI toolkit.
 
+MyNotes is available in Catalan, Dutch, English, French, German and Spanish.
+If you wish to add a new translation, you are welcome to [contribute](CONTRIBUTING.md).
+
 
 Install
 -------
