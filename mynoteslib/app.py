@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 MyNotes - Sticky notes/post-it
-Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
+Copyright 2016-2019 Juliette Monsel <j_4321@protonmail.com>
 
 MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -441,13 +441,13 @@ class App(Tk):
                         tags1 = c[1][1]
                 for c in self.clipboard_content:
                     index = txt.index('insert')
-                    if c[0] is 'image':
+                    if c[0] == 'image':
                         img, name, tags, latex = c[1]
                         if latex and cst.LATEX:
                             txt.master.create_latex(latex, index)
                         else:
                             txt.image_create_undoable(index, align='bottom', image=img, name=name)
-                    elif c[0] is 'checkbox':
+                    elif c[0] == 'checkbox':
                         state, tags = c[1]
                         txt.checkbox_create_undoable(index, state)
                         txt.update_idletasks()
@@ -550,6 +550,8 @@ class App(Tk):
             try:
                 if re.match(r'mynotes[0-9]+', w.get_wm_name()):
                     cst.EWMH.setWmState(w, 1, '_NET_WM_STATE_STICKY')
+                    cst.EWMH.setWmState(w, 1, '_NET_WM_STATE_SKIP_TASKBAR')
+                    cst.EWMH.setWmState(w, 1, '_NET_WM_STATE_SKIP_PAGER')
             except TypeError:
                 pass   # some windows have name b''
         cst.EWMH.display.flush()
@@ -710,7 +712,7 @@ class App(Tk):
         """Launch the setting manager."""
         conf = Config(self)
         self.wait_window(conf)
-        col_changes, name_changes, new_cat = conf.get_changes()
+        col_changes, name_changes, new_cat, splash_change = conf.get_changes()
         if new_cat or col_changes or name_changes:
             self.update_notes(col_changes, name_changes)
             self.update_menu()
@@ -720,6 +722,8 @@ class App(Tk):
             note.update_title_font()
             note.update_text_font()
             note.update_titlebar()
+            if splash_change:
+                note.update_position()
 
     def delete_cat(self, category):
         """Delete all notes belonging to category."""

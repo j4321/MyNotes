@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 MyNotes - Sticky notes/post-it
-Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
+Copyright 2016-2019 Juliette Monsel <j_4321@protonmail.com>
 
 MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -447,12 +447,12 @@ class MyText(Text):
         self.mark_set('insert', index1)
         for c in content:
             index = self.index('insert')
-            if c[0] is 'image':
+            if c[0] == 'image':
                 self.image_create(index, **c[1])
-            elif c[0] is 'latex':
+            elif c[0] == 'latex':
                 self.image_create(index, **c[1])
                 self.latex[c[3]] = c[4]
-            elif c[0] is 'checkbox':
+            elif c[0] == 'checkbox':
                 self.checkbox_create(index, c[1])
                 self.update_idletasks()
             else:
@@ -474,11 +474,11 @@ class MyText(Text):
                 for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
                     self.tag_remove_undoable(style, d, f)
                 tag_ranges = text_ranges(self, "bold-italic", "sel.first", "sel.last")
-                style2 = "bold" if style is "italic" else "italic"
+                style2 = "bold" if style == "italic" else "italic"
                 for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
                     self.tag_remove_undoable("bold-italic", d, f)
                     self.tag_add_undoable(style2, d, f)
-            elif style is "bold" and "bold-italic" in current_tags:
+            elif style == "bold" and "bold-italic" in current_tags:
                 tag_ranges = text_ranges(self, "bold-italic", "sel.first", "sel.last")
                 for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
                     self.tag_remove_undoable("bold-italic", d, f)
@@ -486,7 +486,7 @@ class MyText(Text):
                 tag_ranges = text_ranges(self, "bold", "sel.first", "sel.last")
                 for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
                     self.tag_remove_undoable("bold", d, f)
-            elif style is "italic" and "bold-italic" in current_tags:
+            elif style == "italic" and "bold-italic" in current_tags:
                 tag_ranges = text_ranges(self, "bold-italic", "sel.first", "sel.last")
                 for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
                     self.tag_remove_undoable("bold-italic", d, f)
@@ -495,14 +495,14 @@ class MyText(Text):
                 for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
                     self.tag_remove_undoable("italic", d, f)
             # add tag
-            elif style is "bold":
+            elif style == "bold":
                 self.tag_add_undoable("bold", "sel.first", "sel.last")
                 tag_ranges = text_ranges(self, "italic", "sel.first", "sel.last")
                 for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):
                     self.tag_add_undoable("bold-italic", d, f)
                     self.tag_remove_undoable("italic", d, f)
                     self.tag_remove_undoable("bold", d, f)
-            elif style is "italic":
+            elif style == "italic":
                 self.tag_add_undoable("italic", "sel.first", "sel.last")
                 tag_ranges = text_ranges(self, "bold", "sel.first", "sel.last")
                 for d, f in zip(tag_ranges[::2], tag_ranges[1::2]):

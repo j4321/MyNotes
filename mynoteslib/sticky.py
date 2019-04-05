@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 MyNotes - Sticky notes/post-it
-Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
+Copyright 2016-2019 Juliette Monsel <j_4321@protonmail.com>
 
 MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ Sticky note class
 
 
 from tkinter import Toplevel, StringVar, Menu, TclError
-from tkinter.ttk import  Style, Sizegrip, Entry, Label, Button, Frame
+from tkinter.ttk import Style, Sizegrip, Entry, Label, Button, Frame
 from PIL.ImageTk import PhotoImage
 from PIL import Image
 import os
@@ -68,10 +68,13 @@ class Sticky(Toplevel):
         self.nb_files = 0
         self.title('mynotes%s' % key)
         self.protocol("WM_DELETE_WINDOW", self.hide)
-        self.attributes("-type", "splash")
+        if CONFIG.getboolean('General', 'splash_supported', fallback=True):
+            self.attributes('-type', 'splash')
+        else:
+            self.attributes('-type', 'toolbar')
         self.attributes("-alpha", CONFIG.getint("General", "opacity") / 100)
         self.rowconfigure(1, weight=1)
-        self.minsize(10,10)
+        self.minsize(10, 10)
 
         # --- style
         self.style = Style(self)
@@ -82,8 +85,8 @@ class Sticky(Toplevel):
         # -------- titlebar
         self.titlebar = Frame(self, style=self.id + '.TFrame')
         # title
-        font_title = "%s %s" %(CONFIG.get("Font", "title_family").replace(" ", "\ "),
-                               CONFIG.get("Font", "title_size"))
+        font_title = "%s %s" % (CONFIG.get("Font", "title_family").replace(" ", "\ "),
+                                CONFIG.get("Font", "title_size"))
         style = CONFIG.get("Font", "title_style").split(",")
         if style:
             font_title += " "
@@ -120,19 +123,19 @@ class Sticky(Toplevel):
             self.titlebar.columnconfigure(1, weight=1)
             self.titlebar.columnconfigure(2, weight=1)
             self.roll.grid(row=0, column=3, sticky="e")
-            self.close.grid(row=0, column=4, sticky="e", padx=(0,2))
+            self.close.grid(row=0, column=4, sticky="e", padx=(0, 2))
             self.cadenas.grid(row=0, column=0, sticky="w")
-            self.title_label.grid(row=0, column=1, sticky="ew", pady=(1,0))
-            self.date_label.grid(row=0, column=2, sticky="ew", pady=(1,0))
+            self.title_label.grid(row=0, column=1, sticky="ew", pady=(1, 0))
+            self.date_label.grid(row=0, column=2, sticky="ew", pady=(1, 0))
         else:
             # left = close - roll - title - lock icon
             self.titlebar.columnconfigure(2, weight=1)
             self.titlebar.columnconfigure(3, weight=1)
             self.roll.grid(row=0, column=1, sticky="w")
-            self.close.grid(row=0, column=0, sticky="w", padx=(2,0))
+            self.close.grid(row=0, column=0, sticky="w", padx=(2, 0))
             self.cadenas.grid(row=0, column=4, sticky="e")
-            self.title_label.grid(row=0, column=2, sticky="ew", pady=(1,0))
-            self.date_label.grid(row=0, column=3, sticky="ew", pady=(1,0))
+            self.title_label.grid(row=0, column=2, sticky="ew", pady=(1, 0))
+            self.date_label.grid(row=0, column=3, sticky="ew", pady=(1, 0))
 
         if CONFIG.getboolean('General', 'date_in_title', fallback=True):
             self.date_label.configure(text='- ' + self._date)
@@ -273,7 +276,7 @@ class Sticky(Toplevel):
         # --- restore note content/appearence
         self.color = kwargs.get("color",
                                 CONFIG.get("Categories", self.category.get()))
-        self.txt.insert('1.0', kwargs.get("txt",""))
+        self.txt.insert('1.0', kwargs.get("txt", ""))
         self.txt.edit_reset()  # clear undo stack
         # restore inserted objects (images and checkboxes)
         # we need to restore objects with increasing index to avoid placment errors
@@ -346,7 +349,7 @@ class Sticky(Toplevel):
 
         # body
         self.txt.grid(row=1, column=0, sticky="ewsn",
-                      pady=(1,4), padx=4)
+                      pady=(1, 4), padx=4)
         self.scroll.grid(row=1, column=1, sticky='ns', pady=(2, 14))
         self.corner.lift(self.txt)
         self.corner.place(relx=1.0, rely=1.0, anchor="se")
@@ -419,29 +422,29 @@ class Sticky(Toplevel):
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
-        if name is "color":
+        if name == "color":
             self.style.configure(self.id + ".TSizegrip",
                                  background=self.color)
             self.style.map(self.id + ".TSizegrip",
                            background=[('disabled', self.color)])
-            self.style.configure(self.id +  ".TLabel",
+            self.style.configure(self.id + ".TLabel",
                                  background=self.color)
-            self.style.configure(self.id +  ".TFrame",
+            self.style.configure(self.id + ".TFrame",
                                  background=self.color)
-            self.style.configure("close" + self.id +  ".TLabel",
+            self.style.configure("close" + self.id + ".TLabel",
                                  background=self.color)
-            self.style.configure("roll" + self.id +  ".TLabel",
+            self.style.configure("roll" + self.id + ".TLabel",
                                  background=self.color)
-            self.style.map(self.id +  ".TLabel",
+            self.style.map(self.id + ".TLabel",
                            background=[("active", self.color)])
             self.style.configure(self.id + ".TCheckbutton",
                                  background=self.color)
             self.style.map(self.id + ".TCheckbutton",
                            background=[("active", self.color),
                                        ("disabled", self.color)])
-            self.style.map("close" + self.id +  ".TLabel",
+            self.style.map("close" + self.id + ".TLabel",
                            background=[("active", self.color)])
-            self.style.map("roll" + self.id +  ".TLabel",
+            self.style.map("roll" + self.id + ".TLabel",
                            background=[("active", self.color)])
             self.scroll.configure(style='%s.Vertical.TScrollbar' % value)
             self.configure(bg=self.color)
@@ -503,7 +506,7 @@ class Sticky(Toplevel):
     def save_info(self):
         """Return the dictionnary containing all the note data."""
         data = {}
-        data["txt"] = self.txt.get("1.0","end")[:-1]
+        data["txt"] = self.txt.get("1.0", "end")[:-1]
         data["tags"] = {}
         for tag in self.txt.tag_names():
             if tag not in ["sel", "todolist", "list", "enum"]:
@@ -548,6 +551,7 @@ class Sticky(Toplevel):
 
     def set_position_above(self):
         """Make note always above the other windows."""
+        self.attributes('-type', 'dock')
         self.focus_force()
         self.update_idletasks()
         w = EWMH.getActiveWindow()
@@ -565,10 +569,14 @@ class Sticky(Toplevel):
             EWMH.setWmState(w, 1, '_NET_WM_STATE_ABOVE')
             EWMH.setWmState(w, 0, '_NET_WM_STATE_BELOW')
             EWMH.display.flush()
+            if not CONFIG.getboolean('General', 'splash_supported', fallback=True):
+                self.withdraw()
+                self.deiconify()
         self.save_note()
 
     def set_position_below(self):
         """Make note always below the other windows."""
+        self.attributes('-type', 'desktop')
         self.focus_force()
         self.update_idletasks()
         w = EWMH.getActiveWindow()
@@ -586,6 +594,9 @@ class Sticky(Toplevel):
             EWMH.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
             EWMH.setWmState(w, 1, '_NET_WM_STATE_BELOW')
             EWMH.display.flush()
+            if not CONFIG.getboolean('General', 'splash_supported', fallback=True):
+                self.withdraw()
+                self.deiconify()
         self.save_note()
 
     def set_position_normal(self):
@@ -607,6 +618,12 @@ class Sticky(Toplevel):
             EWMH.setWmState(w, 0, '_NET_WM_STATE_BELOW')
             EWMH.setWmState(w, 0, '_NET_WM_STATE_ABOVE')
             EWMH.display.flush()
+            if CONFIG.getboolean('General', 'splash_supported', fallback=True):
+                self.attributes('-type', 'splash')
+            else:
+                self.attributes('-type', 'toolbar')
+                self.withdraw()
+                self.deiconify()
         self.save_note()
 
     def set_mode_note(self):
@@ -618,24 +635,24 @@ class Sticky(Toplevel):
         if "list" in tags:
             self.txt.tag_remove_undoable("list", "1.0", "end")
             for i in range(1, end):
-                if self.txt.get("%i.0"  % i, "%i.3"  % i) == "\t•\t":
-                    self.txt.delete_undoable("%i.0"  % i, "%i.3"  % i)
+                if self.txt.get("%i.0" % i, "%i.3" % i) == "\t•\t":
+                    self.txt.delete_undoable("%i.0" % i, "%i.3" % i)
         elif "todolist" in tags:
             self.txt.tag_remove_undoable("todolist", "1.0", "end")
             for i in range(1, end):
                 try:
-                    ch = self.txt.window_cget("%i.0"  % i, "window")
-                    self.txt.delete_undoable("%i.0"  % i)
+                    ch = self.txt.window_cget("%i.0" % i, "window")
+                    self.txt.delete_undoable("%i.0" % i)
                     self.txt.children[ch.split('.')[-1]].destroy()
                 except TclError:
                     pass
         elif "enum" in tags:
-            lines  = self.txt.get("1.0", "end").splitlines()
+            lines = self.txt.get("1.0", "end").splitlines()
             self.txt.tag_remove_undoable("enum", "1.0", "end")
             for i, l in zip(range(1, end), lines):
                 res = re.match('^\t[0-9]+\.\t', l)
                 if res:
-                    self.txt.delete_undoable("%i.0"  % i, "%i.%i"  % (i, res.end()))
+                    self.txt.delete_undoable("%i.0" % i, "%i.%i" % (i, res.end()))
         self.txt.add_undo_sep()
         self.save_note()
 
@@ -652,27 +669,27 @@ class Sticky(Toplevel):
             for i in range(1, end):
                 # remove checkboxes
                 try:
-                    ch = self.txt.window_cget("%i.0"  % i, "window")
-                    self.txt.delete_undoable("%i.0"  % i)
+                    ch = self.txt.window_cget("%i.0" % i, "window")
+                    self.txt.delete_undoable("%i.0" % i)
                     self.txt.children[ch.split('.')[-1]].destroy()
                 except TclError:
                     # there is no checkbox
                     pass
-                if self.txt.get("%i.0"  % i, "%i.3"  % i) != "\t•\t":
+                if self.txt.get("%i.0" % i, "%i.3" % i) != "\t•\t":
                     self.txt.insert_undoable("%i.0" % i, "\t•\t")
         elif "enum" in tags:
-            lines  = self.txt.get("1.0", "end").splitlines()
+            lines = self.txt.get("1.0", "end").splitlines()
             self.txt.tag_remove_undoable("enum", "1.0", "end")
             for i, l in zip(range(1, end), lines):
                 # remove enumeration
                 res = re.match('^\t[0-9]+\.\t', l)
                 if res:
-                    self.txt.delete_undoable("%i.0"  % i, "%i.%i"  % (i, res.end()))
-                if self.txt.get("%i.0"  % i, "%i.3"  % i) != "\t•\t":
+                    self.txt.delete_undoable("%i.0" % i, "%i.%i" % (i, res.end()))
+                if self.txt.get("%i.0" % i, "%i.3" % i) != "\t•\t":
                     self.txt.insert_undoable("%i.0" % i, "\t•\t")
         else:
             for i in range(1, end):
-                if self.txt.get("%i.0"  % i, "%i.3"  % i) != "\t•\t":
+                if self.txt.get("%i.0" % i, "%i.3" % i) != "\t•\t":
                     self.txt.insert_undoable("%i.0" % i, "\t•\t")
         self.txt.tag_add_undoable("list", "1.0", "end")
         self.txt.add_undo_sep()
@@ -683,15 +700,15 @@ class Sticky(Toplevel):
         self.txt.add_undo_sep()
         self.txt.mode_change('enum')
         end = int(self.txt.index("end").split(".")[0])
-        lines  = self.txt.get("1.0", "end").splitlines()
+        lines = self.txt.get("1.0", "end").splitlines()
         tags = self.txt.tag_names('1.0')
         if "enum" in tags:
             return
         elif "list" in tags:
             self.txt.tag_remove_undoable("list", "1.0", "end")
             for i, l in zip(range(1, end), lines):
-                if self.txt.get("%i.0"  % i, "%i.3"  % i) == "\t•\t":
-                    self.txt.delete_undoable("%i.0"  % i, "%i.3"  % i)
+                if self.txt.get("%i.0" % i, "%i.3" % i) == "\t•\t":
+                    self.txt.delete_undoable("%i.0" % i, "%i.3" % i)
                 if not re.match('^\t[0-9]+\.', l):
                     self.txt.insert_undoable("%i.0" % i, "\t0.\t")
         elif "todolist" in tags:
@@ -699,8 +716,8 @@ class Sticky(Toplevel):
             for i, l in zip(range(1, end), lines):
                 # remove checkboxes
                 try:
-                    ch = self.txt.window_cget("%i.0"  % i, "window")
-                    self.txt.delete_undoable("%i.0"  % i)
+                    ch = self.txt.window_cget("%i.0" % i, "window")
+                    self.txt.delete_undoable("%i.0" % i)
                     self.txt.children[ch.split('.')[-1]].destroy()
                 except TclError:
                     # no checkbox
@@ -727,29 +744,29 @@ class Sticky(Toplevel):
         elif "list" in tags:
             self.txt.tag_remove_undoable("list", "1.0", "end")
             for i in range(1, end):
-                if self.txt.get("%i.0"  % i, "%i.3"  % i) == "\t•\t":
-                    self.txt.delete_undoable("%i.0"  % i, "%i.3"  % i)
+                if self.txt.get("%i.0" % i, "%i.3" % i) == "\t•\t":
+                    self.txt.delete_undoable("%i.0" % i, "%i.3" % i)
                 try:
-                    self.txt.window_cget("%i.0"  % i, "window")
+                    self.txt.window_cget("%i.0" % i, "window")
                 except TclError:
-                    self.txt.checkbox_create_undoable("%i.0"  % i)
+                    self.txt.checkbox_create_undoable("%i.0" % i)
         elif "enum" in tags:
-            lines  = self.txt.get("1.0", "end").splitlines()
+            lines = self.txt.get("1.0", "end").splitlines()
             self.txt.tag_remove_undoable("enum", "1.0", "end")
-            for i,l in zip(range(1, end), lines):
+            for i, l in zip(range(1, end), lines):
                 res = re.match('^\t[0-9]+\.\t', l)
                 if res:
-                    self.txt.delete_undoable("%i.0"  % i, "%i.%i"  % (i, res.end()))
+                    self.txt.delete_undoable("%i.0" % i, "%i.%i" % (i, res.end()))
                 try:
-                    self.txt.window_cget("%i.0"  % i, "window")
+                    self.txt.window_cget("%i.0" % i, "window")
                 except TclError:
-                    self.txt.checkbox_create_undoable("%i.0"  % i)
+                    self.txt.checkbox_create_undoable("%i.0" % i)
         else:
             for i in range(1, end):
                 try:
-                    self.txt.window_cget("%i.0"  % i, "window")
+                    self.txt.window_cget("%i.0" % i, "window")
                 except TclError:
-                    self.txt.checkbox_create_undoable("%i.0"  % i)
+                    self.txt.checkbox_create_undoable("%i.0" % i)
         self.txt.tag_add_undoable("todolist", "1.0", "end")
         self.txt.add_undo_sep()
         self.save_note()
@@ -800,7 +817,7 @@ class Sticky(Toplevel):
         self.title_entry.place(x=self.title_label.winfo_x() + 5,
                                y=self.title_label.winfo_y(),
                                anchor="nw",
-                               width=self.title_label.winfo_width() + self.date_label.winfo_width() -10)
+                               width=self.title_label.winfo_width() + self.date_label.winfo_width() - 10)
         self.title_entry.selection_range(0, 'end')
         self.title_entry.focus_set()
 
@@ -838,7 +855,7 @@ class Sticky(Toplevel):
     def mouse_roll(self, event):
         if event.num == 5 and not self.txt.winfo_ismapped():
             self.txt.grid(row=1, columnspan=4,
-                          column=0, sticky="ewsn", pady=(1,4), padx=4)
+                          column=0, sticky="ewsn", pady=(1, 4), padx=4)
             self.corner.place(relx=1.0, rely=1.0, anchor="se")
             self.geometry(self.save_geometry)
         elif event.num == 4 and self.txt.winfo_ismapped():
@@ -855,7 +872,7 @@ class Sticky(Toplevel):
             self.geometry("%sx22" % self.winfo_width())
         else:
             self.txt.grid(row=1, columnspan=4,
-                          column=0, sticky="ewsn", pady=(1,4), padx=4)
+                          column=0, sticky="ewsn", pady=(1, 4), padx=4)
             self.corner.place(relx=1.0, rely=1.0, anchor="se")
             self.geometry(self.save_geometry)
         self.save_note()
@@ -872,10 +889,19 @@ class Sticky(Toplevel):
         self.destroy()
 
     # --- Settings update
+    def update_position(self):
+        if self.position.get() == 'normal':
+            if CONFIG.getboolean('General', 'splash_supported', fallback=True):
+                self.attributes('-type', 'splash')
+            else:
+                self.attributes('-type', 'toolbar')
+        self.withdraw()
+        self.deiconify()
+
     def update_title_font(self):
         """Update title font after configuration change."""
-        font = "%s %s" %(CONFIG.get("Font", "title_family").replace(" ", "\ "),
-                         CONFIG.get("Font", "title_size"))
+        font = "%s %s" % (CONFIG.get("Font", "title_family").replace(" ", "\ "),
+                          CONFIG.get("Font", "title_size"))
         style = CONFIG.get("Font", "title_style").split(",")
         if style:
             font += " "
@@ -893,6 +919,7 @@ class Sticky(Toplevel):
             self.menu_categories.add_radiobutton(label=cat.capitalize(), value=cat,
                                                  variable=self.category,
                                                  command=self.change_category)
+
     def update_titlebar(self):
         """Update title bar button order."""
         if CONFIG.get("General", "buttons_position") == "right":
@@ -900,19 +927,19 @@ class Sticky(Toplevel):
             self.titlebar.columnconfigure(1, weight=1)
             self.titlebar.columnconfigure(2, weight=1)
             self.roll.grid(row=0, column=3, sticky="e")
-            self.close.grid(row=0, column=4, sticky="e", padx=(0,2))
+            self.close.grid(row=0, column=4, sticky="e", padx=(0, 2))
             self.cadenas.grid(row=0, column=0, sticky="w")
-            self.title_label.grid(row=0, column=1, sticky="ew", pady=(1,0))
-            self.date_label.grid(row=0, column=2, sticky="ew", pady=(1,0))
+            self.title_label.grid(row=0, column=1, sticky="ew", pady=(1, 0))
+            self.date_label.grid(row=0, column=2, sticky="ew", pady=(1, 0))
         else:
             # left = close - roll - title - lock icon
             self.titlebar.columnconfigure(2, weight=1)
             self.titlebar.columnconfigure(3, weight=1)
             self.roll.grid(row=0, column=1, sticky="w")
-            self.close.grid(row=0, column=0, sticky="w", padx=(2,0))
+            self.close.grid(row=0, column=0, sticky="w", padx=(2, 0))
             self.cadenas.grid(row=0, column=4, sticky="e")
-            self.title_label.grid(row=0, column=2, sticky="ew", pady=(1,0))
-            self.date_label.grid(row=0, column=3, sticky="ew", pady=(1,0))
+            self.title_label.grid(row=0, column=2, sticky="ew", pady=(1, 0))
+            self.date_label.grid(row=0, column=3, sticky="ew", pady=(1, 0))
 
         if CONFIG.getboolean('General', 'date_in_title', fallback=True):
             self.date_label.configure(text='- ' + self._date)
@@ -1061,7 +1088,7 @@ class Sticky(Toplevel):
                     img = img_name
                 im = os.path.join(PATH_LATEX, img)
                 try:
-                    math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size")-2)
+                    math_to_image(latex, im, fontsize=CONFIG.getint("Font", "text_size") - 2)
                     self.images.append(PhotoImage(file=im, master=self))
                     self.txt.add_undo_sep()
                     if sel:

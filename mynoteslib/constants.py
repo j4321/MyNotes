@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 MyNotes - Sticky notes/post-it
-Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
+Copyright 2016-2019 Juliette Monsel <j_4321@protonmail.com>
 
 MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -264,7 +264,7 @@ ICONS = {"information": IM_INFO_DATA, "error": IM_ERROR_DATA,
 
 # --- config file
 AUTOCORRECT = {'->': '→', '<-': '←', '<->': '↔', '=>': '⇒', '<=': '⇐',
-                '<=>': '⇔', '=<': '≤', '>=': '≥', ":)": '☺'}
+               '<=>': '⇔', '=<': '≤', '>=': '≥', ":)": '☺'}
 
 CONFIG = ConfigParser()
 if os.path.exists(PATH_CONFIG):
@@ -303,6 +303,7 @@ else:
     CONFIG.set("General", "trayicon", "")
     value = "\t".join(["%s %s" % (key, val) for key, val in AUTOCORRECT.items()])
     CONFIG.set("General", "autocorrect", value)
+    CONFIG.set("General", "splash_supported", str(os.environ.get('DESKTOP_SESSION') != 'plasma'))
     CONFIG.add_section("Font")
     CONFIG.set("Font", "text_family", "TkDefaultFont")
     CONFIG.set("Font", "text_size", "12")
@@ -311,6 +312,7 @@ else:
     CONFIG.set("Font", "title_style", "bold")
     CONFIG.set("Font", "mono", "")
     CONFIG.add_section("Categories")
+
 
 # --- system tray icon
 def get_available_gui_toolkits():
@@ -434,7 +436,7 @@ def active_color(color, output='HTML'):
 
 
 def color_box(color):
-    im = Image.new('RGBA', (18, 16), (0,0,0,0))
+    im = Image.new('RGBA', (18, 16), (0, 0, 0, 0))
     draw = ImageDraw.Draw(im)
     draw.rectangle([3, 3, 13, 13], color, 'black')
     return im

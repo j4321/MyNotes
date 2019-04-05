@@ -45,7 +45,7 @@ class Config(Toplevel):
         self.title(_("Preferences"))
         self.grab_set()
         self.protocol("WM_DELETE_WINDOW", self.quit)
-        self.changes = {}, {}, False
+        self.changes = {}, {}, False, False
         self.minsize(width=430, height=450)
 
         # --- style
@@ -135,7 +135,7 @@ class Config(Toplevel):
         self.notebook.add(general_settings, text=_("General"),
                           sticky="ewsn", padding=4)
 
-        # --- * ---- language
+        # ---- language
 
         self.lang = StringVar(self, LANGUAGES[CONFIG.get("General", "language")])
         lang_frame = Frame(general_settings)
@@ -147,7 +147,7 @@ class Config(Toplevel):
         for lang in LANGUAGES.values():
             menu_lang.add_radiobutton(variable=self.lang, label=lang,
                                       value=lang, command=self.translate)
-        # --- * ---- gui toolkit
+        # ---- gui toolkit
         self.gui = StringVar(self, CONFIG.get("General", "trayicon").capitalize())
         gui_frame = Frame(general_settings)
         Label(gui_frame,
@@ -164,10 +164,10 @@ class Config(Toplevel):
                                          value=toolkit.capitalize(),
                                          variable=self.gui,
                                          command=self.change_gui)
-        # --- * ---- opacity
+        # ---- opacity
         self.opacity = OpacityFrame(general_settings,
                                     CONFIG.getint("General", "opacity"))
-        # --- * ---- position
+        # ---- position
         frame_position = Frame(general_settings)
         self.position = StringVar(self, CONFIG.get("General", "position"))
         Label(frame_position,
@@ -181,7 +181,7 @@ class Config(Toplevel):
                     variable=self.position).grid(row=1, column=1, padx=4)
         Radiobutton(frame_position, text=_("Normal"), value="normal",
                     variable=self.position).grid(row=1, column=2, padx=4)
-        # --- * ---- titlebar
+        # ---- titlebar
         self.titlebar_disposition = StringVar(self, CONFIG.get("General",
                                                                "buttons_position"))
         self.title_var = StringVar(self)  # to add date if date_in_title is true
@@ -233,7 +233,7 @@ class Config(Toplevel):
                                     command=self.toggle_date)
         date_in_title.grid(row=2, columnspan=4, sticky='w', pady=4, padx=4)
         self.toggle_date()
-        # --- * ---- placement
+        # ---- placement
         lang_frame.grid(sticky="w")
         Separator(general_settings,
                   orient="horizontal").grid(sticky="ew", pady=10)
@@ -249,12 +249,23 @@ class Config(Toplevel):
                   orient="horizontal").grid(sticky="ew", pady=10)
         frame_titlebar.grid(sticky="ew", pady=4)
 
-        # --- * ---- clean local data
+        # ---- clean local data
         Separator(general_settings,
                   orient="horizontal").grid(sticky="ew", pady=10)
         Button(general_settings,
                text=_('Delete unused local data'),
                command=self.cleanup).grid(padx=4, pady=4, sticky='w')
+
+        # ---- splash supported
+        Separator(general_settings,
+                  orient="horizontal").grid(sticky="ew", pady=10)
+        self.splash_support = Checkbutton(general_settings,
+                                          text=_("Check this box if the notes disappear when you click"))
+        self.splash_support.grid(padx=4, pady=4, sticky='w')
+        if not CONFIG.getboolean('General', 'splash_supported', fallback=True):
+            self.splash_support.state(('selected', '!alternate'))
+        else:
+            self.splash_support.state(('!selected', '!alternate'))
 
     def _init_font(self):
         font_settings = Frame(self.notebook, padding=4)
@@ -262,7 +273,7 @@ class Config(Toplevel):
         self.notebook.add(font_settings, text=_("Font"),
                           sticky="ewsn", padding=4)
 
-        # --- * ---- title
+        # ---- title
         fonttitle_frame = Frame(font_settings)
 
         title_size = CONFIG.get("Font", "title_size")
@@ -313,7 +324,7 @@ class Config(Toplevel):
         self.is_italic.pack(side="left")
         self.is_underlined.pack(side="left")
 
-        # --- * ---- text
+        # ---- text
         size = CONFIG.get("Font", "text_size")
         family = CONFIG.get("Font", "text_family")
 
@@ -336,7 +347,7 @@ class Config(Toplevel):
         self.font_size.current(self.sizes.index(size))
         self.font_size.grid(row=0, column=1, padx=4, pady=4)
 
-        # --- * ---- mono
+        # ---- mono
         self.mono_fonts = [f for f in self.fonts if 'Mono' in f]
         mono_family = CONFIG.get("Font", "mono")
 
@@ -352,7 +363,7 @@ class Config(Toplevel):
         self.mono_family.current(self.mono_fonts.index(mono_family))
         self.mono_family.grid(row=0, column=0, padx=4, pady=4)
 
-        # --- * ---- placement
+        # ---- placement
         Label(font_settings,
               text=_("Title")).grid(row=0, column=0, padx=4, pady=4, sticky="nw")
         fonttitle_frame.grid(row=0, column=1, sticky="w", padx=20)
@@ -400,6 +411,9 @@ class Config(Toplevel):
 
     def ok(self):
         """Validate configuration."""
+        # --- splash supported
+        splash_supp = not self.splash_support.instate(('selected',))
+        splash_change = splash_supp != CONFIG.getboolean("General", "splash_supported", fallback=True)
         # --- font
         # mono
         mono = self.mono_family.get()
@@ -472,6 +486,8 @@ class Config(Toplevel):
         CONFIG.set("General", "symbols", "".join(symbols))
         CONFIG.set("General", "trayicon", self.gui.get().lower())
         CONFIG.set("General", "autocorrect", autocorrect)
+        CONFIG.set('General', 'splash_supported', str(splash_supp))
+
         CONFIG.set("Font", "text_size", size)
         CONFIG.set("Font", "text_family", family)
         CONFIG.set("Font", "title_family", familytitle)
@@ -501,7 +517,7 @@ class Config(Toplevel):
                 CONFIG.set("Categories", new_name,
                            COLORS[self.category_settings.get_color(cat)])
         save_config()
-        self.changes = col_changes, name_changes, new_cat
+        self.changes = col_changes, name_changes, new_cat, splash_change
         self.destroy()
 
     def get_changes(self):

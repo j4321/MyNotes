@@ -32,31 +32,31 @@ Install
 - Source code
 
     First, install the missing dependencies among:
-    
+
         - Tkinter (Python wrapper for Tk)
         - ewmh https://pypi.python.org/pypi/ewmh
         - optional dependency: matplotlib + texlive for basic LaTeX formula support
-        
+
     You also need to have at least one of the following GUI toolkits for the system tray icon:
-    
+
         - Tktray https://code.google.com/archive/p/tktray/downloads
         - PyGTK http://www.pygtk.org/downloads.html
         - PyQt5, PyQt4 or PySide
-        
+
     For instance, in Ubuntu/Debian you will need to install the following packages:
     python3-tk, tk-tktray (or python3-gi or python3-pyqt5), python3-ewmh (available in >= 17.04 only),
     python3-pil, python3-pil.imagetk
 
     ewmh can also be installed with pip:
-    
+
     ::
-    
+
         $ sudo pip3 install ewmh
 
     Then install the application:
-    
+
     ::
-    
+
         $ sudo python3 setup.py install
 
 
@@ -70,6 +70,10 @@ Troubleshooting
 Several gui toolkits are available to display the system tray icon, so if the
 icon does not behave properly, try to change toolkit, they are not all fully
 compatible with every desktop environment.
+
+If the notes disappear when you click on them, open the setting dialog
+from the menu and check the box 'Check this box if the notes disappear
+when you click'.
 
 If you encounter bugs or if you have suggestions, please open an issue
 on `GitHub <https://github.com/j4321/MyNotes/issues>`__ or write me
