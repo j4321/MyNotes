@@ -71,7 +71,7 @@ Several gui toolkits are available to display the system tray icon, so if the
 icon does not behave properly, try to change toolkit, they are not all fully
 compatible with every desktop environment.
 
-If the widgets disappear when you click on them, open the setting dialog
+If the notes disappear when you click on them, open the setting dialog
 from the menu and check the box 'Check this box if the notes disappear
 when you click'.
 
