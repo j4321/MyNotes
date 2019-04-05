@@ -890,12 +890,6 @@ class Sticky(Toplevel):
 
     # --- Settings update
     def update_position(self):
-        # if self.position.get() == "above":
-            # self.set_position_above()
-        # elif self.position.get() == "below":
-            # self.set_position_below()
-        # else:
-            # self.set_position_normal()
         if self.position.get() == 'normal':
             if CONFIG.getboolean('General', 'splash_supported', fallback=True):
                 self.attributes('-type', 'splash')
