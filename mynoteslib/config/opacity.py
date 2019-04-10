@@ -26,13 +26,13 @@ from mynoteslib.scaleentry import ScaleEntry
 
 
 class OpacityFrame(ttk.Frame):
-    def __init__(self, master=None, value=0.85, style='TLabel', **kw):
+    def __init__(self, master=None, value=85, style='TLabel', **kw):
         ttk.Frame.__init__(self, master, **kw)
 
         self.columnconfigure(1, weight=1)
         self.opacity_scale = ScaleEntry(self, orient="horizontal", scalewidth=300,
                                         from_=0, to=100, entryscalepad=10,
-                                        value=int(value * 100))
+                                        value=int(value))
         ttk.Label(self, style=style,
                   text=_("Opacity")).grid(row=0, column=0, sticky="w", padx=(0, 4), pady=4)
         self.opacity_scale.grid(row=0, column=1, padx=4, pady=4)

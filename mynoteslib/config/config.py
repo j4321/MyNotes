@@ -24,10 +24,9 @@ from time import strftime
 from tkinter import font
 from tkinter import Toplevel, StringVar, Menu, Text, BooleanVar
 from tkinter.ttk import Label, Radiobutton, Button, Style, Separator, \
-    Notebook, Combobox, Frame, Menubutton, Checkbutton
+    Notebook, Frame, Menubutton, Checkbutton
 
 from mynoteslib.messagebox import showinfo
-from mynoteslib.autocomplete import AutoCompleteCombobox
 from mynoteslib.constants import COLORS, SYMBOLS, LANGUAGES, REV_LANGUAGES, \
     TOOLKITS, AUTOCORRECT, CONFIG, save_config, add_trace
 from mynoteslib.autoscrollbar import AutoScrollbar
@@ -117,7 +116,7 @@ class Config(Toplevel):
                command=self.ok).grid(row=1, column=0, padx=4, pady=10, sticky="e")
         Button(okcancel_frame, text=_("Cancel"),
                command=self.destroy).grid(row=1, column=1, padx=4, pady=10, sticky="w")
- 
+
     def _init_general(self):
         general_settings = Frame(self.notebook, padding=4)
         general_settings.columnconfigure(0, weight=1)
@@ -317,20 +316,6 @@ class Config(Toplevel):
         self.master.cleanup()
         showinfo(_('Information'), _('Unused local data have been cleaned up.'))
 
-    def validate_font_size(self, combo, d, ch, V):
-        """Validation of the size entry content."""
-        if d == '1':
-            l = [i for i in self.sizes if i[:len(ch)] == ch]
-            if l:
-                i = self.sizes.index(l[0])
-                combo.current(i)
-                index = combo.index("insert")
-                combo.selection_range(index + 1, "end")
-                combo.icursor(index + 1)
-            return ch.isdigit()
-        else:
-            return True
-
     def ok(self):
         """Validate configuration."""
         # --- splash supported
@@ -342,9 +327,6 @@ class Config(Toplevel):
         title_font = self.title_font.get_font()
         style = "{weight},{slant}".format(**title_font)
         style = style + ',underline' * title_font['underline']
-
-        # --- opacity
-        opacity = "%i" % self.opacity.get()
 
         # --- language
         language = REV_LANGUAGES[self.lang.get()]
@@ -360,7 +342,7 @@ class Config(Toplevel):
         CONFIG.set("General", "default_category",
                    self.category_settings.default_category.get().lower())
         CONFIG.set("General", "language", language)
-        CONFIG.set("General", "opacity", opacity)
+        CONFIG.set("General", "opacity", str(self.opacity.get()))
         CONFIG.set("General", "position", self.position.get())
         CONFIG.set("General", "buttons_position", self.titlebar_disposition.get())
         CONFIG.set("General", "date_in_title", str(self.date_in_title.get()))
@@ -415,32 +397,6 @@ class Config(Toplevel):
         showinfo("Information",
                  _("The GUI Toolkit setting will take effect after restarting the application"),
                  parent=self)
-
-    def update_preview(self, event=None):
-        """Update font preview."""
-        family = self.font_family.get()
-        size = self.font_size.get()
-        self.sample.configure(font="%s %s" % (family.replace(" ", "\ "), size))
-        self.update_mono_preview()
-
-    def update_mono_preview(self, event=None):
-        """Update mono font preview."""
-        family = self.mono_family.get()
-        size = self.font_size.get()
-        self.sample_mono.configure(font="%s %s" % (family.replace(" ", "\ "), size))
-
-    def update_preview_title(self, event=None):
-        """Update title font preview."""
-        family = self.fonttitle_family.get()
-        size = self.fonttitle_size.get()
-        config = "%s %s" % (family.replace(" ", "\ "), size)
-        if self.is_bold.instate(("selected",)):
-            config += " bold"
-        if self.is_italic.instate(("selected",)):
-            config += " italic"
-        if self.is_underlined.instate(("selected",)):
-            config += " underline"
-        self.sampletitle.configure(font=config)
 
     def display_label(self, value):
         self.opacity_label.configure(text=" {val} %".format(val=int(float(value))))
