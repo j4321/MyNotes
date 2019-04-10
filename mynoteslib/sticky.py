@@ -20,17 +20,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Sticky note class
 """
-
-
-from tkinter import Toplevel, StringVar, Menu, TclError
-from tkinter.ttk import Style, Sizegrip, Entry, Label, Button, Frame
-from PIL.ImageTk import PhotoImage
-from PIL import Image
 import os
 import re
+from tkinter import Toplevel, StringVar, Menu, TclError
+from tkinter.ttk import Style, Sizegrip, Entry, Label, Button, Frame
 from time import strftime
-from mynoteslib.constants import TEXT_COLORS, COLORS, askopenfilename, EWMH,\
-    PATH_LATEX, LATEX, CONFIG, IM_LOCK, IM_CLIP, sorting, math_to_image, open_url
+
+from PIL.ImageTk import PhotoImage
+from PIL import Image
+
+from mynoteslib.constants import TEXT_COLORS, COLORS, EWMH, PATH_LATEX, LATEX,\
+    CONFIG, IM_LOCK, IM_CLIP, sorting, math_to_image, open_url, askopenfilename
 from mynoteslib.autoscrollbar import AutoScrollbar
 from mynoteslib.symbols import pick_symbol
 from mynoteslib.mytext import MyText
@@ -89,19 +89,20 @@ class Sticky(Toplevel):
                                 CONFIG.get("Font", "title_size"))
         style = CONFIG.get("Font", "title_style").split(",")
         if style:
-            font_title += " "
-            font_title += " ".join(style)
+            font_title = font_title + " " + " ".join(style)
 
         self.title_var = StringVar(master=self,
                                    value=kwargs.get("title", _("Title")))
         self.title_label = Label(self.titlebar,
                                  textvariable=self.title_var,
                                  anchor="e",
+                                 borderwidth=0,
                                  style=self.id + ".TLabel",
                                  font=font_title)
         self.date_label = Label(self.titlebar,
                                 text="",
                                 anchor="w",
+                                borderwidth=0,
                                 style=self.id + ".TLabel",
                                 font=font_title)
         self.title_entry = Entry(self.titlebar, textvariable=self.title_var,
@@ -138,7 +139,7 @@ class Sticky(Toplevel):
             self.date_label.grid(row=0, column=3, sticky="ew", pady=(1, 0))
 
         if CONFIG.getboolean('General', 'date_in_title', fallback=True):
-            self.date_label.configure(text='- ' + self._date)
+            self.date_label.configure(text=' - ' + self._date)
 
         # -------- body
         # corner grip
@@ -900,13 +901,13 @@ class Sticky(Toplevel):
 
     def update_title_font(self):
         """Update title font after configuration change."""
-        font = "%s %s" % (CONFIG.get("Font", "title_family").replace(" ", "\ "),
-                          CONFIG.get("Font", "title_size"))
+        font_title = "%s %s" % (CONFIG.get("Font", "title_family").replace(" ", "\ "),
+                                CONFIG.get("Font", "title_size"))
         style = CONFIG.get("Font", "title_style").split(",")
         if style:
-            font += " "
-            font += " ".join(style)
-        self.title_label.configure(font=font)
+            font_title = font_title + " " + " ".join(style)
+        self.title_label.configure(font=font_title)
+        self.date_label.configure(font=font_title)
 
     def update_text_font(self):
         """Update text font after configuration change."""
@@ -942,7 +943,7 @@ class Sticky(Toplevel):
             self.date_label.grid(row=0, column=3, sticky="ew", pady=(1, 0))
 
         if CONFIG.getboolean('General', 'date_in_title', fallback=True):
-            self.date_label.configure(text='- ' + self._date)
+            self.date_label.configure(text=' - ' + self._date)
         else:
             self.date_label.configure(text='')
 

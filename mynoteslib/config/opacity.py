@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 MyNotes - Sticky notes/post-it
-Copyright 2018 Juliette Monsel <j_4321@protonmail.com>
+Copyright 2018-2019 Juliette Monsel <j_4321@protonmail.com>
 
 MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,21 +18,21 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-Settings
+Opacity settings
 """
-
 from tkinter import ttk
-from schedulerlib.ttkwidgets import ScaleEntry
+
+from mynoteslib.scaleentry import ScaleEntry
 
 
 class OpacityFrame(ttk.Frame):
-    def __init__(self, master=None, value=85, style='TLabel', **kw):
+    def __init__(self, master=None, value=0.85, style='TLabel', **kw):
         ttk.Frame.__init__(self, master, **kw)
 
         self.columnconfigure(1, weight=1)
         self.opacity_scale = ScaleEntry(self, orient="horizontal", scalewidth=300,
                                         from_=0, to=100, entryscalepad=10,
-                                        value=int(value))
+                                        value=int(value * 100))
         ttk.Label(self, style=style,
                   text=_("Opacity")).grid(row=0, column=0, sticky="w", padx=(0, 4), pady=4)
         self.opacity_scale.grid(row=0, column=1, padx=4, pady=4)
