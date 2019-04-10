@@ -7,6 +7,8 @@ Changelog
 
 -Version 2.4.4
     * Fix widget disappearance in Plasma desktop
+    * Fix title bar style update
+    * Improve underline style of title bar with date
 
 -Version 2.4.3
     * Add Spanish and Catalan translations (thanks to Adolfo Jayme-Barrientos <fitojb@ubuntu.com>)
