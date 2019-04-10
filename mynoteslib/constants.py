@@ -42,16 +42,15 @@ were taken from "icons.tcl":
 
 Constants and functions
 """
-
-
 import os
 import gettext
+import warnings
 from subprocess import Popen
 from configparser import ConfigParser
 from locale import getdefaultlocale, setlocale, LC_ALL
 from subprocess import check_output, CalledProcessError
+
 import ewmh
-import warnings
 from PIL import Image, ImageDraw
 
 
@@ -572,6 +571,21 @@ def asksaveasfilename(defaultextension, filetypes, initialdir=".", initialfile="
                                             filetypes=filetypes,
                                             initialfile=initialfile,
                                             **options)
+
+
+# --- compatibility
+def add_trace(variable, mode, callback):
+    """
+    Add trace to variable.
+
+    Ensure compatibility with old and new trace method.
+    mode: "read", "write", "unset" (new syntax)
+    """
+    try:
+        return variable.trace_add(mode, callback)
+    except AttributeError:
+        # fallback to old method
+        return variable.trace(mode[0], callback)
 
 
 # --- miscellaneous functions

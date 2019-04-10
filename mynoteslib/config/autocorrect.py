@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 MyNotes - Sticky notes/post-it
-Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
+Copyright 2016-2019 Juliette Monsel <j_4321@protonmail.com>
 
 MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,11 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Configuration window for autocorrect
 """
-
-
 from tkinter import StringVar
 from tkinter.ttk import Treeview, Frame, Label, Button, Entry
-from mynoteslib.constants import AUTOCORRECT
+
+from mynoteslib.constants import AUTOCORRECT, add_trace
 from mynoteslib.autoscrollbar import AutoScrollbar
 
 
@@ -49,12 +48,8 @@ class AutoCorrectConfig(Frame):
         self.replace = StringVar(self)
         self.by = StringVar(self)
 
-        try:
-            self.replace.trace_add('write', self._trace_replace)
-            self.by.trace_add('write', self._trace_by)
-        except AttributeError:
-            self.replace.trace_add('w', self._trace_replace)
-            self.by.trace_add('w', self._trace_by)
+        add_trace(self.replace, 'write', self._trace_replace)
+        add_trace(self.by, 'write', self._trace_by)
 
         b_frame = Frame(self)
         self.b_add = Button(b_frame, text=_('New'), command=self.add)

@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 MyNotes - Sticky notes/post-it
-Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
+Copyright 2016-2019 Juliette Monsel <j_4321@protonmail.com>
 
 MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,20 +20,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Main
 """
-
-
+import logging
 import os
 import sys
 import traceback
 import signal
 from tkinter import Tk
 from tkinter.ttk import Style
+import argparse
+
 from mynoteslib.constants import save_config, PIDFILE
 from mynoteslib.app import App
 from mynoteslib.messagebox import showerror
-import logging
 from mynoteslib.version import __version__
-import argparse
+
 
 # parse command line arguments
 parser = argparse.ArgumentParser(description=_("MyNotes - Post-it system tray app"),

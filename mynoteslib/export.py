@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 MyNotes - Sticky notes/post-it
-Copyright 2016-2017 Juliette Monsel <j_4321@protonmail.com>
+Copyright 2016-2019 Juliette Monsel <j_4321@protonmail.com>
 
 MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,21 +20,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Export dialog
 """
-
-
 import re
+import tarfile
+import filecmp
 from os.path import split, exists, join, splitext
 from os import mkdir
+from pickle import Pickler
 from tempfile import TemporaryDirectory
-import tarfile
 from shutil import copyfile
 from tkinter import Toplevel, Text, StringVar, Menu
 from tkinter.ttk import Checkbutton, Frame, Button, Separator, Menubutton, Label
+
 from mynoteslib.constants import CONFIG, TEXT_COLORS, sorting, text_ranges
 from mynoteslib.checkboxtreeview import CheckboxTreeview
 from mynoteslib.autoscrollbar import AutoScrollbar as Scrollbar
-from pickle import Pickler
-import filecmp
+
 
 EXT_DICT = {_("Notes (.notes)"): '.notes',
             _("HTML file (.html)"): '.html',

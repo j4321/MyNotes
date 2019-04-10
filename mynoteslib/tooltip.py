@@ -19,8 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Tooltip and TooltipWrapper
 """
-
-
 from tkinter import Toplevel
 from tkinter.ttk import Label, Style
 

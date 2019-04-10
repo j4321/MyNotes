@@ -1,9 +1,10 @@
 #! /usr/bin/python3
 # -*- coding:Utf-8 -*-
+import os
 
 from setuptools import setup
 
-import os
+
 images = [os.path.join("mynoteslib/images/", img) for img in os.listdir("mynoteslib/images/")]
 data_files = [("/usr/share/pixmaps", ["mynotes.svg", "mynotes-tray.svg"]),
               ("/usr/share/doc/mynotes", ["README.rst", "changelog"]),

@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 MyNotes - Sticky notes/post-it
-Copyright 2016-2017 Juliette Monsel <j_4321@protonmail.com>
+Copyright 2016-2019 Juliette Monsel <j_4321@protonmail.com>
 
 MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,12 +20,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Category Manager
 """
-
 from tkinter import StringVar, Toplevel, Text
+from tkinter.ttk import Label, Button, OptionMenu, Style, Entry, Frame
+
 from PIL.ImageTk import PhotoImage
+
 from mynoteslib.constants import CONFIG, COLORS, INV_COLORS, IM_PLUS, IM_DELETE
 from mynoteslib.constants import save_config, optionmenu_patch
-from tkinter.ttk import Label, Button, OptionMenu, Style, Entry, Frame
 from mynoteslib.messagebox import askyesnocancel
 from mynoteslib.autoscrollbar import AutoScrollbar
 

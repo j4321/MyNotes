@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 MyNotes - Sticky notes/post-it
-Copyright 2016-2018 Juliette Monsel <j_4321@protonmail.com>
+Copyright 2016-2019 Juliette Monsel <j_4321@protonmail.com>
 
 MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,8 +22,10 @@ About dialog
 """
 from webbrowser import open as webOpen
 from tkinter import Text, Toplevel
-from PIL.ImageTk import PhotoImage
 from tkinter.ttk import Button, Label, Style
+
+from PIL.ImageTk import PhotoImage
+
 from mynoteslib.constants import IM_ICON_48
 from mynoteslib.version import __version__
 
@@ -49,7 +51,7 @@ class About(Toplevel):
                                                                    columnspan=2,
                                                                    padx=10)
         Label(self,
-              text="Copyright (C) Juliette Monsel 2016-2018").grid(row=3,
+              text="Copyright (C) Juliette Monsel 2016-2019").grid(row=3,
                                                                    columnspan=2,
                                                                    padx=10)
         Label(self,

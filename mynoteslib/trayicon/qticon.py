@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 System tray icon using Qt.
 """
-
 try:
     from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction
     from PyQt5.QtGui import QIcon
@@ -128,4 +127,3 @@ class TrayIcon(QApplication):
                 command()
 
         self.tray_icon.activated.connect(action)
-

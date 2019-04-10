@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 MyNotes - Sticky notes/post-it
-Copyright 2016-2017 Juliette Monsel <j_4321@protonmail.com>
+Copyright 2016-2019 Juliette Monsel <j_4321@protonmail.com>
 
 MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,8 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Check for updates
 """
-
-
 import re
 from threading import Thread
 from urllib import request, error
@@ -29,7 +27,8 @@ from html.parser import HTMLParser
 from webbrowser import open as webOpen
 from tkinter import Toplevel, PhotoImage
 from tkinter.ttk import Label, Button, Frame, Checkbutton
-from mynoteslib.constants import CONFIG, save_config, IM_QUESTION_DATA
+
+from mynoteslib.constants import IM_QUESTION_DATA, CONFIG, save_config
 from mynoteslib.version import __version__
 
 

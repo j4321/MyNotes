@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Symbol palette
 """
-
 from tkinter import Toplevel, Canvas
 from tkinter.ttk import Button, Entry, Style
 
