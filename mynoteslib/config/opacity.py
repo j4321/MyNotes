@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 MyNotes - Sticky notes/post-it
-Copyright 2018 Juliette Monsel <j_4321@protonmail.com>
+Copyright 2018-2019 Juliette Monsel <j_4321@protonmail.com>
 
 MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,11 +18,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-Settings
+Opacity settings
 """
-
 from tkinter import ttk
-from schedulerlib.ttkwidgets import ScaleEntry
+
+from mynoteslib.scaleentry import ScaleEntry
 
 
 class OpacityFrame(ttk.Frame):

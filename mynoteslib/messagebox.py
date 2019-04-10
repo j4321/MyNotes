@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 MyNotes - Sticky notes/post-it
-Copyright 2016-2017 Juliette Monsel <j_4321@protonmail.com>
+Copyright 2016-2019 Juliette Monsel <j_4321@protonmail.com>
 
 MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,11 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Custom tkinter messageboxes
 """
-
-
 from webbrowser import open as url_open
 from tkinter import Toplevel, PhotoImage, Text
 from tkinter.ttk import Label, Button, Frame, Style
+
 from mynoteslib.autoscrollbar import AutoScrollbar as Scrollbar
 from mynoteslib.constants import ICONS, IM_ERROR_DATA
 

@@ -20,14 +20,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Text class with improved undo/redo
 """
-
+import os
+import re
 from tkinter import Text, TclError
 from tkinter.font import Font
 from tkinter.ttk import Checkbutton
-from mynoteslib.constants import sorting, CONFIG, TEXT_COLORS, PATH_LATEX, \
-    AUTOCORRECT, text_ranges
-import os
-import re
+
+from mynoteslib.constants import CONFIG, TEXT_COLORS, PATH_LATEX, AUTOCORRECT, \
+    text_ranges, sorting
 
 
 class Checkbox(Checkbutton):

@@ -2,7 +2,7 @@
 # -*- coding:Utf-8 -*-
 """
 MyNotes - Sticky notes/post-it
-Copyright 2016-2017 Juliette Monsel <j_4321@protonmail.com>
+Copyright 2016-2019 Juliette Monsel <j_4321@protonmail.com>
 
 MyNotes is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,13 +18,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-Dialog to delete notes
+Dialog to manage notes
 """
-
-
-from PIL.ImageTk import PhotoImage
 from tkinter import Toplevel, Text, Menu, StringVar, BooleanVar
 from tkinter.ttk import Label, Frame, Button, Notebook, Checkbutton, Menubutton
+
+from PIL.ImageTk import PhotoImage
+
 from mynoteslib.constants import CONFIG, IM_DELETE, IM_CHANGE, IM_VISIBLE_24, IM_HIDDEN_24
 from mynoteslib.autoscrollbar import AutoScrollbar as Scrollbar
 from mynoteslib.messagebox import askokcancel
@@ -104,7 +104,7 @@ class ManagerItem(Frame):
         self.toggle_visibility_cmd(self.visibility.get())
 
     def get(self, key):
-        if key is 'visibility':
+        if key == 'visibility':
             return self.visibility.get()
         else:
             return self._data[key]

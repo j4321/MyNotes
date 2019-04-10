@@ -20,29 +20,29 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Main class
 """
-
-from tkinter import Tk, TclError
-from tkinter import PhotoImage as tkPhotoImage
-from tkinter.ttk import Style
-from tkinter.font import families
-from PIL import Image
-from PIL.ImageTk import PhotoImage
+import signal
 import os
 import filecmp
 import re
 import traceback
-from shutil import copy, copyfile
 import pickle
 import tarfile
+from shutil import copy, copyfile
 from tempfile import TemporaryDirectory
 from time import strftime
-import signal
-from mynoteslib.trayicon import TrayIcon, SubMenu
-from mynoteslib.constants import CONFIG, PATH_DATA, PATH_DATA_BACKUP,\
-    LOCAL_PATH, backup, asksaveasfilename, askopenfilename, COLORS, \
-    IM_SCROLL_ALPHA, IM_VISIBLE, IM_HIDDEN, IM_SELECT, IM_SORT_REV, IM_ROLL, \
-    TEXT_COLORS, color_box, PATH_LATEX, PATH_LOCAL_DATA
+from tkinter import Tk, TclError
+from tkinter import PhotoImage as tkPhotoImage
+from tkinter.ttk import Style
+from tkinter.font import families
+
+from PIL import Image
+from PIL.ImageTk import PhotoImage
+
 import mynoteslib.constants as cst
+from mynoteslib.trayicon import TrayIcon, SubMenu
+from mynoteslib.constants import CONFIG, COLORS, TEXT_COLORS,\
+    PATH_DATA, PATH_DATA_BACKUP, LOCAL_PATH, PATH_LATEX, PATH_LOCAL_DATA,\
+    asksaveasfilename, askopenfilename
 from mynoteslib.config import Config
 from mynoteslib.export import Export, EXT_DICT, MERGE_FCT, EXPORT_FCT, \
     make_archive, export_filename
@@ -66,19 +66,19 @@ class App(Tk):
         self.notes = {}
         self.im_icon = PhotoImage(master=self, file=cst.IM_ICON_48)
         self.iconphoto(True, self.im_icon)
-        self.im_visible = PhotoImage(file=IM_VISIBLE, master=self)
-        self.im_hidden = PhotoImage(file=IM_HIDDEN, master=self)
-        self.im_select = PhotoImage(file=IM_SELECT, master=self)
-        self.im_sort_rev = PhotoImage(file=IM_SORT_REV, master=self)
-        self.im_sort = PhotoImage(file=IM_ROLL, master=self)
+        self.im_visible = PhotoImage(file=cst.IM_VISIBLE, master=self)
+        self.im_hidden = PhotoImage(file=cst.IM_HIDDEN, master=self)
+        self.im_select = PhotoImage(file=cst.IM_SELECT, master=self)
+        self.im_sort_rev = PhotoImage(file=cst.IM_SORT_REV, master=self)
+        self.im_sort = PhotoImage(file=cst.IM_ROLL, master=self)
 
         # color boxes for menus
         self.im_text_color = {}
         for name, value in TEXT_COLORS.items():
-            self.im_text_color[name] = PhotoImage(color_box(value), master=self)
+            self.im_text_color[name] = PhotoImage(cst.color_box(value), master=self)
         self.im_color = {}
         for name, value in COLORS.items():
-            self.im_color[name] = PhotoImage(color_box(value), master=self)
+            self.im_color[name] = PhotoImage(cst.color_box(value), master=self)
 
         # --- style
         style = Style(self)
@@ -146,7 +146,7 @@ class App(Tk):
             active_bg = cst.active_color(color)
             active_bg2 = cst.active_color(cst.active_color(color, 'RGB'))
             active_bg3 = cst.active_color(cst.active_color(cst.active_color(color, 'RGB'), 'RGB'))
-            slider_alpha = Image.open(IM_SCROLL_ALPHA)
+            slider_alpha = Image.open(cst.IM_SCROLL_ALPHA)
             slider_vert = Image.new('RGBA', (13, 28), active_bg)
             slider_vert.putalpha(slider_alpha)
             slider_vert_active = Image.new('RGBA', (13, 28), active_bg3)
@@ -272,7 +272,7 @@ class App(Tk):
                               _("The data is corrupted, an older backup has been restored and there might be some data losses."))
 
             else:
-                backup()
+                cst.backup()
             for i, key in enumerate(note_data):
                 self.note_data["%i" % i] = note_data[key]
 
