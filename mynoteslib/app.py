@@ -223,6 +223,8 @@ class App(Tk):
         self.icon.menu.add_cascade(label=_('Hide Category'),
                                    menu=self.menu_hide_cat)
         self.icon.menu.add_separator()
+        self.icon.menu.add_command(label=_("Toggle All"), command=self.toggle_all)
+        self.icon.menu.add_separator()
         self.icon.menu.add_command(label=_("Preferences"),
                                    command=self.config)
         self.icon.menu.add_command(label=_("Note Manager"), command=self.manage)
@@ -325,11 +327,15 @@ class App(Tk):
             self.show_all()
         elif args.hide_all:
             self.hide_all()
+        elif args.toggle_all:
+            self.toggle_all()
 
         # react to mynotes --show-all in command line
         signal.signal(signal.SIGUSR1, lambda *args: self.show_all())
         # react to mynotes --hide-all in command line
         signal.signal(signal.SIGUSR2, lambda *args: self.hide_all())
+        # react to mynotes --toggle-all in command line
+        signal.signal(signal.SIGVTALRM, lambda *args: self.toggle_all())
 
         # check for updates
         if CONFIG.getboolean("General", "check_update"):
@@ -663,10 +669,8 @@ class App(Tk):
 
     def show_all(self):
         """Show all notes."""
-        for cat in self.hidden_notes.keys():
-            keys = list(self.hidden_notes[cat].keys())
-            for key in keys:
-                self.show_note(key)
+        for key in self.hidden_keys():
+            self.show_note(key)
 
     def show_cat(self, category):
         """Show all notes belonging to category."""
@@ -690,6 +694,15 @@ class App(Tk):
                 self.icon.menu.disable_item(4)
         self.make_notes_sticky()
 
+    def toggle_all(self):
+        """Toggle all notes."""
+        shown = list(self.notes.keys())
+        hidden = self.hidden_keys()
+        for key in hidden:
+            self.show_note(key)
+        for key in shown:
+            self.notes[key].hide()
+
     def hide_all(self):
         """Hide all notes."""
         keys = list(self.notes.keys())
@@ -702,6 +715,13 @@ class App(Tk):
         for key in keys:
             if self.note_data[key]["category"] == category:
                 self.notes[key].hide()
+
+    def hidden_keys(self):
+        """Return the keys of all hidden notes."""
+        keys = []
+        for cat in self.hidden_notes.keys():
+            keys = keys + list(self.hidden_notes[cat].keys())
+        return keys
 
     def manage(self):
         """Launch note manager."""

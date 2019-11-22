@@ -42,6 +42,7 @@ parser.add_argument('-V', '--version', help=_('show version and exit'), action='
 group = parser.add_mutually_exclusive_group()
 group.add_argument('-H', '--hide-all', help=_('hide all notes'), action='store_true')
 group.add_argument('-S', '--show-all', help=_('show all notes'), action='store_true')
+group.add_argument('-T', '--toggle-all', help=_('toggle all notes'), action='store_true')
 args = parser.parse_args()
 
 if args.version:
@@ -65,6 +66,10 @@ if os.path.isfile(PIDFILE):
             elif args.hide_all:
                 # send signal to mynotes to hide all notes
                 os.kill(int(old_pid), signal.SIGUSR2)
+                sys.exit()
+            elif args.toggle_all:
+                # send signal to mynotes to toggle all notes
+                os.kill(int(old_pid), signal.SIGVTALRM)
                 sys.exit()
             else:
                 # MyNotes is already runnning
