@@ -38,7 +38,7 @@ Install
 
         - Tkinter (Python wrapper for Tk)
         - ewmh https://pypi.python.org/pypi/ewmh
-        - optional dependency: matplotlib + texlive for basic LaTeX formula support
+        - optional dependency: matplotlib for basic LaTeX formula support
 
     You also need to have at least one of the following GUI toolkits for the system tray icon:
 
