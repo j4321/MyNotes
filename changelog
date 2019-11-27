@@ -5,6 +5,9 @@ Copyright 2016-2019 Juliette Monsel <j_4321@protonmail.com>
 Changelog
 ---------
 
+-Version 2.5.0
+    * Add toggle feature ([#35](https://github.com/j4321/MyNotes/pull/35) thanks to Moritz Biering <https://github.com/zMoooooritz>)
+
 -Version 2.4.4
     * Fix widget disappearance in Plasma desktop
     * Fix title bar style update
