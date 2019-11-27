@@ -79,8 +79,7 @@ from the menu and check the box 'Check this box if the notes disappear
 when you click'.
 
 If you encounter bugs or if you have suggestions, please open an issue
-on `GitHub <https://github.com/j4321/MyNotes/issues>`__ or write me
-an email at <j_4321@protonmail.com>.
+on `GitHub <https://github.com/j4321/MyNotes/issues>`__.
 
 
 .. |Release| image:: https://badge.fury.io/gh/j4321%2FMyNotes.svg
