@@ -111,6 +111,7 @@ class MyText(Text):
         self.bind('<Control-Key>', self._on_ctrl_keypress)
         self.bind('<Control-z>', self.undo)
         self.bind('<Control-y>', self.redo)
+        self.bind('<<Copy>>', lambda ev: print(self.dump('1.0', 'end')))
         self.bind_class('Text', '<Control-y>', lambda e: None)
 
         self.tag_bind("link", "<Enter>",
@@ -440,6 +441,7 @@ class MyText(Text):
                         content.append(('char', self.get(index), tags))
             if l < fin[0]:
                 content.append(('char', '\n', []))
+        print(content)
         return content
 
     def _restore_text_with_prop(self, index1, content):

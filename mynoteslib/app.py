@@ -342,9 +342,13 @@ class App(Tk):
             UpdateChecker(self)
 
     def report_callback_exception(self, *args):
-        err = "".join(traceback.format_exception(*args))
-        print(err)
-        showerror(_("Error"), str(args[1]), err, True)
+        if args[0] is not KeyboardInterrupt:
+            err = "".join(traceback.format_exception(*args))
+            print(err)
+            showerror(_("Error"), str(args[1]), err, True)
+        else:
+            print('KeyboardInterrupt')
+            self.quit()
 
     # --- class bindings methods
     @staticmethod
@@ -960,6 +964,7 @@ class App(Tk):
             self._cleanup_cat(self, categories)
         self.update_menu()
         self.update_notes()
+        cst.save_config()
 
     def _load_notes_with_data(self, filename, cleanup_cat=False):
         """Load notes and data from archive."""

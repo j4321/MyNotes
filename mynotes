@@ -91,6 +91,7 @@ try:
     app = App(args)
     app.mainloop()
 except Exception as e:
+    print(str(type(e)), traceback.format_exc())
     showerror(_("Error"), str(type(e)), traceback.format_exc(), True)
 finally:
     try:

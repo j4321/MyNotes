@@ -51,7 +51,7 @@ class About(Toplevel):
                                                                    columnspan=2,
                                                                    padx=10)
         Label(self,
-              text="Copyright (C) Juliette Monsel 2016-2019").grid(row=3,
+              text="Copyright (C) Juliette Monsel 2016-2021").grid(row=3,
                                                                    columnspan=2,
                                                                    padx=10)
         Label(self,

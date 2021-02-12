@@ -55,5 +55,6 @@ category has a color. Images, checkboxes and a few predefined symbols
 can be inserted in the notes. The style of the text can be changed
 (alignment, style).
 """,
-      extras_require={'basic LaTeX formula support': ['matplotlib']},
+      extras_require={'basic LaTeX formula support': ['matplotlib'],
+                      'rich text copy/pasting': ['klembord']},
       install_requires=['Pillow', 'ewmh'])
