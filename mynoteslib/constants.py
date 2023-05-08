@@ -312,6 +312,37 @@ else:
     CONFIG.set("Font", "mono", "")
     CONFIG.add_section("Categories")
 
+# --- clipboard management
+
+try:  # copy with formatting and objects
+    import klembord
+    RICH_TEXT_COPY = True
+
+    def copy_to_clipboard(text_widget, plain_text, start, end):
+        """
+        Copy text to clipboard with formatting if possible.
+
+        * text_widget: MyText instance from which to copy the text
+        * plain_text: copied text without formatting
+        * start, end: start and end indices for the copied text
+        """
+        html = text_widget.get_rich_text(start, end)
+        print(html)
+        klembord.set_with_rich_text(plain_text, plain_text)
+
+except ImportError:  # klemboard is not install, use plain text copy
+    RICH_TEXT_COPY = False
+
+    def copy_to_clipboard(text_widget, plain_text, start, end):
+        """
+        Copy text to clipboard with formatting if possible.
+
+        * text_widget: MyText instance from which to copy the text
+        * plain_text: copied text without formatting
+        * start, end: start and end indices for the copied text
+        """
+        text_widget.clipboard_append(plain_text)
+
 
 # --- system tray icon
 def get_available_gui_toolkits():
@@ -389,7 +420,7 @@ if LANGUE not in LANGUAGES:
         CONFIG.set("General", "language", "en")
 
 gettext.find(APP_NAME, PATH_LOCALE)
-gettext.bind_textdomain_codeset(APP_NAME, "UTF-8")
+
 gettext.bindtextdomain(APP_NAME, PATH_LOCALE)
 gettext.textdomain(APP_NAME)
 LANG = gettext.translation(APP_NAME, PATH_LOCALE,
@@ -443,19 +474,22 @@ def color_box(color):
 
 # --- latex (optional):  insertion of latex formulas via matplotlib
 try:
+    import matplotlib
+    matplotlib.use("tkagg")
     from matplotlib import rc
     rc('text', usetex=True)
-    from matplotlib.mathtext import MathTextParser
-    from matplotlib.image import imsave
-    parser = MathTextParser('bitmap')
+    from matplotlib import pyplot as plt
     LATEX = True
 except Exception:
     LATEX = False
 
 
 def math_to_image(latex, image_path, **options):
-    img = parser.to_rgba(latex, **options)[0]
-    imsave(image_path, img)
+    fig = plt.figure()
+    fig.text(0, 0, latex, **options)
+    fig.savefig(image_path, dpi=90, transparent=True, format="png",
+                bbox_inches='tight', pad_inches=0.0)
+    plt.close(fig)
 
 
 # --- filebrowser

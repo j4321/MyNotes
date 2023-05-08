@@ -102,10 +102,12 @@ TAG_CLOSE_RST = {'bold': '** ',
 
 def make_archive(archive, data, extension, text, latex={}, pickle=False):
     """
-    archive: archive path
-    data: {name: path}
-    extension: extension for the notes
-    text: exported notes
+    Create archive containing notes and data (images, ...).
+
+    * archive: archive path
+    * data: {name: path}
+    * extension: extension for the notes
+    * text: exported notes
     """
 
     with TemporaryDirectory() as tmpdir:
@@ -222,7 +224,7 @@ def apply_formatting(balises, text_lines, obj_indexes):
 
 
 def md_rst_line_cleanup(line):
-    """Strip line and remove space just after/before bold or italic start/end"""
+    """Strip line and remove space just after/before bold or italic start/end."""
     l = line
     if l[:2] == ' *' or l[:3] == ' ``':
         l = l[1:]

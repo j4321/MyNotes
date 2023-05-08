@@ -375,11 +375,11 @@ class App(Tk):
             txt.clipboard_clear()
             txt_copy = txt.get(sel[0], sel[1])
             self.clipboard = txt_copy
-            txt.clipboard_append(txt_copy)
             self.clipboard_content.clear()
             self.link_clipboard.clear()
 
             if isinstance(txt, MyText):
+                cst.copy_to_clipboard(txt, txt_copy, *sel)
                 deb = cst.sorting(str(sel[0]))
                 fin = cst.sorting(str(sel[1]))
                 for l in range(deb[0], fin[0] + 1):
@@ -418,6 +418,8 @@ class App(Tk):
                                 self.clipboard_content.append(('char', (txt.get(index), tags)))
                     if l < fin[0]:
                         self.clipboard_content.append(('char', ('\n', [])))
+                else:
+                    txt.clipboard_append(txt_copy)
 
     def cut_text(self, event):
         self.copy_text(event)

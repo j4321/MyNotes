@@ -28,6 +28,8 @@ from tkinter.ttk import Checkbutton
 
 from mynoteslib.constants import CONFIG, TEXT_COLORS, PATH_LATEX, AUTOCORRECT, \
     text_ranges, sorting
+from mynoteslib.export import TAG_OPEN_HTML, TAG_CLOSE_HTML
+
 
 
 class Checkbox(Checkbutton):
@@ -111,7 +113,7 @@ class MyText(Text):
         self.bind('<Control-Key>', self._on_ctrl_keypress)
         self.bind('<Control-z>', self.undo)
         self.bind('<Control-y>', self.redo)
-        self.bind('<<Copy>>', lambda ev: print(self.dump('1.0', 'end')))
+
         self.bind_class('Text', '<Control-y>', lambda e: None)
 
         self.tag_bind("link", "<Enter>",
@@ -441,8 +443,55 @@ class MyText(Text):
                         content.append(('char', self.get(index), tags))
             if l < fin[0]:
                 content.append(('char', '\n', []))
-        print(content)
         return content
+
+    @staticmethod
+    def _apply_tag(tag, tag_dic, split=1):
+        """Return HTML tag corresponding to Text tag."""
+        if "-" in tag:
+            tag1, tag2 = tag.split("-")[::split]
+            return tag_dic.get(tag1, "") + tag_dic.get(tag2, "")
+        return tag_dic.get(tag, "")
+
+    def _checkbox_to_html(self, ch_name):
+        """Return the HTML code for the checkbox."""
+        ch = self.children[ch_name.split(".")[-1]]
+        if 'selected' in ch.state():
+            return '<input type="checkbox" checked />'
+        return '<input type="checkbox" />'
+
+    def get_rich_text(self, start='1.0', end='end'):
+        """Return HTML formatted text between indices START and END."""
+        tag_open_html = TAG_OPEN_HTML.copy()
+        tag_close_html = TAG_CLOSE_HTML.copy()
+
+        for nb, link in self.links.items():
+            link_id = f"link#{nb}"
+            if not os.path.exists(link):
+                if not re.match(r'http(s)?://', link):
+                    link = f'http://{link}'
+            tag_open_html[link_id] = '<a href="%s" target="_blank">' % link
+            tag_close_html[link_id] = "</a>"
+
+        #~actions = {
+        #~    'tagon': lambda tag: self._apply_tag(tag, tag_open_html),
+        #~    'tagoff': lambda tag: self._apply_tag(tag, tag_close_html, -1),
+        #~    'text': lambda text: text,
+        #~    'image': lambda path: '<img src="file://%s" style="vertical-align:middle" alt="%s" />' % (path, os.path.split(path)[-1]),
+        #~    'window': self._checkbox_to_html,
+        #~}
+        actions = {
+            'tagon': lambda tag: '<b>' if tag == 'bold' else '',
+            'tagoff': lambda tag: '</b>' if tag == 'bold' else '',
+            'text': lambda text: text,
+            'image': lambda w: '',
+            'window': lambda w: '',
+        }
+
+        content = self.dump(start, end, tag=True, text=True,
+                            image=True, window=True)
+        html = [actions[key](value) for key, value, index in content]
+        return ''.join(html)
 
     def _restore_text_with_prop(self, index1, content):
         """Restore text, images, checkboxes and formatting at index1."""
